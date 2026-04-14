@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calculadora de Gastos Mensuales</title>
-    <!-- Firebase SDK (Versiones Compatibles) -->
     <script src="https://gstatic.com"></script>
     <script src="https://gstatic.com"></script>
     
@@ -63,17 +62,25 @@
 
         .card { background: var(--card-bg); padding: 20px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         
-        /* FILAS DE GASTOS CON PALETA INDIVIDUAL */
+        /* FILAS DE GASTOS ACTUALIZADAS */
         .item-row { 
             display: flex; gap: 10px; background: #f8f9fa; padding: 12px; 
             border-radius: 12px; margin-bottom: 10px; align-items: center;
-            border-left: 6px solid #ccc; /* Color individual */
+            border-left: 6px solid #ccc;
         }
-        .item-row input { background: transparent; border: none; font-weight: 600; outline: none; width: 100%; }
+        .item-row input, .item-row input[type="number"] { 
+            background: transparent; border: none; font-weight: 600; outline: none; 
+        }
         
         .btn-add { 
             background: var(--primary-color); color: white; border: none; 
             width: 35px; height: 35px; border-radius: 50%; cursor: pointer; font-size: 20px;
+        }
+
+        /* SELECTOR DE COLOR EN LA POSICIÓN MARCADA */
+        .input-color-box {
+            width: 35px; height: 35px; border: none; border-radius: 8px;
+            cursor: pointer; padding: 0; background: none;
         }
 
         /* BARRA INFERIOR */
@@ -133,7 +140,7 @@
 </div>
 
 <script>
-    // --- USA TUS CREDENCIALES REALES ---
+    // --- TUS CREDENCIALES ---
     const firebaseConfig = {
         apiKey: "AIzaSyCLb7LaJypnUHQ0TKZ2aTRNK4yAa6SUiZE",
         authDomain: "://firebaseapp.com",
@@ -162,10 +169,13 @@
         const div = document.createElement('div');
         div.className = 'item-row';
         div.style.borderLeftColor = color;
+        
+        // Estructura idéntica a tu imagen pero con el selector de color donde lo marcaste
         div.innerHTML = `
-            <input type="color" value="${color}" oninput="this.parentElement.style.borderLeftColor = this.value; updateAll()" style="width:25px; height:25px; border:none; background:none; cursor:pointer;">
+            <span style="color: ${color}; font-size: 20px;">■</span>
             <input type="text" placeholder="Nombre" value="${nombre}" oninput="updateAll()" style="flex:2">
-            <input type="number" placeholder="0" value="${monto}" oninput="updateAll()" style="flex:1">
+            <input type="number" placeholder="0" value="${monto}" oninput="updateAll()" style="flex:1; text-align: right;">
+            <input type="color" class="input-color-box" value="${color}" oninput="this.parentElement.style.borderLeftColor = this.value; this.parentElement.querySelector('span').style.color = this.value; updateAll()">
             <button onclick="this.parentElement.remove(); updateAll()" style="background:none; border:none; color:#ccc; cursor:pointer;">✕</button>
         `;
         container.appendChild(div);
@@ -218,6 +228,10 @@
             }
             if(data.deudas) data.deudas.forEach(d => addItem('deudas', d.nombre, d.monto, d.color));
             if(data.ahorros) data.ahorros.forEach(a => addItem('ahorros', a.nombre, a.monto, a.color));
+        } else {
+            // Un par de ejemplos si la base de datos está vacía
+            addItem('deudas', 'Nombre', 0, '#820ad1');
+            addItem('ahorros', 'Nombre', 0, '#820ad1');
         }
         updateAll();
     };
