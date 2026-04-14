@@ -32,6 +32,8 @@
             --sidebar-width: 340px;
             --safe-area-top: env(safe-area-inset-top);
             --safe-area-bottom: env(safe-area-inset-bottom);
+            /* ===== FOOTER HEIGHT + MARGIN ===== */
+            --footer-height: 100px;
         }
 
         [data-theme="light"] {
@@ -56,6 +58,8 @@
             -webkit-font-smoothing: antialiased;
             transition: background 0.3s ease;
             overflow-x: hidden;
+            /* ✅ ESPACIO SUFICIENTE PARA EL FOOTER FIJO */
+            padding-bottom: calc(var(--footer-height) + 30px + var(--safe-area-bottom));
         }
 
         /* ===== SIDEBAR ===== */
@@ -338,8 +342,8 @@
             fill: none;
             stroke-width: 7;
             stroke-linecap: round;
-            stroke-dasharray: 307.876;
-            stroke-dashoffset: 307.876;
+            stroke-dasharray: 339.292;
+            stroke-dashoffset: 339.292;
             transition: stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
@@ -396,11 +400,13 @@
         .stat-value.text-danger { color: var(--danger); }
         .stat-value.text-success { color: var(--success); }
 
-        /* ===== CONTAINER ===== */
+        /* ===== CONTAINER - ✅ CENTRADO ===== */
         .container { 
             max-width: 1100px; 
             margin: 0 auto; 
-            padding: 0 30px 40px; 
+            padding: 0 30px; 
+            /* ✅ Espacio para el footer */
+            padding-bottom: 20px;
         }
         
         .dashboard {
@@ -456,7 +462,7 @@
         .btn-add:hover { transform: scale(1.1) rotate(90deg); }
         .btn-add:active { transform: scale(0.9); }
 
-        /* ===== ITEM ROW - CON PALETA DE COLORES ===== */
+        /* ===== ITEM ROW - CON PALETA DE COLORES MEJORADA ===== */
         .item-row {
             display: flex;
             align-items: center;
@@ -471,9 +477,18 @@
         }
         @keyframes itemSlide { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
         
-        /* Selector de color (paleta) a la izquierda */
+        /* ✅ LÍNEA DE COLOR A LA IZQUIERDA */
+        .item-color-line {
+            width: 5px;
+            min-height: 52px;
+            flex-shrink: 0;
+            background: var(--item-color, var(--primary));
+            transition: var(--transition);
+        }
+        
+        /* ✅ PALETA DE COLORES - BOTÓN CIRCULAR */
         .item-color-picker {
-            width: 42px;
+            width: 44px;
             min-height: 52px;
             display: flex;
             align-items: center;
@@ -482,33 +497,39 @@
             padding: 4px;
         }
         
-        .item-color-input {
-            width: 32px;
-            height: 32px;
+        .item-color-btn {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
             border: 2px solid rgba(255,255,255,0.15);
-            border-radius: 8px;
             cursor: pointer;
-            background: none;
-            padding: 0;
             transition: var(--transition);
+            position: relative;
+            overflow: hidden;
         }
-        .item-color-input::-webkit-color-swatch-wrapper { padding: 0; }
-        .item-color-input::-webkit-color-swatch { border: none; border-radius: 6px; }
-        .item-color-input::-moz-color-swatch { border: none; border-radius: 6px; }
-        .item-color-input:hover { 
+        .item-color-btn:hover { 
             transform: scale(1.15); 
             border-color: rgba(255,255,255,0.4);
             box-shadow: 0 0 12px rgba(255,255,255,0.15);
         }
+        .item-color-btn::after {
+            content: '🎨';
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            filter: brightness(0) invert(1);
+            opacity: 0.7;
+        }
         
-        /* Línea de color a la izquierda de la paleta */
-        .item-color-line {
-            width: 5px;
-            min-height: 52px;
-            flex-shrink: 0;
-            background: var(--item-color, var(--primary));
-            transition: var(--transition);
-            border-radius: 14px 0 0 14px;
+        .item-color-input-hidden {
+            position: absolute;
+            width: 0;
+            height: 0;
+            opacity: 0;
+            pointer-events: none;
         }
         
         .item-content {
@@ -662,10 +683,10 @@
         .empty-state-icon { font-size: 3rem; margin-bottom: 12px; opacity: 0.3; }
         .empty-state-text strong { display: block; font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 4px; }
 
-        /* ===== FOOTER NAV CON PORCENTAJES ===== */
+        /* ===== FOOTER NAV - ✅ POSICIONADO CORRECTAMENTE ===== */
         .footer-nav {
             position: fixed;
-            bottom: calc(20px + var(--safe-area-bottom));
+            bottom: calc(16px + var(--safe-area-bottom));
             left: 50%;
             transform: translateX(-50%);
             width: calc(100% - 60px);
@@ -676,9 +697,10 @@
             grid-template-columns: repeat(3, 1fr);
             gap: 8px;
             padding: 14px 16px;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
             z-index: 2000;
-            border: 1px solid rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.08);
+            backdrop-filter: blur(10px);
         }
         
         .footer-item {
@@ -718,7 +740,7 @@
         /* ===== TOAST ===== */
         .toast-container {
             position: fixed;
-            bottom: 140px;
+            bottom: calc(var(--footer-height) + 40px + var(--safe-area-bottom));
             right: 30px;
             z-index: 4000;
             display: flex;
@@ -803,7 +825,7 @@
 
         @media (max-width: 768px) {
             .stats-section { padding: 0 16px; }
-            .container { padding: 0 16px 40px; }
+            .container { padding: 0 16px 20px; }
             .stats-grid { grid-template-columns: 1fr; gap: 12px; }
             .stat-card { padding: 18px 16px; display: flex; align-items: center; gap: 16px; text-align: left; }
             .circular-progress { margin: 0; width: 70px; height: 70px; }
@@ -817,7 +839,7 @@
             .top-banner { padding: calc(20px + var(--safe-area-top)) 16px 40px; }
             .menu-btn { left: 16px; }
             .save-indicator { right: 16px; }
-            .toast-container { right: 16px; left: 16px; }
+            .toast-container { right: 16px; left: 16px; bottom: calc(var(--footer-height) + 30px); }
             .footer-nav { width: calc(100% - 32px); }
             .footer-item .footer-amount { font-size: 1rem; }
             .footer-item:nth-child(2) .footer-amount { font-size: 1.15rem; }
@@ -825,13 +847,14 @@
 
         @media (max-width: 480px) {
             .stats-section { padding: 0 12px; }
-            .container { padding: 0 12px 40px; }
+            .container { padding: 0 12px 20px; }
             .item-content { padding: 8px 10px; gap: 8px; }
             .item-name-input { font-size: 0.85rem; }
             .category-select { padding: 6px 26px 6px 10px; font-size: 0.76rem; max-width: 110px; }
             .item-amount-input { width: 70px; font-size: 0.88rem; padding: 6px 8px; }
-            .item-color-picker { width: 36px; }
-            .item-color-input { width: 28px; height: 28px; }
+            .item-color-picker { width: 38px; }
+            .item-color-btn { width: 30px; height: 30px; border-radius: 8px; }
+            .item-color-btn::after { font-size: 0.75rem; }
         }
     </style>
 </head>
@@ -916,7 +939,7 @@
     </div>
 
     <div class="sidebar-footer">
-        <small>💰 Smart Budget v8.0<br>Sincronizado con Firebase<br><span id="lastSync">--:--</span></small>
+        <small>💰 Smart Budget v9.0<br>Sincronizado con Firebase<br><span id="lastSync">--:--</span></small>
     </div>
 </div>
 
@@ -931,12 +954,11 @@
     </div>
 </div>
 
-<!-- STATS CON CÍRCULOS DE PROGRESO (SIN PORCENTAJES - solo visual) -->
+<!-- STATS -->
 <div class="stats-section">
     <div class="stats-grid">
-        <!-- GASTOS -->
         <div class="stat-card stat-card-gastos">
-            <div class="circular-progress" id="gastosCircle">
+            <div class="circular-progress">
                 <svg viewBox="0 0 120 120">
                     <circle class="bg-circle" cx="60" cy="60" r="54"></circle>
                     <circle class="progress-circle gastos" id="gastosProgress" cx="60" cy="60" r="54"></circle>
@@ -952,9 +974,8 @@
             </div>
         </div>
 
-        <!-- DISPONIBLE -->
         <div class="stat-card stat-card-disponible">
-            <div class="circular-progress" id="disponibleCircle">
+            <div class="circular-progress">
                 <svg viewBox="0 0 120 120">
                     <circle class="bg-circle" cx="60" cy="60" r="54"></circle>
                     <circle class="progress-circle disponible" id="disponibleProgress" cx="60" cy="60" r="54"></circle>
@@ -970,9 +991,8 @@
             </div>
         </div>
 
-        <!-- AHORROS -->
         <div class="stat-card stat-card-ahorros">
-            <div class="circular-progress" id="ahorrosCircle">
+            <div class="circular-progress">
                 <svg viewBox="0 0 120 120">
                     <circle class="bg-circle" cx="60" cy="60" r="54"></circle>
                     <circle class="progress-circle ahorros" id="ahorrosProgress" cx="60" cy="60" r="54"></circle>
@@ -992,7 +1012,6 @@
 
 <div class="container">
     <div class="dashboard">
-        <!-- DEUDAS -->
         <div class="card">
             <div class="card-header">
                 <strong class="card-title danger">💸 Deudas y Gastos</strong>
@@ -1015,7 +1034,6 @@
             </div>
         </div>
 
-        <!-- AHORROS -->
         <div class="card">
             <div class="card-header">
                 <strong class="card-title success">🎯 Metas de Ahorro</strong>
@@ -1099,7 +1117,6 @@
         vacaciones: '✈️', inversion: '📈', compra: '🛒', educacion: '📚'
     };
 
-    // Circunferencia del círculo: 2 * π * 54 = 339.292
     const CIRCUMFERENCE = 2 * Math.PI * 54;
 
     docRef.onSnapshot((doc) => {
@@ -1164,7 +1181,6 @@
         const html = document.documentElement;
         const toggle = document.getElementById('themeToggle');
         const isDark = html.getAttribute('data-theme') !== 'light';
-        
         if(isDark) {
             html.setAttribute('data-theme', 'light');
             toggle.classList.remove('active');
@@ -1229,15 +1245,12 @@
         document.getElementById('modal').classList.add('active');
     }
 
-    function closeModal() {
-        document.getElementById('modal').classList.remove('active');
-    }
+    function closeModal() { document.getElementById('modal').classList.remove('active'); }
 
     function showEmptyState(containerId, icon, title, subtitle) {
         document.getElementById(containerId).innerHTML = `<div class="empty-state"><div class="empty-state-icon">${icon}</div><p class="empty-state-text"><strong>${title}</strong><small>${subtitle}</small></p></div>`;
     }
 
-    // ===== CIRCULAR PROGRESS UPDATE =====
     function updateCircularProgress(elementId, percent) {
         const circle = document.getElementById(elementId);
         const offset = CIRCUMFERENCE - (percent / 100) * CIRCUMFERENCE;
@@ -1254,37 +1267,30 @@
         const disponible = Math.max(0, sueldo - gastos - ahorros);
         const symbol = currencySymbols[currentCurrency];
         
-        // Calcular porcentajes
         const gastosPercent = Math.min(100, Math.round((gastos / sueldo) * 100));
         const ahorrosPercent = Math.min(100, Math.round((ahorros / sueldo) * 100));
         const disponiblePercent = Math.min(100, Math.round((disponible / sueldo) * 100));
         
-        // Actualizar valores en stats superiores
         document.getElementById('statGastos').textContent = `${symbol} ${gastos.toLocaleString()}`;
         document.getElementById('statAhorros').textContent = `${symbol} ${ahorros.toLocaleString()}`;
         document.getElementById('statDisponible').textContent = `${symbol} ${disponible.toLocaleString()}`;
         
-        // Actualizar círculos superiores
         updateCircularProgress('gastosProgress', gastosPercent);
         updateCircularProgress('ahorrosProgress', ahorrosPercent);
         updateCircularProgress('disponibleProgress', disponiblePercent);
         
-        // Actualizar textos de porcentaje en círculos
         document.getElementById('gastosPercent').textContent = `${gastosPercent}%`;
         document.getElementById('ahorrosPercent').textContent = `${ahorrosPercent}%`;
         document.getElementById('disponiblePercent').textContent = `${disponiblePercent}%`;
         
-        // ===== ACTUALIZAR FOOTER CON PORCENTAJES =====
         document.getElementById('resGasto').textContent = `${symbol} ${gastos.toLocaleString()}`;
         document.getElementById('resAhorro').textContent = `${symbol} ${ahorros.toLocaleString()}`;
         document.getElementById('resDisponible').textContent = `${symbol} ${disponible.toLocaleString()}`;
         
-        // Porcentajes en el footer
         document.getElementById('gastosFooterPercent').textContent = `${gastosPercent}%`;
         document.getElementById('ahorrosFooterPercent').textContent = `${ahorrosPercent}%`;
         document.getElementById('disponibleFooterPercent').textContent = `${disponiblePercent}%`;
         
-        // Barras de progreso en cards
         document.getElementById('deudaProgressText').textContent = `${gastosPercent}%`;
         document.getElementById('deudaBar').style.width = `${gastosPercent}%`;
         document.getElementById('ahorroProgressText').textContent = `${ahorrosPercent}%`;
@@ -1292,10 +1298,7 @@
     }
 
     function addItem(type, nombre = '', monto = '', color, category = 'general', fromDB = false) {
-        // Colores por defecto según tipo
-        if(!color) {
-            color = type === 'deudas' ? '#ef4444' : '#22c55e';
-        }
+        if(!color) color = type === 'deudas' ? '#ef4444' : '#22c55e';
         
         const container = document.getElementById(type === 'deudas' ? 'listaDeudas' : 'listaAhorros');
         const emptyState = container.querySelector('.empty-state');
@@ -1312,11 +1315,13 @@
         
         const amountClass = type === 'deudas' ? 'deuda-mon' : 'ahorro-mon';
         const inputEvent = fromDB ? '' : 'oninput="onUserInput()"';
+        const colorId = 'color-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5);
         
         div.innerHTML = `
             <div class="item-color-line"></div>
             <div class="item-color-picker">
-                <input type="color" class="item-color-input" value="${color}" title="Cambiar color">
+                <label for="${colorId}" class="item-color-btn" style="background: ${color};" title="Cambiar color"></label>
+                <input type="color" id="${colorId}" class="item-color-input-hidden" value="${color}">
             </div>
             <div class="item-content">
                 <span class="item-icon">${categoryIcons[category] || '📌'}</span>
@@ -1333,7 +1338,6 @@
         select.value = category || 'general';
         select.style.color = getCategoryColor(category || 'general');
         
-        // Event listener para cambio de categoría
         select.addEventListener('change', function() {
             this.style.color = getCategoryColor(this.value);
             const dot = div.querySelector('.item-icon');
@@ -1341,10 +1345,11 @@
             if(!fromDB) onUserInput();
         });
         
-        // Event listener para cambio de color
-        const colorInput = div.querySelector('.item-color-input');
+        const colorInput = div.querySelector('.item-color-input-hidden');
+        const colorBtn = div.querySelector('.item-color-btn');
         colorInput.addEventListener('input', function() {
             div.style.setProperty('--item-color', this.value);
+            colorBtn.style.background = this.value;
             if(!fromDB) onUserInput();
         });
         
@@ -1382,14 +1387,11 @@
     function onUserInput() {
         if (isUpdatingFromDB) return;
         calculateTotals();
-        
         updateSyncStatus('Guardando...', 'warning');
         clearTimeout(saveTimeout);
-        
         saveTimeout = setTimeout(() => {
             const theme = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim();
             const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
-            
             docRef.set({
                 sueldo: parseFloat(document.getElementById('sueldoBase').value) || 0,
                 temaColor: theme,
@@ -1398,11 +1400,8 @@
                 deudas: getItemsArray('deudas'),
                 ahorros: getItemsArray('ahorros'),
                 ultimaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
-            }).then(() => {
-                updateSyncStatus('Sincronizado', 'success');
-            }).catch(err => {
+            }).then(() => updateSyncStatus('Sincronizado', 'success')).catch(err => {
                 updateSyncStatus('Error', 'error');
-                console.error(err);
                 showToast('Error al guardar', 'error');
             });
         }, 800);
@@ -1423,22 +1422,17 @@
             if(doc.exists) {
                 const data = JSON.stringify(doc.data(), null, 2);
                 const blob = new Blob([data], {type: 'application/json'});
-                const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
-                a.href = url;
+                a.href = URL.createObjectURL(blob);
                 a.download = `budget-${new Date().toISOString().split('T')[0]}.json`;
                 a.click();
-                URL.revokeObjectURL(url);
                 showToast('📤 Datos exportados', 'success');
             }
         });
         toggleMenu();
     }
 
-    function importData() {
-        document.getElementById('importFile').click();
-        toggleMenu();
-    }
+    function importData() { document.getElementById('importFile').click(); toggleMenu(); }
 
     function handleImport(event) {
         const file = event.target.files[0];
@@ -1446,8 +1440,7 @@
         const reader = new FileReader();
         reader.onload = (e) => {
             try {
-                const data = JSON.parse(e.target.result);
-                docRef.set(data).then(() => { showToast('📥 Datos importados', 'success'); location.reload(); });
+                docRef.set(JSON.parse(e.target.result)).then(() => { showToast('📥 Importado', 'success'); location.reload(); });
             } catch(err) { showToast('❌ Archivo inválido', 'error'); }
         };
         reader.readAsText(file);
@@ -1455,32 +1448,21 @@
     }
 
     function showStats() {
-        const sueldo = parseFloat(document.getElementById('sueldoBase').value) || 0;
-        const gastos = Array.from(document.querySelectorAll('.deuda-mon')).reduce((s, i) => s + (parseFloat(i.value)||0), 0);
-        const ahorros = Array.from(document.querySelectorAll('.ahorro-mon')).reduce((s, i) => s + (parseFloat(i.value)||0), 0);
-        const disponible = sueldo - gastos - ahorros;
-        const symbol = currencySymbols[currentCurrency];
-        
-        showModal('📊 Resumen', 
-            `💵 Ingreso: ${symbol}${sueldo.toLocaleString()}\n` +
-            `💸 Gastos: ${symbol}${gastos.toLocaleString()}\n` +
-            `🎯 Ahorros: ${symbol}${ahorros.toLocaleString()}\n` +
-            `💎 Disponible: ${symbol}${disponible.toLocaleString()}`,
-            null
-        );
+        const s = parseFloat(document.getElementById('sueldoBase').value) || 0;
+        const g = Array.from(document.querySelectorAll('.deuda-mon')).reduce((a, i) => a + (parseFloat(i.value)||0), 0);
+        const ah = Array.from(document.querySelectorAll('.ahorro-mon')).reduce((a, i) => a + (parseFloat(i.value)||0), 0);
+        const sym = currencySymbols[currentCurrency];
+        showModal('📊 Resumen', `💵 Ingreso: ${sym}${s.toLocaleString()}\n💸 Gastos: ${sym}${g.toLocaleString()}\n🎯 Ahorros: ${sym}${ah.toLocaleString()}\n💎 Disponible: ${sym}${(s-g-ah).toLocaleString()}`, null);
         toggleMenu();
     }
 
     function confirmReset() {
-        showModal('🗑️ ¿Borrar todo?', '⚠️ Esto eliminará TODOS tus datos permanentemente. ¿Continuar?', resetApp);
+        showModal('🗑️ ¿Borrar todo?', '⚠️ Esto eliminará TODOS tus datos. ¿Continuar?', resetApp);
         toggleMenu();
     }
 
     function resetApp() {
-        docRef.delete().then(() => {
-            showToast('🗑️ Datos borrados', 'success');
-            setTimeout(() => location.reload(), 1500);
-        }).catch(err => showToast('❌ Error al borrar', 'error'));
+        docRef.delete().then(() => { showToast('🗑️ Borrado', 'success'); setTimeout(() => location.reload(), 1500); }).catch(() => showToast('❌ Error', 'error'));
     }
 
     function forceSync() {
@@ -1491,8 +1473,8 @@
     }
 
     window.addEventListener('DOMContentLoaded', () => {
-        const savedTheme = localStorage.getItem('theme');
-        if(savedTheme === 'light') {
+        const saved = localStorage.getItem('theme');
+        if(saved === 'light') {
             document.documentElement.setAttribute('data-theme', 'light');
             document.getElementById('themeToggle').classList.remove('active');
         } else {
@@ -1508,11 +1490,7 @@
         }
     });
 
-    document.querySelectorAll('.modal').forEach(modal => {
-        modal.addEventListener('click', (e) => {
-            if(e.target === modal) modal.classList.remove('active');
-        });
-    });
+    document.querySelectorAll('.modal').forEach(m => m.addEventListener('click', (e) => { if(e.target === m) m.classList.remove('active'); }));
 </script>
 </body>
 </html>
