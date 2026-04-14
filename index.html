@@ -4,22 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calculadora Sincronizada Hernán</title>
-    <!-- CORRECCIÓN VITAL: Librerías completas de Firebase -->
+    <!-- Librerías de Firebase -->
     <script src="https://gstatic.com"></script>
     <script src="https://gstatic.com"></script>
     
     <style>
         :root { --primary-color: #2c3e50; --bg-color: #f0f2f5; --card-bg: #ffffff; --danger: #e74c3c; --success: #27ae60; }
-        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-color); margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-color); margin: 0; padding: 0; padding-bottom: 100px; }
         .sidebar { position: fixed; left: -280px; top: 0; width: 280px; height: 100%; background: white; z-index: 3000; transition: 0.3s; padding: 25px; box-sizing: border-box; box-shadow: 10px 0 30px rgba(0,0,0,0.1); }
         .sidebar.active { left: 0; }
         .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 2500; display: none; }
         .overlay.active { display: block; }
-        .top-banner { background: var(--primary-color); padding: 50px 20px; color: white; text-align: center; border-bottom-left-radius: 30px; border-bottom-right-radius: 30px; position: relative; }
+        .top-banner { background: var(--primary-color); padding: 50px 20px; color: white; text-align: center; border-bottom-left-radius: 30px; border-bottom-right-radius: 30px; position: relative; transition: 0.3s; }
         .menu-btn { position: absolute; left: 20px; top: 20px; font-size: 28px; cursor: pointer; }
         .save-indicator { position: absolute; right: 20px; top: 25px; font-size: 11px; background: rgba(0,0,0,0.3); padding: 4px 10px; border-radius: 10px; }
         .header-income input { background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); border-radius: 15px; color: white; font-size: 2rem; font-weight: 800; text-align: center; width: 85%; max-width: 380px; padding: 10px; outline: none; }
-        .container { max-width: 1000px; margin: -25px auto 120px; padding: 0 15px; }
+        .container { max-width: 1000px; margin: -25px auto 0; padding: 0 15px; }
         .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         @media (max-width: 768px) { .dashboard { grid-template-columns: 1fr; } }
         .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); min-height: 150px; }
@@ -43,10 +43,10 @@
 
 <div class="top-banner">
     <div class="menu-btn" onclick="toggleMenu()">☰</div>
-    <div class="save-indicator" id="saveIcon">Nube lista</div>
+    <div class="save-indicator" id="saveIcon">Conectando...</div>
     <div class="header-income">
         <label>CALCULADORA DE GASTOS</label><br>
-        <input type="number" id="sueldoBase" placeholder="Ingresa Sueldo" oninput="updateAll()">
+        <input type="number" id="sueldoBase" placeholder="Sueldo Neto" oninput="updateAll()">
     </div>
 </div>
 
@@ -71,7 +71,7 @@
 
 <div class="footer-nav">
     <div style="text-align:center"><span>GASTOS</span><br><strong id="resGasto" style="color:var(--danger)">$ 0</strong></div>
-    <div style="text-align:center"><span>DISPONIBLE</span><br><strong id="resDisponible" style="font-size: 1.4rem;">$ 0</strong></div>
+    <div style="text-align:center"><span>NETO</span><br><strong id="resDisponible" style="font-size: 1.4rem;">$ 0</strong></div>
     <div style="text-align:center"><span>AHORROS</span><br><strong id="resAhorro" style="color:var(--success)">$ 0</strong></div>
 </div>
 
@@ -85,10 +85,8 @@
         appId: "1:619721076451:web:56925f6251a3ba53ad5fd6"
     };
 
-    // Inicialización Robusta
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-    const docRef = db.collection("usuarios").doc("presupuesto_hernan");
 
     function toggleMenu() {
         document.getElementById('sidebar').classList.toggle('active');
@@ -124,10 +122,8 @@
     function updateAll() {
         const sueldo = parseFloat(document.getElementById('sueldoBase').value) || 0;
         let g = 0, a = 0;
-        
         document.querySelectorAll('#listaDeudas .inp-mon').forEach(i => g += parseFloat(i.value) || 0);
         document.querySelectorAll('#listaAhorros .inp-mon').forEach(i => a += parseFloat(i.value) || 0);
-        
         const disp = sueldo - g - a;
         document.getElementById('resGasto').innerText = `$ ${g.toLocaleString()}`;
         document.getElementById('resAhorro').innerText = `$ ${a.toLocaleString()}`;
@@ -135,11 +131,10 @@
         document.getElementById('resDisponible').style.color = disp < 0 ? "var(--danger)" : "var(--success)";
 
         document.getElementById('saveIcon').innerText = "☁️ Guardando...";
-
         clearTimeout(window.sT);
         window.sT = setTimeout(() => {
             const currentTheme = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim();
-            docRef.set({
+            db.collection("usuarios").doc("datos").set({
                 sueldo: sueldo,
                 temaColor: currentTheme,
                 deudas: Array.from(document.querySelectorAll('#listaDeudas .item-row')).map(r => ({
@@ -156,14 +151,13 @@
                 document.getElementById('saveIcon').innerText = "✅ Sincronizado";
             }).catch(e => {
                 document.getElementById('saveIcon').innerText = "❌ Error";
-                console.error(e);
             });
         }, 1000);
     }
 
     window.onload = async () => {
         try {
-            const doc = await docRef.get();
+            const doc = await db.collection("usuarios").doc("datos").get();
             if (doc.exists) {
                 const data = doc.data();
                 document.getElementById('sueldoBase').value = data.sueldo || "";
@@ -175,11 +169,11 @@
                 if(data.ahorros) data.ahorros.forEach(a => addItem('ahorros', a.nombre, a.monto, a.color));
             }
             updateAll();
-        } catch(e) { console.error("Error inicial:", e); }
+        } catch(e) { document.getElementById('saveIcon').innerText = "❌ Error"; }
     };
 
     function resetApp() {
-        if(confirm("¿Borrar todo?")) docRef.set({sueldo:0, deudas:[], ahorros:[], temaColor:'#2c3e50'}).then(()=>location.reload());
+        if(confirm("¿Borrar todo?")) db.collection("usuarios").doc("datos").delete().then(()=>location.reload());
     }
 </script>
 </body>
