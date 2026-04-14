@@ -1,298 +1,67 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>💰 Smart Budget Pro</title>
-    
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-    
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    
-    <style>
-        :root {
-            /* Nueva Paleta Neomórfica y Vibrante */
-            --primary: #6366f1;
-            --primary-light: #818cf8;
-            --secondary: #a855f7;
-            --accent: #f43f5e;
-            --bg-color: #f8fafc;
-            --card-bg: rgba(255, 255, 255, 0.8); /* Glassmorphism */
-            --text-primary: #1e293b;
-            --text-secondary: #64748b;
-            --success: #10b981;
-            --danger: #ef4444;
-            --transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            --blur: blur(12px);
-        }
+/* Estilo para el contenedor de la fila */
+.item-row {
+    display: grid;
+    grid-template-columns: 8px 1fr auto auto 40px; /* La primera columna es para el color */
+    align-items: center;
+    gap: 12px;
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 10px 15px;
+    margin-bottom: 10px;
+    border-left: 4px solid transparent; /* Fallback */
+    transition: var(--transition);
+}
 
-        [data-theme="dark"] {
-            --bg-color: #0b0e14;
-            --card-bg: rgba(30, 41, 59, 0.7);
-            --text-primary: #f8fafc;
-            --text-secondary: #94a3b8;
-        }
+/* El Selector de Color convertido en una línea vertical fina */
+input[type="color"] {
+    -webkit-appearance: none;
+    border: none;
+    width: 6px;
+    height: 30px;
+    cursor: pointer;
+    background: none;
+    padding: 0;
+    border-radius: 10px;
+}
 
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background: var(--bg-color);
-            color: var(--text-primary);
-            margin: 0;
-            overflow-x: hidden;
-            transition: background 0.5s ease;
-        }
+input[type="color"]::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
 
-        /* Fondo Animado sutil */
-        .bg-blobs {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            z-index: -1;
-            overflow: hidden;
-            filter: blur(80px);
-        }
+input[type="color"]::-webkit-color-swatch {
+    border: none;
+    border-radius: 10px;
+}
 
-        .blob {
-            position: absolute;
-            width: 300px; height: 300px;
-            background: var(--primary);
-            border-radius: 50%;
-            opacity: 0.15;
-            animation: move 20s infinite alternate;
-        }
+/* Arreglo para el Selector de Categoría (Select) */
+select {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary); /* Forzamos el color de letra */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 5px;
+    outline: none;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
 
-        @keyframes move {
-            from { transform: translate(-10%, -10%); }
-            to { transform: translate(100%, 50%); }
-        }
+/* Importante: Estilo de las opciones dentro del desplegable */
+select option {
+    background-color: #1e293b; /* Fondo oscuro sólido para que se vea la letra */
+    color: white;
+    padding: 10px;
+}
 
-        /* Top Banner Modernizado */
-        .top-banner {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-            padding: 60px 20px 80px;
-            border-radius: 0 0 40px 40px;
-            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.3);
-            text-align: center;
-            color: white;
-        }
+/* Input de nombre más minimalista */
+.input-name {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+    padding: 5px;
+    outline: none;
+}
 
-        .header-income input {
-            background: rgba(255, 255, 255, 0.15);
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            backdrop-filter: var(--blur);
-            border-radius: 20px;
-            color: white;
-            font-size: 2.5rem;
-            font-weight: 800;
-            width: 80%;
-            max-width: 400px;
-            padding: 15px;
-            margin-top: 10px;
-            outline: none;
-            transition: var(--transition);
-        }
-
-        .header-income input:focus {
-            background: rgba(255, 255, 255, 0.25);
-            transform: scale(1.05);
-            border-color: white;
-        }
-
-        /* Tarjetas con Efecto Glassmorphism */
-        .card {
-            background: var(--card-bg);
-            backdrop-filter: var(--blur);
-            -webkit-backdrop-filter: var(--blur);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 30px;
-            padding: 25px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.05);
-            margin-bottom: 20px;
-            transition: var(--transition);
-        }
-
-        .card:hover {
-            transform: translateY(-10px) scale(1.01);
-            box-shadow: 0 30px 60px rgba(0,0,0,0.1);
-        }
-
-        /* Nuevas Funciones: Categorías con Iconos */
-        .category-tag {
-            display: inline-flex;
-            align-items: center;
-            padding: 5px 12px;
-            border-radius: 12px;
-            font-size: 0.75rem;
-            font-weight: 700;
-            background: var(--primary-light);
-            color: white;
-            margin-bottom: 10px;
-        }
-
-        /* Floating Action Button (FAB) */
-        .fab-add {
-            position: fixed;
-            bottom: 110px;
-            right: 25px;
-            width: 60px;
-            height: 60px;
-            background: var(--primary);
-            color: white;
-            border-radius: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            box-shadow: 0 10px 20px rgba(99, 102, 241, 0.4);
-            cursor: pointer;
-            z-index: 1000;
-            transition: var(--transition);
-        }
-
-        .fab-add:hover {
-            transform: rotate(90deg) scale(1.1);
-        }
-
-        /* Resumen de Ahorro (Nueva Función) */
-        .savings-insight {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            color: white;
-            padding: 20px;
-            border-radius: 24px;
-            margin-top: 20px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        
-        /* Animación para filas */
-        .item-row {
-            display: grid;
-            grid-template-columns: 40px 1fr 100px 40px;
-            align-items: center;
-            gap: 15px;
-            padding: 15px;
-            background: rgba(255, 255, 255, 0.5);
-            border-radius: 18px;
-            margin-bottom: 12px;
-            transition: var(--transition);
-        }
-
-        .item-row:hover {
-            background: white;
-            padding-left: 25px;
-        }
-
-    </style>
-</head>
-<body>
-
-    <div class="bg-blobs">
-        <div class="blob"></div>
-        <div class="blob" style="background: var(--secondary); left: 70%; top: 40%; animation-delay: -5s;"></div>
-    </div>
-
-    <div class="top-banner">
-        <div class="menu-btn" onclick="toggleMenu()">☰</div>
-        <div class="header-income">
-            <label>MI PRESUPUESTO MENSUAL</label>
-            <input type="number" id="mainIncome" placeholder="$ 0.00" inputmode="decimal">
-        </div>
-    </div>
-
-    <div class="container" style="margin-top: -30px;">
-        <div class="quick-stats">
-            <div class="stat-card">
-                <div class="stat-icon">📈</div>
-                <div class="stat-value text-success" id="statBalance">$0</div>
-                <div class="stat-label">Balance</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">📉</div>
-                <div class="stat-value text-danger" id="statExpenses">$0</div>
-                <div class="stat-label">Gastos</div>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-header">
-                <h3 class="card-title">💸 Gastos Fijos</h3>
-                <button class="btn-add" onclick="addRow('expenses')">+</button>
-            </div>
-            <div id="expensesList">
-                <div class="item-row">
-                    <div class="icon">🏠</div>
-                    <input type="text" placeholder="Arriendo / Hipoteca">
-                    <input type="number" placeholder="0">
-                    <button class="btn-remove">✕</button>
-                </div>
-            </div>
-        </div>
-
-        <div class="savings-insight">
-            <div style="font-size: 2rem;">💡</div>
-            <div>
-                <h4 style="margin: 0">Tip de Ahorro</h4>
-                <p style="margin: 5px 0 0; font-size: 0.85rem; opacity: 0.9">Estás ahorrando el 15% de tus ingresos. ¡Vas por buen camino!</p>
-            </div>
-        </div>
-    </div>
-
-    <div class="fab-add" title="Agregar Gasto Rápido">+</div>
-
-    <nav class="footer-nav">
-        <div class="footer-item">
-            <span>Gastos</span>
-            <strong id="totalExpenses">$0</strong>
-        </div>
-        <div class="footer-item">
-            <span>Disponible</span>
-            <strong id="totalAvailable" class="text-success">$0</strong>
-        </div>
-        <div class="footer-item">
-            <span>Meta</span>
-            <strong id="savingGoal">10%</strong>
-        </div>
-    </nav>
-
-    <script>
-        // Lógica para el modo oscuro
-        function toggleDarkMode() {
-            const body = document.body;
-            const isDark = body.getAttribute('data-theme') === 'dark';
-            body.setAttribute('data-theme', isDark ? 'light' : 'dark');
-            document.getElementById('darkModeToggle').classList.toggle('active');
-        }
-
-        // Función para agregar filas (Mejorada con animaciones)
-        function addRow(type) {
-            const container = document.getElementById(type + 'List');
-            const row = document.createElement('div');
-            row.className = 'item-row';
-            row.style.opacity = '0';
-            row.style.transform = 'translateX(-20px)';
-            
-            row.innerHTML = `
-                <div class="icon">📝</div>
-                <input type="text" placeholder="Nuevo concepto...">
-                <input type="number" placeholder="0">
-                <button class="btn-remove" onclick="this.parentElement.remove()">✕</button>
-            `;
-            
-            container.appendChild(row);
-            setTimeout(() => {
-                row.style.opacity = '1';
-                row.style.transform = 'translateX(0)';
-            }, 10);
-        }
-
-        // Toggle Menu
-        function toggleMenu() {
-            document.getElementById('sidebar').classList.toggle('active');
-            document.getElementById('overlay').classList.toggle('active');
-        }
-    </script>
-</body>
-</html>
+.input-name:focus {
+    border-bottom-color: var(--primary);
+}
