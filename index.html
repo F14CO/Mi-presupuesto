@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="theme-color" content="#0d0d1a">
+    <meta name="theme-color" content="#4f46e5">
     <title>💰 Smart Budget</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -11,1522 +11,482 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
     <style>
+        /* ===== VARIABLES Y RESET ===== */
         :root {
             --primary: #6366f1;
             --primary-dark: #4f46e5;
-            --secondary: #8b5cf6;
-            --bg-gradient: linear-gradient(135deg, #1a1a3e 0%, #2d1b69 50%, #1a1a3e 100%);
-            --bg-color: #0d0d1a;
-            --card-bg: #151530;
-            --card-bg-light: #1c1c40;
-            --item-bg: #1a1a42;
-            --text-primary: #e2e8f0;
-            --text-secondary: #94a3b8;
-            --text-muted: #64748b;
+            --success: #10b981;
             --danger: #ef4444;
-            --success: #22c55e;
             --warning: #f59e0b;
-            --border-radius: 16px;
-            --border-radius-sm: 12px;
-            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            --sidebar-width: 340px;
-            --safe-area-top: env(safe-area-inset-top);
-            --safe-area-bottom: env(safe-area-inset-bottom);
+            --bg-color: #f3f4f6;
+            --surface: #ffffff;
+            --surface-glass: rgba(255, 255, 255, 0.8);
+            --text-main: #1f2937;
+            --text-muted: #6b7280;
+            --border: #e5e7eb;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --radius: 16px;
         }
 
-        [data-theme="light"] {
-            --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #667eea 100%);
-            --bg-color: #eef1f8;
-            --card-bg: #ffffff;
-            --card-bg-light: #f8f9ff;
-            --item-bg: #ffffff;
-            --text-primary: #0f172a;
-            --text-secondary: #64748b;
+        [data-theme="dark"] {
+            --bg-color: #0f172a;
+            --surface: #1e293b;
+            --surface-glass: rgba(30, 41, 59, 0.8);
+            --text-main: #f8fafc;
             --text-muted: #94a3b8;
+            --border: #334155;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-        
-        body {
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box; /* ESTA ES LA CLAVE DEL DESFASE VISUAL */
             font-family: 'Plus Jakarta Sans', sans-serif;
-            background: var(--bg-color);
-            color: var(--text-primary);
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
             min-height: 100vh;
-            line-height: 1.5;
-            -webkit-font-smoothing: antialiased;
-            transition: background 0.3s ease;
-            overflow-x: hidden;
-            padding-left: env(safe-area-inset-left);
-            padding-right: env(safe-area-inset-right);
+            padding: 20px;
         }
 
-        /* ===== SIDEBAR ===== */
-        .sidebar {
-            position: fixed;
-            left: calc(-1 * var(--sidebar-width));
-            top: 0;
-            width: var(--sidebar-width);
-            height: 100vh;
-            background: var(--card-bg);
-            z-index: 3000;
-            transition: var(--transition);
-            padding: calc(16px + var(--safe-area-top)) 18px calc(16px + var(--safe-area-bottom));
-            box-shadow: 20px 0 60px rgba(0,0,0,0.3);
+        /* ===== HEADER ===== */
+        header {
             display: flex;
-            flex-direction: column;
-            overflow-y: auto;
-        }
-        .sidebar.active { left: 0; }
-        
-        .sidebar-header {
-            display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 12px;
-            padding-bottom: 16px;
-            border-bottom: 2px solid rgba(255,255,255,0.05);
-            margin-bottom: 20px;
+            max-width: 1200px;
+            margin: 0 auto 30px auto;
+            padding: 15px 25px;
+            background: var(--surface-glass);
+            backdrop-filter: blur(10px);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
         }
-        .sidebar-header h3 {
-            font-size: 1.2rem;
+
+        .logo h1 {
+            font-size: 1.5rem;
             font-weight: 800;
-            background: linear-gradient(135deg, #667eea, #764ba2);
+            background: linear-gradient(to right, var(--primary), var(--secondary, #8b5cf6));
             -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            flex: 1;
-        }
-        .sidebar-close {
-            background: rgba(255,255,255,0.05);
-            border: none;
-            font-size: 1.4rem;
-            cursor: pointer;
-            color: var(--text-muted);
-            width: 38px;
-            height: 38px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: var(--transition);
-        }
-        .sidebar-close:hover { background: rgba(255,255,255,0.1); }
-
-        .sidebar-section { margin-bottom: 22px; }
-        .sidebar-section-title {
-            font-size: 0.68rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: var(--text-muted);
-            margin-bottom: 10px;
+            color: transparent;
         }
 
-        .sidebar-option {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 14px;
-            border-radius: var(--border-radius-sm);
+        .controls button {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 8px 16px;
+            border-radius: 8px;
             cursor: pointer;
-            transition: var(--transition);
-            margin-bottom: 4px;
             font-weight: 600;
-            font-size: 0.9rem;
-            background: rgba(255,255,255,0.03);
+            box-shadow: var(--shadow);
         }
-        .sidebar-option:hover { background: rgba(255,255,255,0.08); }
-        .sidebar-option:active { transform: scale(0.98); }
-        .sidebar-option.danger:hover { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
-        .sidebar-option-icon { font-size: 1.2rem; width: 26px; text-align: center; }
-        .sidebar-option-label { flex: 1; }
 
-        .toggle-switch {
-            position: relative;
-            width: 48px;
-            height: 28px;
-            background: #333366;
-            border-radius: 14px;
-            cursor: pointer;
-            transition: var(--transition);
-        }
-        .toggle-switch::after {
-            content: '';
-            position: absolute;
-            width: 22px;
-            height: 22px;
-            background: #666;
-            border-radius: 50%;
-            top: 3px;
-            left: 3px;
-            transition: var(--transition);
-        }
-        .toggle-switch.active { background: var(--primary); }
-        .toggle-switch.active::after { left: 23px; background: white; }
-
-        .color-picker-container {
-            background: rgba(255,255,255,0.03);
-            border-radius: var(--border-radius-sm);
-            padding: 14px;
-            margin-top: 8px;
-        }
-        .color-picker-label {
-            font-size: 0.78rem;
-            font-weight: 700;
-            margin-bottom: 10px;
-            color: var(--text-secondary);
-        }
-        .color-presets {
+        /* ===== SUMMARY CARDS ===== */
+        .summary-grid {
             display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 7px;
-            margin-bottom: 10px;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto 30px auto;
         }
-        .color-preset {
-            width: 100%;
-            aspect-ratio: 1;
-            border-radius: 10px;
-            cursor: pointer;
-            border: 2px solid transparent;
-            transition: var(--transition);
-        }
-        .color-preset:hover { transform: scale(1.1); }
-        .color-preset.active { border-color: white; transform: scale(1.08); }
 
-        .overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.6);
-            z-index: 2500;
-            display: none;
-            backdrop-filter: blur(4px);
-        }
-        .overlay.active { display: block; }
-
-        /* ===== TOP BANNER ===== */
-        .top-banner {
-            background: var(--bg-gradient);
-            padding: calc(30px + var(--safe-area-top)) 30px 50px;
-            color: white;
+        .card {
+            background: var(--surface);
+            padding: 25px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
             text-align: center;
             position: relative;
             overflow: hidden;
         }
-        .top-banner::before {
+
+        .card::before {
             content: '';
             position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
-            animation: pulse 8s ease-in-out infinite;
-        }
-        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.2); } }
-        
-        .menu-btn {
-            position: absolute;
-            left: 30px;
-            top: calc(20px + var(--safe-area-top));
-            width: 44px;
-            height: 44px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: var(--transition);
-            background: rgba(255,255,255,0.12);
-            backdrop-filter: blur(10px);
-            border: none;
-            color: white;
-            font-size: 1.4rem;
-            cursor: pointer;
-        }
-        .menu-btn:hover { background: rgba(255,255,255,0.22); }
-        
-        .save-indicator {
-            position: absolute;
-            right: 30px;
-            top: calc(20px + var(--safe-area-top));
-            font-size: 0.7rem;
-            font-weight: 700;
-            background: rgba(34, 197, 94, 0.2);
-            padding: 6px 14px;
-            border-radius: 20px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            color: #86efac;
-        }
-        
-        .header-income { position: relative; z-index: 2; margin-top: 10px; }
-        .header-income label {
-            display: block;
-            font-size: 0.75rem;
-            font-weight: 700;
-            opacity: 0.7;
-            margin-bottom: 10px;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-        }
-        .header-income input {
-            background: rgba(255,255,255,0.1);
-            border: 2px solid rgba(255,255,255,0.15);
-            border-radius: 16px;
-            color: white;
-            font-size: 2.5rem;
-            font-weight: 800;
-            text-align: center;
-            max-width: 380px;
-            width: 100%;
-            padding: 14px 24px;
-            outline: none;
-            transition: var(--transition);
-            margin: 0 auto;
-            display: block;
-        }
-        .header-income input::placeholder { color: rgba(255,255,255,0.3); }
-        .header-income input:focus {
-            background: rgba(255,255,255,0.15);
-            border-color: rgba(255,255,255,0.4);
+            top: 0; left: 0; width: 100%; height: 4px;
         }
 
-        /* ===== CIRCULAR PROGRESS STATS ===== */
-        .stats-section {
-            max-width: 1100px;
-            width: 100%;
-            margin: -30px auto 0;
-            padding: 0 30px;
-            position: relative;
-            z-index: 10;
-        }
-        
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 24px;
-            margin-bottom: 30px;
-        }
-        
-        .stat-card {
-            background: var(--card-bg);
-            border-radius: 20px;
-            padding: 28px 20px;
-            text-align: center;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
-            transition: var(--transition);
-            border: 1px solid rgba(255,255,255,0.05);
-        }
-        .stat-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,0.3); }
-        
-        .stat-card-gastos { border-top: 3px solid var(--danger); }
-        .stat-card-disponible { border-top: 3px solid var(--success); }
-        .stat-card-ahorros { border-top: 3px solid #16a34a; }
-        
-        .circular-progress {
-            position: relative;
-            width: 110px;
-            height: 110px;
-            margin: 0 auto 16px;
-        }
-        
-        .circular-progress svg {
-            width: 110px;
-            height: 110px;
-            transform: rotate(-90deg);
-        }
-        
-        .circular-progress .bg-circle {
-            fill: none;
-            stroke: rgba(255,255,255,0.08);
-            stroke-width: 7;
-        }
-        
-        .circular-progress .progress-circle {
-            fill: none;
-            stroke-width: 7;
-            stroke-linecap: round;
-            stroke-dasharray: 307.876;
-            stroke-dashoffset: 307.876;
-            transition: stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        
-        .circular-progress .progress-circle.gastos {
-            stroke: var(--danger);
-            filter: drop-shadow(0 0 8px rgba(239, 68, 68, 0.5));
-        }
-        .circular-progress .progress-circle.disponible {
-            stroke: var(--success);
-            filter: drop-shadow(0 0 8px rgba(34, 197, 94, 0.5));
-        }
-        .circular-progress .progress-circle.ahorros {
-            stroke: #16a34a;
-            filter: drop-shadow(0 0 8px rgba(22, 163, 74, 0.5));
-        }
-        
-        .circular-progress .center-text {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-        }
-        .circular-progress .center-percent {
-            font-size: 1.3rem;
-            font-weight: 800;
-            display: block;
-            line-height: 1;
-        }
-        .circular-progress .center-label {
-            font-size: 0.6rem;
+        .card.income::before { background: var(--success); }
+        .card.expense::before { background: var(--danger); }
+        .card.savings::before { background: var(--primary); }
+        .card.balance::before { background: var(--warning); }
+
+        .card h3 {
             color: var(--text-muted);
-            font-weight: 600;
+            font-size: 0.9rem;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin-top: 4px;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
         }
-        
-        .stat-icon { font-size: 1.5rem; margin-bottom: 8px; }
-        .stat-value { 
-            font-size: 1.6rem; 
-            font-weight: 800; 
-            margin-bottom: 4px; 
-            display: block;
-        }
-        .stat-label { 
-            font-size: 0.72rem; 
-            color: var(--text-muted); 
-            font-weight: 700; 
-            text-transform: uppercase; 
-            letter-spacing: 0.08em;
-        }
-        
-        .stat-value.text-danger { color: var(--danger); }
-        .stat-value.text-success { color: var(--success); }
 
-        /* ===== CONTAINER ===== */
-        .container { 
-            max-width: 1100px;
-            width: 100%;
-            margin: 0 auto; 
-            padding: 0 30px 40px; 
+        .card .amount {
+            font-size: 2rem;
+            font-weight: 800;
         }
-        
-        .dashboard {
+
+        .amount.negative { color: var(--danger); }
+
+        /* ===== MAIN COLUMNS ===== */
+        .lists-container {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 24px;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 25px;
+            max-width: 1200px;
+            margin: 0 auto;
         }
 
-        /* ===== CARDS ===== */
-        .card {
-            background: var(--card-bg);
-            border-radius: 20px;
-            padding: 24px;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
-            transition: var(--transition);
-            border: 1px solid rgba(255,255,255,0.05);
+        .list-column {
+            background: var(--surface);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
         }
-        .card:hover { box-shadow: 0 12px 40px rgba(0,0,0,0.25); }
-        
-        .card-header {
+
+        .list-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 20px;
-            padding-bottom: 16px;
-            border-bottom: 2px solid rgba(255,255,255,0.06);
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
         }
-        .card-title {
-            font-size: 1.1rem;
-            font-weight: 800;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .card-title.danger { color: #f87171; }
-        .card-title.success { color: #4ade80; }
-        
-        .btn-add {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
+
+        .add-btn {
+            background: var(--primary);
             color: white;
             border: none;
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 1.4rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: var(--transition);
-            box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
-        }
-        .btn-add:hover { transform: scale(1.1) rotate(90deg); }
-        .btn-add:active { transform: scale(0.9); }
-
-        /* ===== ITEM ROW - CON PALETA DE COLORES ===== */
-        .item-row {
-            display: flex;
-            align-items: center;
-            background: var(--item-bg);
-            border-radius: 14px;
-            margin-bottom: 10px;
-            position: relative;
-            overflow: hidden;
-            transition: var(--transition);
-            animation: itemSlide 0.35s ease;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        @keyframes itemSlide { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
-        
-        .item-color-picker {
-            width: 42px;
-            min-height: 52px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-            padding: 4px;
-        }
-        
-        .item-color-input {
             width: 32px;
             height: 32px;
-            border: 2px solid rgba(255,255,255,0.15);
-            border-radius: 8px;
-            cursor: pointer;
-            background: none;
-            padding: 0;
-            transition: var(--transition);
-        }
-        .item-color-input::-webkit-color-swatch-wrapper { padding: 0; }
-        .item-color-input::-webkit-color-swatch { border: none; border-radius: 6px; }
-        .item-color-input::-moz-color-swatch { border: none; border-radius: 6px; }
-        .item-color-input:hover { 
-            transform: scale(1.15); 
-            border-color: rgba(255,255,255,0.4);
-            box-shadow: 0 0 12px rgba(255,255,255,0.15);
-        }
-        
-        .item-color-line {
-            width: 5px;
-            min-height: 52px;
-            flex-shrink: 0;
-            background: var(--item-color, var(--primary));
-            transition: var(--transition);
-            border-radius: 14px 0 0 14px;
-        }
-        
-        .item-content {
-            display: flex;
-            align-items: center;
-            flex: 1;
-            padding: 10px 14px;
-            gap: 12px;
-            min-width: 0;
-        }
-        
-        .item-icon {
-            font-size: 1rem;
-            flex-shrink: 0;
-            width: 28px;
-            height: 28px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(255,255,255,0.05);
-            border-radius: 8px;
-        }
-        
-        .item-name-input {
-            flex: 2;
-            min-width: 0;
-            background: transparent;
-            border: none;
-            font-family: inherit;
-            font-size: 0.95rem;
-            font-weight: 600;
-            color: var(--text-primary);
-            padding: 6px 0;
-            outline: none;
-        }
-        .item-name-input::placeholder { color: var(--text-muted); opacity: 0.5; font-weight: 500; }
-        
-        .category-select-wrapper { position: relative; flex-shrink: 0; }
-        .category-select {
-            appearance: none;
-            -webkit-appearance: none;
-            background: var(--card-bg-light);
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 8px;
-            padding: 8px 30px 8px 12px;
-            font-family: inherit;
-            font-size: 0.82rem;
-            font-weight: 700;
-            cursor: pointer;
-            outline: none;
-            transition: var(--transition);
-            white-space: nowrap;
-        }
-        .category-select:hover { border-color: var(--primary); }
-        .category-select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99,102,241,0.2); }
-        .category-select-wrapper::after {
-            content: '▾';
-            position: absolute;
-            right: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            pointer-events: none;
-            font-size: 0.75rem;
-            color: var(--text-muted);
-        }
-        
-        .category-select[data-cat="general"] { color: #818cf8; }
-        .category-select[data-cat="vivienda"] { color: #f472b6; }
-        .category-select[data-cat="comida"] { color: #fbbf24; }
-        .category-select[data-cat="transporte"] { color: #60a5fa; }
-        .category-select[data-cat="servicios"] { color: #34d399; }
-        .category-select[data-cat="ocio"] { color: #a78bfa; }
-        .category-select[data-cat="salud"] { color: #f87171; }
-        .category-select[data-cat="emergencia"] { color: #f87171; }
-        .category-select[data-cat="vacaciones"] { color: #34d399; }
-        .category-select[data-cat="inversion"] { color: #4ade80; }
-        .category-select[data-cat="compra"] { color: #fbbf24; }
-        .category-select[data-cat="educacion"] { color: #60a5fa; }
-        
-        .item-amount-input {
-            width: 90px;
-            background: var(--card-bg-light);
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 8px;
-            padding: 8px 12px;
-            font-family: inherit;
-            font-size: 0.95rem;
-            font-weight: 700;
-            color: var(--text-primary);
-            text-align: right;
-            outline: none;
-            transition: var(--transition);
-        }
-        .item-amount-input::placeholder { color: var(--text-muted); opacity: 0.4; }
-        .item-amount-input:focus { border-color: var(--primary); }
-        
-        .btn-remove {
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            cursor: pointer;
+            border-radius: 50%;
             font-size: 1.2rem;
-            width: 38px;
-            height: 38px;
+            cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: var(--transition);
-            flex-shrink: 0;
-            margin-right: 6px;
-            border-radius: 8px;
+            transition: transform 0.2s;
         }
-        .btn-remove:hover { color: var(--danger); background: rgba(239, 68, 68, 0.1); }
-        .btn-remove:active { transform: scale(0.85); }
 
-        /* ===== PROGRESS BAR ===== */
-        .progress-container {
-            margin-top: 18px;
-            padding-top: 18px;
-            border-top: 1px solid rgba(255,255,255,0.06);
-        }
-        .progress-label {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.75rem;
-            margin-bottom: 8px;
-            color: var(--text-muted);
-            font-weight: 600;
-        }
-        .progress-bar {
-            height: 8px;
-            background: rgba(255,255,255,0.06);
-            border-radius: 4px;
-            overflow: hidden;
-        }
-        .progress-fill {
-            height: 100%;
-            border-radius: 4px;
-            transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
-            width: 0%;
-        }
-        .progress-fill.red { background: linear-gradient(90deg, #ef4444, #f87171); }
-        .progress-fill.green { background: linear-gradient(90deg, #22c55e, #4ade80); }
+        .add-btn:hover { transform: scale(1.1); }
 
-        /* ===== EMPTY STATE ===== */
-        .empty-state {
-            text-align: center;
-            padding: 40px 20px;
-            color: var(--text-muted);
-        }
-        .empty-state-icon { font-size: 3rem; margin-bottom: 12px; opacity: 0.3; }
-        .empty-state-text strong { display: block; font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 4px; }
-
-        /* ===== FOOTER NAV CON PORCENTAJES ===== */
-        .footer-nav {
-            position: fixed;
-            bottom: calc(20px + var(--safe-area-bottom));
-            left: 50%;
-            transform: translateX(-50%);
-            width: calc(100% - 60px);
-            max-width: 560px;
-            background: var(--card-bg);
-            border-radius: 20px;
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 8px;
-            padding: 14px 16px;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.25);
-            z-index: 2000;
-            border: 1px solid rgba(255,255,255,0.05);
-        }
-        
-        .footer-item {
-            text-align: center;
-            padding: 8px 6px;
-            border-radius: 14px;
-            transition: var(--transition);
-        }
-        .footer-item:hover { background: rgba(255,255,255,0.05); }
-        .footer-item span {
-            display: block;
-            font-size: 0.58rem;
-            font-weight: 700;
-            color: var(--text-muted);
-            margin-bottom: 4px;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-        }
-        .footer-item .footer-amount {
-            font-size: 1.15rem;
-            font-weight: 800;
-            display: block;
-        }
-        .footer-item:nth-child(2) .footer-amount { font-size: 1.35rem; }
-        .footer-item .footer-percent {
-            font-size: 0.65rem;
-            font-weight: 700;
-            opacity: 0.7;
-            margin-top: 2px;
-            display: block;
-        }
-        
-        .footer-item:nth-child(1) .footer-amount { color: var(--danger); }
-        .footer-item:nth-child(2) .footer-amount { color: var(--success); }
-        .footer-item:nth-child(3) .footer-amount { color: #16a34a; }
-
-        /* ===== TOAST ===== */
-        .toast-container {
-            position: fixed;
-            bottom: 140px;
-            right: 30px;
-            z-index: 4000;
+        /* ===== ITEMS (SOLUCIÓN AL DESFASE) ===== */
+        .items-list {
             display: flex;
             flex-direction: column;
-            gap: 10px;
-        }
-        .toast {
-            background: var(--card-bg);
-            padding: 14px 20px;
-            border-radius: 12px;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
-            display: flex;
-            align-items: center;
             gap: 12px;
-            animation: toastIn 0.3s ease, toastOut 0.3s ease 2.7s forwards;
-            border-left: 4px solid var(--primary);
-            font-weight: 600;
-            font-size: 0.9rem;
         }
-        @keyframes toastIn { from { opacity: 0; transform: translateX(50px); } to { opacity: 1; transform: translateX(0); } }
-        @keyframes toastOut { to { opacity: 0; transform: translateX(50px); } }
-        .toast.success { border-left-color: var(--success); }
-        .toast.error { border-left-color: var(--danger); }
-        .toast-icon { font-size: 1.3rem; }
 
-        /* ===== MODAL ===== */
-        .modal {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.7);
-            display: none;
+        .item {
+            display: flex;
+            gap: 10px;
             align-items: center;
-            justify-content: center;
-            z-index: 5000;
-            backdrop-filter: blur(6px);
+            background: var(--bg-color);
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            animation: slideIn 0.3s ease-out forwards;
         }
-        .modal.active { display: flex; }
-        .modal-content {
-            background: var(--card-bg);
-            border-radius: 20px;
-            padding: 32px;
-            width: 100%;
-            max-width: 500px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
-            animation: modalIn 0.3s ease;
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-        @keyframes modalIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
-        .modal-title { font-size: 1.3rem; font-weight: 800; margin-bottom: 14px; }
-        .modal-text { color: var(--text-secondary); margin-bottom: 24px; line-height: 1.6; white-space: pre-line; }
-        .modal-buttons { display: flex; gap: 12px; justify-content: flex-end; }
-        .btn {
-            padding: 12px 24px;
-            border-radius: 12px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: var(--transition);
-            border: none;
+
+        .item input {
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-main);
+            padding: 8px;
+            border-radius: 6px;
             font-size: 0.95rem;
-            font-family: inherit;
+            outline: none;
+            width: 100%;
         }
-        .btn:hover { transform: translateY(-2px); }
-        .btn-primary { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; }
-        .btn-secondary { background: rgba(255,255,255,0.08); color: var(--text-primary); }
 
-        .sidebar-footer {
-            margin-top: auto;
-            padding-top: 16px;
-            border-top: 1px solid rgba(255,255,255,0.05);
-            text-align: center;
+        .item input:focus {
+            border-color: var(--primary);
+            background: var(--surface);
         }
-        .sidebar-footer small { color: var(--text-muted); font-size: 0.75rem; display: block; line-height: 1.6; }
 
-        select option { background: var(--card-bg); color: var(--text-primary); }
+        .item .item-name { flex: 2; }
+        .item .item-amount { flex: 1; text-align: right; font-weight: 600; }
 
-        /* ===== RESPONSIVE ===== */
-        @media (max-width: 1024px) {
-            .stats-grid { gap: 16px; }
-            .circular-progress { width: 95px; height: 95px; }
-            .circular-progress svg { width: 95px; height: 95px; }
-            .circular-progress .center-percent { font-size: 1.1rem; }
+        .delete-btn {
+            background: transparent;
+            border: none;
+            color: var(--danger);
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 4px;
+        }
+        .delete-btn:hover { background: rgba(239, 68, 68, 0.1); }
+
+        /* Status Toast */
+        #sync-status {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 12px 24px;
+            border-radius: 30px;
+            background: var(--primary);
+            color: white;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+        #sync-status.show {
+            transform: translateY(0);
+            opacity: 1;
         }
 
         @media (max-width: 768px) {
-            .stats-section { padding: 0 16px; }
-            .container { padding: 0 16px 40px; }
-            .stats-grid { grid-template-columns: 1fr; gap: 12px; }
-            .stat-card { padding: 18px 16px; display: flex; align-items: center; gap: 16px; text-align: left; }
-            .circular-progress { margin: 0; width: 70px; height: 70px; }
-            .circular-progress svg { width: 70px; height: 70px; }
-            .circular-progress .center-percent { font-size: 0.95rem; }
-            .circular-progress .center-label { font-size: 0.55rem; }
-            .stat-content { flex: 1; }
-            .stat-value { font-size: 1.2rem; }
-            .dashboard { grid-template-columns: 1fr; gap: 16px; }
-            .header-income input { font-size: 2rem; }
-            .top-banner { padding: calc(20px + var(--safe-area-top)) 16px 40px; }
-            .menu-btn { left: 16px; }
-            .save-indicator { right: 16px; }
-            .toast-container { right: 16px; left: 16px; }
-            .footer-nav { width: calc(100% - 32px); }
-            .footer-item .footer-amount { font-size: 1rem; }
-            .footer-item:nth-child(2) .footer-amount { font-size: 1.15rem; }
-        }
-
-        @media (max-width: 480px) {
-            .stats-section { padding: 0 12px; }
-            .container { padding: 0 12px 40px; }
-            .item-content { padding: 8px 10px; gap: 8px; }
-            .item-name-input { font-size: 0.85rem; }
-            .category-select { padding: 6px 26px 6px 10px; font-size: 0.76rem; max-width: 110px; }
-            .item-amount-input { width: 70px; font-size: 0.88rem; padding: 6px 8px; }
-            .item-color-picker { width: 36px; }
-            .item-color-input { width: 28px; height: 28px; }
+            .summary-grid { grid-template-columns: 1fr 1fr; }
+            .card .amount { font-size: 1.5rem; }
         }
     </style>
 </head>
 <body>
 
-<div class="overlay" id="overlay" onclick="toggleMenu()"></div>
+    <header>
+        <div class="logo">
+            <h1>💰 Smart Budget</h1>
+        </div>
+        <div class="controls">
+            <button id="themeToggle">🌓 Cambiar Tema</button>
+        </div>
+    </header>
 
-<div class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-        <h3>⚙️ Configuración</h3>
-        <button class="sidebar-close" onclick="toggleMenu()">✕</button>
-    </div>
-
-    <div class="sidebar-section">
-        <div class="sidebar-section-title">💱 Moneda</div>
-        <div style="display:grid; grid-template-columns: repeat(2,1fr); gap:8px; margin-bottom:12px;">
-            <button class="sidebar-option currency-btn active" onclick="setCurrency('USD')" id="currUSD" style="justify-content:center;">$ USD</button>
-            <button class="sidebar-option currency-btn" onclick="setCurrency('EUR')" id="currEUR" style="justify-content:center;">€ EUR</button>
-            <button class="sidebar-option currency-btn" onclick="setCurrency('MXN')" id="currMXN" style="justify-content:center;">$ MXN</button>
-            <button class="sidebar-option currency-btn" onclick="setCurrency('COP')" id="currCOP" style="justify-content:center;">$ COP</button>
+    <div class="summary-grid">
+        <div class="card income">
+            <h3>Ingresos</h3>
+            <div class="amount" id="total-income">$0</div>
+        </div>
+        <div class="card expense">
+            <h3>Gastos</h3>
+            <div class="amount" id="total-expense">$0</div>
+        </div>
+        <div class="card savings">
+            <h3>Ahorros</h3>
+            <div class="amount" id="total-savings">$0</div>
+        </div>
+        <div class="card balance">
+            <h3>Disponible</h3>
+            <div class="amount" id="total-balance">$0</div>
         </div>
     </div>
 
-    <div class="sidebar-section">
-        <div class="sidebar-section-title">🎨 Apariencia</div>
-        <div class="sidebar-option" onclick="toggleTheme()">
-            <span class="sidebar-option-icon">🌓</span>
-            <span class="sidebar-option-label">Modo Claro / Oscuro</span>
-            <div class="toggle-switch active" id="themeToggle"></div>
-        </div>
-        <div class="color-picker-container">
-            <div class="color-picker-label">🎨 Color Principal</div>
-            <div class="color-presets">
-                <div class="color-preset active" style="background: linear-gradient(135deg, #6366f1, #8b5cf6)" data-color="#6366f1"></div>
-                <div class="color-preset" style="background: linear-gradient(135deg, #ec4899, #f43f5e)" data-color="#ec4899"></div>
-                <div class="color-preset" style="background: linear-gradient(135deg, #10b981, #14b8a6)" data-color="#10b981"></div>
-                <div class="color-preset" style="background: linear-gradient(135deg, #f59e0b, #f97316)" data-color="#f59e0b"></div>
-                <div class="color-preset" style="background: linear-gradient(135deg, #3b82f6, #06b6d4)" data-color="#3b82f6"></div>
-                <div class="color-preset" style="background: linear-gradient(135deg, #8b5cf6, #a855f7)" data-color="#8b5cf6"></div>
-                <div class="color-preset" style="background: linear-gradient(135deg, #ef4444, #dc2626)" data-color="#ef4444"></div>
-                <div class="color-preset" style="background: linear-gradient(135deg, #14b8a6, #0d9488)" data-color="#14b8a6"></div>
-                <div class="color-preset" style="background: linear-gradient(135deg, #6366f1, #ec4899)" data-color="#6366f1"></div>
-                <div class="color-preset" style="background: linear-gradient(135deg, #22c55e, #84cc16)" data-color="#22c55e"></div>
+    <div class="lists-container">
+        <div class="list-column">
+            <div class="list-header">
+                <h2>Ingresos</h2>
+                <button class="add-btn" onclick="addItem('income')">+</button>
             </div>
+            <div class="items-list" id="income-list"></div>
         </div>
-    </div>
 
-    <div class="sidebar-section">
-        <div class="sidebar-section-title">📊 Datos</div>
-        <div class="sidebar-option" onclick="exportData()">
-            <span class="sidebar-option-icon">📤</span>
-            <span class="sidebar-option-label">Exportar Datos</span>
+        <div class="list-column">
+            <div class="list-header">
+                <h2>Gastos</h2>
+                <button class="add-btn" onclick="addItem('expense')">+</button>
+            </div>
+            <div class="items-list" id="expense-list"></div>
         </div>
-        <div class="sidebar-option" onclick="importData()">
-            <span class="sidebar-option-icon">📥</span>
-            <span class="sidebar-option-label">Importar Datos</span>
-        </div>
-        <div class="sidebar-option" onclick="showStats()">
-            <span class="sidebar-option-icon">📈</span>
-            <span class="sidebar-option-label">Estadísticas</span>
+
+        <div class="list-column">
+            <div class="list-header">
+                <h2>Ahorros</h2>
+                <button class="add-btn" onclick="addItem('savings')">+</button>
+            </div>
+            <div class="items-list" id="savings-list"></div>
         </div>
     </div>
 
-    <div class="sidebar-section">
-        <div class="sidebar-section-title">☁️ Sincronización</div>
-        <div class="sidebar-option">
-            <span class="sidebar-option-icon">☁️</span>
-            <span class="sidebar-option-label" id="syncStatus">Conectado</span>
-        </div>
-        <div class="sidebar-option" onclick="forceSync()">
-            <span class="sidebar-option-icon">🔄</span>
-            <span class="sidebar-option-label">Sincronizar Ahora</span>
-        </div>
-    </div>
+    <div id="sync-status">Sincronizado ✅</div>
 
-    <div class="sidebar-section">
-        <div class="sidebar-section-title">❓ Ayuda</div>
-        <div class="sidebar-option danger" onclick="confirmReset()">
-            <span class="sidebar-option-icon">🗑️</span>
-            <span class="sidebar-option-label">Borrar Todo</span>
-        </div>
-    </div>
-
-    <div class="sidebar-footer">
-        <small>💰 Smart Budget v8.1<br>Sincronizado con Firebase<br><span id="lastSync">--:--</span></small>
-    </div>
-</div>
-
-<div class="top-banner">
-    <button class="menu-btn" onclick="toggleMenu()">☰</button>
-    <div class="save-indicator" id="saveIcon">
-        <span>✅</span> <span id="saveText">Sincronizado</span>
-    </div>
-    <div class="header-income">
-        <label>💵 INGRESO MENSUAL</label>
-        <input type="number" id="sueldoBase" placeholder="$ 0" min="0" step="1" oninput="onUserInput()">
-    </div>
-</div>
-
-<!-- STATS CON CÍRCULOS DE PROGRESO -->
-<div class="stats-section">
-    <div class="stats-grid">
-        <!-- GASTOS -->
-        <div class="stat-card stat-card-gastos">
-            <div class="circular-progress" id="gastosCircle">
-                <svg viewBox="0 0 120 120">
-                    <circle class="bg-circle" cx="60" cy="60" r="54"></circle>
-                    <circle class="progress-circle gastos" id="gastosProgress" cx="60" cy="60" r="54"></circle>
-                </svg>
-                <div class="center-text">
-                    <span class="center-percent" id="gastosPercent" style="color: var(--danger);">0%</span>
-                    <span class="center-label">gastos</span>
-                </div>
-            </div>
-            <div class="stat-content">
-                <div class="stat-value text-danger" id="statGastos">$ 0</div>
-                <div class="stat-label">💸 Gastos</div>
-            </div>
-        </div>
-
-        <!-- DISPONIBLE -->
-        <div class="stat-card stat-card-disponible">
-            <div class="circular-progress" id="disponibleCircle">
-                <svg viewBox="0 0 120 120">
-                    <circle class="bg-circle" cx="60" cy="60" r="54"></circle>
-                    <circle class="progress-circle disponible" id="disponibleProgress" cx="60" cy="60" r="54"></circle>
-                </svg>
-                <div class="center-text">
-                    <span class="center-percent" id="disponiblePercent" style="color: var(--success);">0%</span>
-                    <span class="center-label">disponible</span>
-                </div>
-            </div>
-            <div class="stat-content">
-                <div class="stat-value text-success" id="statDisponible">$ 0</div>
-                <div class="stat-label">💎 Disponible</div>
-            </div>
-        </div>
-
-        <!-- AHORROS -->
-        <div class="stat-card stat-card-ahorros">
-            <div class="circular-progress" id="ahorrosCircle">
-                <svg viewBox="0 0 120 120">
-                    <circle class="bg-circle" cx="60" cy="60" r="54"></circle>
-                    <circle class="progress-circle ahorros" id="ahorrosProgress" cx="60" cy="60" r="54"></circle>
-                </svg>
-                <div class="center-text">
-                    <span class="center-percent" id="ahorrosPercent" style="color: #16a34a;">0%</span>
-                    <span class="center-label">ahorros</span>
-                </div>
-            </div>
-            <div class="stat-content">
-                <div class="stat-value text-success" id="statAhorros">$ 0</div>
-                <div class="stat-label">🎯 Ahorros</div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="container">
-    <div class="dashboard">
-        <!-- DEUDAS -->
-        <div class="card">
-            <div class="card-header">
-                <strong class="card-title danger">💸 Deudas y Gastos</strong>
-                <button class="btn-add" onclick="addItem('deudas')">+</button>
-            </div>
-            <div id="listaDeudas">
-                <div class="empty-state">
-                    <div class="empty-state-icon">📭</div>
-                    <p class="empty-state-text"><strong>Sin deudas</strong><small>Agrega tu primer gasto</small></p>
-                </div>
-            </div>
-            <div class="progress-container">
-                <div class="progress-label">
-                    <span>Progreso de pago</span>
-                    <span id="deudaProgressText">0%</span>
-                </div>
-                <div class="progress-bar">
-                    <div class="progress-fill red" id="deudaBar"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- AHORROS -->
-        <div class="card">
-            <div class="card-header">
-                <strong class="card-title success">🎯 Metas de Ahorro</strong>
-                <button class="btn-add" onclick="addItem('ahorros')">+</button>
-            </div>
-            <div id="listaAhorros">
-                <div class="empty-state">
-                    <div class="empty-state-icon">🏦</div>
-                    <p class="empty-state-text"><strong>Sin metas</strong><small>¡Empieza a ahorrar!</small></p>
-                </div>
-            </div>
-            <div class="progress-container">
-                <div class="progress-label">
-                    <span>Meta alcanzada</span>
-                    <span id="ahorroProgressText">0%</span>
-                </div>
-                <div class="progress-bar">
-                    <div class="progress-fill green" id="ahorroBar"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- FOOTER NAV CON PORCENTAJES -->
-<div class="footer-nav">
-    <div class="footer-item">
-        <span>💸 Gastos</span>
-        <div class="footer-amount" id="resGasto">$ 0</div>
-        <div class="footer-percent" id="gastosFooterPercent">0%</div>
-    </div>
-    <div class="footer-item">
-        <span>💎 Disponible</span>
-        <div class="footer-amount" id="resDisponible">$ 0</div>
-        <div class="footer-percent" id="disponibleFooterPercent">0%</div>
-    </div>
-    <div class="footer-item">
-        <span>🎯 Ahorros</span>
-        <div class="footer-amount" id="resAhorro">$ 0</div>
-        <div class="footer-percent" id="ahorrosFooterPercent">0%</div>
-    </div>
-</div>
-
-<div class="toast-container" id="toastContainer"></div>
-
-<div class="modal" id="modal">
-    <div class="modal-content">
-        <h4 class="modal-title" id="modalTitle">Confirmar</h4>
-        <p class="modal-text" id="modalText">¿Estás seguro?</p>
-        <div class="modal-buttons">
-            <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
-            <button class="btn btn-primary" id="modalConfirm">Confirmar</button>
-        </div>
-    </div>
-</div>
-
-<input type="file" id="importFile" accept=".json" style="display:none" onchange="handleImport(event)">
-
-<script>
-    // Configuración de Firebase
-    var firebaseConfig = {
-        apiKey: "AIzaSyCLb7LaJypnUHQ0TKZ2aTRNK4yAa6SUiZE",
-        authDomain: "calculadoramensualsueldo.firebaseapp.com",
-        projectId: "calculadoramensualsueldo",
-        storageBucket: "calculadoramensualsueldo.appspot.com",
-        messagingSenderId: "619721076451",
-        appId: "1:619721076451:web:56925f6251a3ba53ad5fd6"
-    };
-
-    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-    var db = firebase.firestore();
-
-    var isUpdatingFromDB = false;
-    var saveTimeout;
-    var docRef = db.collection("usuarios").doc("x9k2mP7qLz4wN1vB8cR5Hernan2026");
-    var currentCurrency = 'USD';
-    var currencySymbols = { 'USD': '$', 'EUR': '€', 'MXN': '$', 'COP': '$' };
-
-    const categoryIcons = {
-        general: '📌', vivienda: '🏠', comida: '🍔', transporte: '🚗',
-        servicios: '💡', ocio: '🎮', salud: '🏥', emergencia: '🚨',
-        vacaciones: '✈️', inversion: '📈', compra: '🛒', educacion: '📚'
-    };
-
-    const CIRCUMFERENCE = 2 * Math.PI * 54; // 339.292
-
-    // Sincronización en tiempo real con Firestore
-    docRef.onSnapshot((doc) => {
-        if (doc.exists) {
-            isUpdatingFromDB = true;
-            var data = doc.data();
-            
-            document.getElementById('sueldoBase').value = data.sueldo ?? "";
-            if(data.temaColor) {
-                document.documentElement.style.setProperty('--primary', data.temaColor);
-            }
-            if(data.darkMode === true || data.darkMode === false) {
-                if(data.darkMode) {
-                    document.documentElement.removeAttribute('data-theme');
-                    document.getElementById('themeToggle').classList.add('active');
-                } else {
-                    document.documentElement.setAttribute('data-theme', 'light');
-                    document.getElementById('themeToggle').classList.remove('active');
-                }
-            }
-            if(data.currency) {
-                currentCurrency = data.currency;
-                updateCurrencyUI();
-            }
-            
-            document.getElementById('listaDeudas').innerHTML = '';
-            document.getElementById('listaAhorros').innerHTML = '';
-            
-            // Filtrar ítems vacíos (sin nombre y monto 0)
-            const deudasValidas = (data.deudas || []).filter(d => d.nombre && d.nombre.trim() !== '' && d.monto > 0);
-            const ahorrosValidos = (data.ahorros || []).filter(a => a.nombre && a.nombre.trim() !== '' && a.monto > 0);
-            
-            if(deudasValidas.length) {
-                deudasValidas.forEach(d => addItem('deudas', d.nombre, d.monto, d.color || '#ef4444', d.category || 'general', true));
-            } else {
-                showEmptyState('listaDeudas', '📭', 'Sin deudas', 'Agrega tu primer gasto');
-            }
-            
-            if(ahorrosValidos.length) {
-                ahorrosValidos.forEach(a => addItem('ahorros', a.nombre, a.monto, a.color || '#22c55e', a.category || 'general', true));
-            } else {
-                showEmptyState('listaAhorros', '🏦', 'Sin metas', '¡Empieza a ahorrar!');
-            }
-            
-            calculateTotals();
-            isUpdatingFromDB = false;
-            updateSyncStatus('✅ Sincronizado', 'success');
-            
-            const now = new Date();
-            document.getElementById('lastSync').textContent = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
-        } else {
-            // Documento no existe: limpiar UI
-            isUpdatingFromDB = true;
-            document.getElementById('sueldoBase').value = '';
-            showEmptyState('listaDeudas', '📭', 'Sin deudas', 'Agrega tu primer gasto');
-            showEmptyState('listaAhorros', '🏦', 'Sin metas', '¡Empieza a ahorrar!');
-            calculateTotals();
-            isUpdatingFromDB = false;
-            updateSyncStatus('📡 Listo', 'warning');
-            document.getElementById('lastSync').textContent = '--:--';
-        }
-    }, (error) => {
-        console.error("Sync error:", error);
-        updateSyncStatus('❌ Error', 'error');
-        showToast('Error de sincronización', 'error');
-    });
-
-    function toggleMenu() {
-        document.getElementById('sidebar').classList.toggle('active');
-        document.getElementById('overlay').classList.toggle('active');
-    }
-
-    function toggleTheme() {
-        const html = document.documentElement;
-        const toggle = document.getElementById('themeToggle');
-        const isDark = html.getAttribute('data-theme') !== 'light';
-        
-        if(isDark) {
-            html.setAttribute('data-theme', 'light');
-            toggle.classList.remove('active');
-        } else {
-            html.removeAttribute('data-theme');
-            toggle.classList.add('active');
-        }
-        onUserInput();
-        showToast(isDark ? '☀️ Modo claro' : '🌙 Modo oscuro', 'success');
-    }
-
-    function setCurrency(curr) {
-        currentCurrency = curr;
-        updateCurrencyUI();
-        onUserInput();
-        showToast(`Moneda: ${curr}`, 'success');
-    }
-
-    function updateCurrencyUI() {
-        document.querySelectorAll('.currency-btn').forEach(btn => btn.classList.remove('active'));
-        document.getElementById('curr' + currentCurrency).classList.add('active');
-        document.getElementById('sueldoBase').placeholder = currencySymbols[currentCurrency] + ' 0';
-        calculateTotals();
-    }
-
-    document.querySelectorAll('.color-preset').forEach(preset => {
-        preset.addEventListener('click', function() {
-            document.querySelectorAll('.color-preset').forEach(p => p.classList.remove('active'));
-            this.classList.add('active');
-            document.documentElement.style.setProperty('--primary', this.dataset.color);
-            onUserInput();
-            showToast('Color actualizado', 'success');
-        });
-    });
-
-    function updateSyncStatus(text, type) {
-        const icon = document.getElementById('saveIcon');
-        const saveText = document.getElementById('saveText');
-        const icons = { 'success': '✅', 'warning': '📡', 'error': '❌' };
-        icon.querySelector('span:first-child').textContent = icons[type] || '🔄';
-        saveText.textContent = text.split(' ').slice(1).join(' ');
-        icon.style.background = type === 'error' ? 'rgba(239,68,68,0.2)' : 
-                               type === 'warning' ? 'rgba(245,158,11,0.2)' : 
-                               'rgba(34,197,94,0.2)';
-        icon.style.color = type === 'error' ? '#fca5a5' : 
-                          type === 'warning' ? '#fcd34d' : '#86efac';
-    }
-
-    function showToast(message, type = 'success') {
-        const container = document.getElementById('toastContainer');
-        const toast = document.createElement('div');
-        toast.className = `toast ${type}`;
-        toast.innerHTML = `<span class="toast-icon">${type === 'success' ? '✅' : type === 'error' ? '❌' : '⚠️'}</span><span class="toast-message">${message}</span>`;
-        container.appendChild(toast);
-        setTimeout(() => toast.remove(), 3000);
-    }
-
-    function showModal(title, text, onConfirm) {
-        document.getElementById('modalTitle').textContent = title;
-        document.getElementById('modalText').textContent = text;
-        document.getElementById('modalConfirm').onclick = () => { closeModal(); if(onConfirm) onConfirm(); };
-        document.getElementById('modal').classList.add('active');
-    }
-
-    function closeModal() {
-        document.getElementById('modal').classList.remove('active');
-    }
-
-    function showEmptyState(containerId, icon, title, subtitle) {
-        document.getElementById(containerId).innerHTML = `<div class="empty-state"><div class="empty-state-icon">${icon}</div><p class="empty-state-text"><strong>${title}</strong><small>${subtitle}</small></p></div>`;
-    }
-
-    function updateCircularProgress(elementId, percent) {
-        const circle = document.getElementById(elementId);
-        const offset = CIRCUMFERENCE - (percent / 100) * CIRCUMFERENCE;
-        circle.style.strokeDashoffset = offset;
-    }
-
-    function calculateTotals() {
-        let sueldo = parseFloat(document.getElementById('sueldoBase').value);
-        if (isNaN(sueldo) || sueldo < 0) sueldo = 0;
-        
-        let gastos = 0, ahorros = 0;
-        
-        document.querySelectorAll('.deuda-mon').forEach(i => gastos += parseFloat(i.value) || 0);
-        document.querySelectorAll('.ahorro-mon').forEach(i => ahorros += parseFloat(i.value) || 0);
-        
-        const disponible = Math.max(0, sueldo - gastos - ahorros);
-        const symbol = currencySymbols[currentCurrency];
-        
-        const gastosPercent = sueldo === 0 ? 0 : Math.min(100, Math.round((gastos / sueldo) * 100));
-        const ahorrosPercent = sueldo === 0 ? 0 : Math.min(100, Math.round((ahorros / sueldo) * 100));
-        const disponiblePercent = sueldo === 0 ? 0 : Math.min(100, Math.round((disponible / sueldo) * 100));
-        
-        document.getElementById('statGastos').textContent = `${symbol} ${gastos.toLocaleString()}`;
-        document.getElementById('statAhorros').textContent = `${symbol} ${ahorros.toLocaleString()}`;
-        document.getElementById('statDisponible').textContent = `${symbol} ${disponible.toLocaleString()}`;
-        
-        updateCircularProgress('gastosProgress', gastosPercent);
-        updateCircularProgress('ahorrosProgress', ahorrosPercent);
-        updateCircularProgress('disponibleProgress', disponiblePercent);
-        
-        // Mostrar 0% en lugar de N/A cuando sueldo es 0
-        document.getElementById('gastosPercent').textContent = `${gastosPercent}%`;
-        document.getElementById('ahorrosPercent').textContent = `${ahorrosPercent}%`;
-        document.getElementById('disponiblePercent').textContent = `${disponiblePercent}%`;
-        
-        document.getElementById('resGasto').textContent = `${symbol} ${gastos.toLocaleString()}`;
-        document.getElementById('resAhorro').textContent = `${symbol} ${ahorros.toLocaleString()}`;
-        document.getElementById('resDisponible').textContent = `${symbol} ${disponible.toLocaleString()}`;
-        
-        document.getElementById('gastosFooterPercent').textContent = `${gastosPercent}%`;
-        document.getElementById('ahorrosFooterPercent').textContent = `${ahorrosPercent}%`;
-        document.getElementById('disponibleFooterPercent').textContent = `${disponiblePercent}%`;
-        
-        document.getElementById('deudaProgressText').textContent = `${gastosPercent}%`;
-        document.getElementById('deudaBar').style.width = `${gastosPercent}%`;
-        document.getElementById('ahorroProgressText').textContent = `${ahorrosPercent}%`;
-        document.getElementById('ahorroBar').style.width = `${ahorrosPercent}%`;
-    }
-
-    function addItem(type, nombre = '', monto = '', color, category = 'general', fromDB = false) {
-        if(!color) {
-            color = type === 'deudas' ? '#ef4444' : '#22c55e';
-        }
-        
-        const container = document.getElementById(type === 'deudas' ? 'listaDeudas' : 'listaAhorros');
-        const emptyState = container.querySelector('.empty-state');
-        if(emptyState) emptyState.remove();
-        
-        const div = document.createElement('div');
-        div.className = 'item-row';
-        div.style.setProperty('--item-color', color);
-        
-        const placeholder = type === 'deudas' ? 'Gasto...' : 'Meta de ahorro...';
-        const categories = type === 'deudas' 
-            ? `<option value="general">General</option><option value="vivienda">Vivienda</option><option value="comida">Comida</option><option value="transporte">Transporte</option><option value="servicios">Servicios</option><option value="ocio">Ocio</option><option value="salud">Salud</option>`
-            : `<option value="general">General</option><option value="emergencia">Emergencia</option><option value="vacaciones">Vacaciones</option><option value="inversion">Inversión</option><option value="compra">Compra</option><option value="educacion">Educación</option>`;
-        
-        const amountClass = type === 'deudas' ? 'deuda-mon' : 'ahorro-mon';
-        const inputEvent = fromDB ? '' : 'oninput="onUserInput()"';
-        
-        div.innerHTML = `
-            <div class="item-color-line"></div>
-            <div class="item-color-picker">
-                <input type="color" class="item-color-input" value="${color}" title="Cambiar color">
-            </div>
-            <div class="item-content">
-                <span class="item-icon">${categoryIcons[category] || '📌'}</span>
-                <input type="text" class="item-name-input" placeholder="${placeholder}" value="${nombre}" ${inputEvent}>
-                <div class="category-select-wrapper">
-                    <select class="category-select" data-cat="${category || 'general'}" ${inputEvent}>${categories}</select>
-                </div>
-                <input type="number" class="item-amount-input ${amountClass}" placeholder="0" min="0" step="0.01" value="${monto}" ${inputEvent}>
-            </div>
-            <button class="btn-remove" onclick="removeItem(this)">✕</button>
-        `;
-        
-        const select = div.querySelector('.category-select');
-        select.value = category || 'general';
-        select.style.color = getCategoryColor(category || 'general');
-        
-        select.addEventListener('change', function() {
-            this.style.color = getCategoryColor(this.value);
-            const dot = div.querySelector('.item-icon');
-            dot.textContent = categoryIcons[this.value] || '📌';
-            if(!fromDB) onUserInput();
-        });
-        
-        const colorInput = div.querySelector('.item-color-input');
-        colorInput.addEventListener('input', function() {
-            div.style.setProperty('--item-color', this.value);
-            if(!fromDB) onUserInput();
-        });
-        
-        container.appendChild(div);
-        
-        if(!fromDB) onUserInput();
-    }
-
-    function getCategoryColor(cat) {
-        const colors = {
-            general: '#818cf8', vivienda: '#f472b6', comida: '#fbbf24', transporte: '#60a5fa',
-            servicios: '#34d399', ocio: '#a78bfa', salud: '#f87171', emergencia: '#f87171',
-            vacaciones: '#34d399', inversion: '#4ade80', compra: '#fbbf24', educacion: '#60a5fa'
+    <script>
+        // 1. CONFIGURACIÓN DE FIREBASE (Usa tus credenciales aquí)
+        // REEMPLAZA ESTO CON LA CONFIGURACIÓN DE TU PROYECTO
+        const firebaseConfig = {
+            apiKey: "TU_API_KEY",
+            authDomain: "TU_PROYECTO.firebaseapp.com",
+            projectId: "TU_PROYECTO",
+            storageBucket: "TU_PROYECTO.appspot.com",
+            messagingSenderId: "TUS_SENDER_ID",
+            appId: "TU_APP_ID"
         };
-        return colors[cat] || '#818cf8';
-    }
+        
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.firestore();
 
-    function removeItem(btn) {
-        const row = btn.closest('.item-row');
-        row.style.opacity = '0';
-        row.style.transform = 'translateX(20px) scale(0.95)';
-        setTimeout(() => {
-            row.remove();
-            const container = row.parentElement;
-            if(!container.querySelector('.item-row')) {
-                const type = container.id === 'listaDeudas' ? 'deudas' : 'ahorros';
-                showEmptyState(container.id, type === 'deudas' ? '📭' : '🏦', 
-                    type === 'deudas' ? 'Sin deudas' : 'Sin metas',
-                    type === 'deudas' ? 'Agrega tu primer gasto' : '¡Empieza a ahorrar!');
+        // 2. SISTEMA DE USUARIO SEGURO (Genera UUID si no existe)
+        let userId = localStorage.getItem('smart_budget_uid');
+        if (!userId) {
+            userId = 'usr_' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
+            localStorage.setItem('smart_budget_uid', userId);
+        }
+        const docRef = db.collection("presupuestos").doc(userId);
+
+        // 3. ESTADO DE LA APLICACIÓN
+        let appData = {
+            income: [],
+            expense: [],
+            savings: []
+        };
+        let saveTimeout = null;
+
+        // 4. FUNCIONES DE UI
+        function formatMoney(amount) {
+            return new Intl.NumberFormat('es-CO', {
+                style: 'currency',
+                currency: 'COP',
+                minimumFractionDigits: 0
+            }).format(amount || 0);
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('sync-status');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+
+        // 5. MANEJO DE TEMA
+        const themeToggle = document.getElementById('themeToggle');
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme); // Fix del localStorage
+        });
+
+        // 6. LÓGICA PRINCIPAL Y RENDERIZADO SEGURO
+        function addItem(type) {
+            appData[type].push({ name: '', amount: 0 });
+            renderList(type);
+            triggerSave();
+        }
+
+        function deleteItem(type, index) {
+            appData[type].splice(index, 1);
+            renderList(type);
+            triggerSave();
+        }
+
+        function updateItem(type, index, field, value) {
+            if (field === 'amount') {
+                value = parseFloat(value) || 0;
             }
-            onUserInput();
-        }, 300);
-    }
+            appData[type][index][field] = value;
+            calculateTotals();
+            triggerSave();
+        }
 
-    function onUserInput() {
-        if (isUpdatingFromDB) return;
-        calculateTotals();
-        
-        updateSyncStatus('Guardando...', 'warning');
-        clearTimeout(saveTimeout);
-        
-        saveTimeout = setTimeout(() => {
-            const theme = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim();
-            const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
-            
-            // Guardar solo ítems válidos (con nombre y monto > 0)
-            const deudas = getItemsArray('deudas').filter(d => d.nombre.trim() !== '' && d.monto > 0);
-            const ahorros = getItemsArray('ahorros').filter(a => a.nombre.trim() !== '' && a.monto > 0);
-            
-            docRef.set({
-                sueldo: parseFloat(document.getElementById('sueldoBase').value) || 0,
-                temaColor: theme,
-                darkMode: isDark,
-                currency: currentCurrency,
-                deudas: deudas,
-                ahorros: ahorros,
-                ultimaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
-            }).then(() => {
-                updateSyncStatus('Sincronizado', 'success');
-            }).catch(err => {
-                updateSyncStatus('Error', 'error');
-                console.error(err);
-                showToast('Error al guardar', 'error');
+        function renderList(type) {
+            const listContainer = document.getElementById(`${type}-list`);
+            listContainer.innerHTML = ''; // Limpiar lista
+
+            appData[type].forEach((item, index) => {
+                // Creación de DOM segura (Evita XSS)
+                const div = document.createElement('div');
+                div.className = 'item';
+
+                const inputName = document.createElement('input');
+                inputName.type = 'text';
+                inputName.className = 'item-name';
+                inputName.placeholder = 'Descripción...';
+                inputName.value = item.name;
+                inputName.oninput = (e) => updateItem(type, index, 'name', e.target.value);
+
+                const inputAmount = document.createElement('input');
+                inputAmount.type = 'number';
+                inputAmount.className = 'item-amount';
+                inputAmount.placeholder = '$0';
+                inputAmount.value = item.amount || '';
+                inputAmount.oninput = (e) => updateItem(type, index, 'amount', e.target.value);
+
+                const btnDelete = document.createElement('button');
+                btnDelete.className = 'delete-btn';
+                btnDelete.innerHTML = '🗑️';
+                btnDelete.onclick = () => deleteItem(type, index);
+
+                div.appendChild(inputName);
+                div.appendChild(inputAmount);
+                div.appendChild(btnDelete);
+                listContainer.appendChild(div);
             });
-        }, 800);
-    }
+            calculateTotals();
+        }
 
-    function getItemsArray(type) {
-        const listId = type === 'deudas' ? 'listaDeudas' : 'listaAhorros';
-        return Array.from(document.querySelectorAll(`#${listId} .item-row`)).map(r => ({
-            nombre: r.querySelector('.item-name-input').value,
-            monto: parseFloat(r.querySelector('.item-amount-input').value) || 0,
-            color: getComputedStyle(r).getPropertyValue('--item-color').trim() || '#6366f1',
-            category: r.querySelector('.category-select').value
-        }));
-    }
+        function calculateTotals() {
+            const sumArray = (arr) => arr.reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 0);
 
-    function exportData() {
-        docRef.get().then(doc => {
-            if(doc.exists) {
-                const data = JSON.stringify(doc.data(), null, 2);
-                const blob = new Blob([data], {type: 'application/json'});
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `budget-${new Date().toISOString().split('T')[0]}.json`;
-                a.click();
-                URL.revokeObjectURL(url);
-                showToast('📤 Datos exportados', 'success');
+            const totalIncome = sumArray(appData.income);
+            const totalExpense = sumArray(appData.expense);
+            const totalSavings = sumArray(appData.savings);
+            
+            // Corrección Matemática: Permitir que el saldo sea negativo
+            const totalBalance = totalIncome - totalExpense - totalSavings;
+
+            document.getElementById('total-income').textContent = formatMoney(totalIncome);
+            document.getElementById('total-expense').textContent = formatMoney(totalExpense);
+            document.getElementById('total-savings').textContent = formatMoney(totalSavings);
+            
+            const balanceEl = document.getElementById('total-balance');
+            balanceEl.textContent = formatMoney(totalBalance);
+            
+            if (totalBalance < 0) {
+                balanceEl.classList.add('negative');
+            } else {
+                balanceEl.classList.remove('negative');
             }
-        });
-        toggleMenu();
-    }
-
-    function importData() {
-        document.getElementById('importFile').click();
-        toggleMenu();
-    }
-
-    function handleImport(event) {
-        const file = event.target.files[0];
-        if(!file) return;
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            try {
-                const data = JSON.parse(e.target.result);
-                docRef.set(data).then(() => { showToast('📥 Datos importados', 'success'); location.reload(); });
-            } catch(err) { showToast('❌ Archivo inválido', 'error'); }
-        };
-        reader.readAsText(file);
-        event.target.value = '';
-    }
-
-    function showStats() {
-        const sueldo = parseFloat(document.getElementById('sueldoBase').value) || 0;
-        const gastos = Array.from(document.querySelectorAll('.deuda-mon')).reduce((s, i) => s + (parseFloat(i.value)||0), 0);
-        const ahorros = Array.from(document.querySelectorAll('.ahorro-mon')).reduce((s, i) => s + (parseFloat(i.value)||0), 0);
-        const disponible = sueldo - gastos - ahorros;
-        const symbol = currencySymbols[currentCurrency];
-        
-        showModal('📊 Resumen', 
-            `💵 Ingreso: ${symbol}${sueldo.toLocaleString()}\n` +
-            `💸 Gastos: ${symbol}${gastos.toLocaleString()}\n` +
-            `🎯 Ahorros: ${symbol}${ahorros.toLocaleString()}\n` +
-            `💎 Disponible: ${symbol}${disponible.toLocaleString()}`,
-            null
-        );
-        toggleMenu();
-    }
-
-    function confirmReset() {
-        showModal('🗑️ ¿Borrar todo?', '⚠️ Esto eliminará TODOS tus datos permanentemente. ¿Continuar?', resetApp);
-        toggleMenu();
-    }
-
-    function resetApp() {
-        docRef.delete().then(() => {
-            showToast('🗑️ Datos borrados', 'success');
-            setTimeout(() => location.reload(), 1500);
-        }).catch(err => showToast('❌ Error al borrar', 'error'));
-    }
-
-    function forceSync() {
-        updateSyncStatus('Sincronizando...', 'warning');
-        onUserInput();
-        setTimeout(() => showToast('🔄 Sincronizado', 'success'), 1000);
-        toggleMenu();
-    }
-
-    window.addEventListener('DOMContentLoaded', () => {
-        const savedTheme = localStorage.getItem('theme');
-        if(savedTheme === 'light') {
-            document.documentElement.setAttribute('data-theme', 'light');
-            document.getElementById('themeToggle').classList.remove('active');
-        } else {
-            document.getElementById('themeToggle').classList.add('active');
         }
-        showToast('✨ ¡Bienvenido!', 'success');
-    });
 
-    document.addEventListener('keydown', (e) => {
-        if(e.key === 'Escape') {
-            document.getElementById('sidebar').classList.remove('active');
-            document.getElementById('overlay').classList.remove('active');
+        // 7. SINCRONIZACIÓN CON FIREBASE
+        function triggerSave() {
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() => {
+                docRef.set(appData)
+                    .then(() => showToast('Guardado en la nube ☁️'))
+                    .catch(err => console.error("Error guardando:", err));
+            }, 1000); // Debounce de 1 segundo
         }
-    });
 
-    document.querySelectorAll('.modal').forEach(modal => {
-        modal.addEventListener('click', (e) => {
-            if(e.target === modal) modal.classList.remove('active');
-        });
-    });
-</script>
+        function loadData() {
+            docRef.get().then((doc) => {
+                if (doc.exists) {
+                    appData = {
+                        income: doc.data().income || [],
+                        expense: doc.data().expense || [],
+                        savings: doc.data().savings || []
+                    };
+                }
+                renderList('income');
+                renderList('expense');
+                renderList('savings');
+                showToast('Datos cargados ✅');
+            }).catch(err => {
+                console.error("Error cargando:", err);
+                // Si falla la red, al menos renderiza vacío
+                renderList('income'); renderList('expense'); renderList('savings');
+            });
+        }
+
+        // Iniciar
+        window.onload = loadData;
+    </script>
 </body>
 </html>
