@@ -6,16 +6,15 @@
     <meta name="theme-color" content="#0d0d1a">
     <title>💰 Smart Budget Pro</title>
     
-    <!-- Firebase SDK v8 (exactamente compatible con tu configuración) -->
+    <!-- Firebase SDK v8 (solo app + firestore, sin auth) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     
     <!-- Fuente -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
     <style>
-        /* ===== ESTILOS (SIN CAMBIOS) ===== */
+        /* ===== ESTILOS ORIGINALES (SIN CAMBIOS) ===== */
         :root {
             --primary: #6366f1;
             --primary-dark: #4f46e5;
@@ -680,20 +679,12 @@
     </div>
 
     <div class="sidebar-section">
-        <div class="sidebar-section-title">👤 Usuario</div>
-        <div class="sidebar-option">
-            <span class="sidebar-option-icon">🆔</span>
-            <span class="sidebar-option-label" id="userDisplay">Conectando...</span>
-        </div>
-    </div>
-
-    <div class="sidebar-section">
         <div class="sidebar-section-title">💱 Moneda</div>
         <div style="display:grid; grid-template-columns: repeat(2,1fr); gap:8px;">
-            <button class="sidebar-option currency-btn" data-curr="USD">$ USD</button>
-            <button class="sidebar-option currency-btn" data-curr="EUR">€ EUR</button>
-            <button class="sidebar-option currency-btn" data-curr="MXN">$ MXN</button>
-            <button class="sidebar-option currency-btn" data-curr="COP">$ COP</button>
+            <button class="sidebar-option currency-btn active" data-curr="USD" onclick="setCurrency('USD')">$ USD</button>
+            <button class="sidebar-option currency-btn" data-curr="EUR" onclick="setCurrency('EUR')">€ EUR</button>
+            <button class="sidebar-option currency-btn" data-curr="MXN" onclick="setCurrency('MXN')">$ MXN</button>
+            <button class="sidebar-option currency-btn" data-curr="COP" onclick="setCurrency('COP')">$ COP</button>
         </div>
     </div>
 
@@ -719,9 +710,9 @@
 
     <div class="sidebar-section">
         <div class="sidebar-section-title">☁️ Sincronización</div>
-        <div class="sidebar-option" id="syncStatusOption">
+        <div class="sidebar-option">
             <span class="sidebar-option-icon">🔄</span>
-            <span class="sidebar-option-label" id="syncStatusText">Conectando</span>
+            <span class="sidebar-option-label" id="syncStatusText">Conectando...</span>
         </div>
         <div class="sidebar-option" onclick="forceSync()">🔄 Sincronizar Ahora</div>
     </div>
@@ -740,7 +731,7 @@
 <div class="top-banner">
     <button class="menu-btn" onclick="toggleMenu()">☰</button>
     <div class="save-indicator" id="saveIcon">
-        <span>✅</span> <span id="saveText">Sincronizado</span>
+        <span>🔄</span> <span id="saveText">Conectando...</span>
     </div>
     <div class="header-income">
         <label>💵 INGRESO MENSUAL</label>
@@ -828,7 +819,7 @@
     (function(){
         "use strict";
 
-        // ========== CONFIGURACIÓN DE FIREBASE (EXACTAMENTE LA PROPORCIONADA) ==========
+        // ========== CONFIGURACIÓN DE FIREBASE ==========
         var firebaseConfig = {
             apiKey: "AIzaSyCLb7LaJypnUHQ0TKZ2aTRNK4yAa6SUiZE",
             authDomain: "calculadoramensualsueldo.firebaseapp.com",
@@ -842,18 +833,15 @@
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
         }
-        var auth = firebase.auth();
         var db = firebase.firestore();
 
-        // 🔧 Configuración adicional para mejorar la conexión en redes restrictivas
+        // 🔧 Configuración para mejor compatibilidad
         db.settings({
-            experimentalForceLongPolling: true,  // Ayuda en conexiones con proxy/firewall
+            experimentalForceLongPolling: true,
             merge: true
         });
 
         // ========== ESTADO GLOBAL ==========
-        var currentUser = null;
-        var userDocRef = null;
         var isUpdatingFromDB = false;
         var saveTimeout;
         var currentCurrency = 'USD';
@@ -865,53 +853,38 @@
         };
         var CIRCUMFERENCE = 2 * Math.PI * 54;
 
+        // 🔄 REFERENCIA DIRECTA A DOCUMENTO (SIN AUTH)
+        var docRef = db.collection("usuarios").doc("x9k2mP7qLz4wN1vB8cR5Hernan2026");
+
         // ========== INICIALIZACIÓN ==========
         function init() {
             console.log('🔥 Iniciando Smart Budget Pro...');
             setupEventListeners();
             renderColorPresets();
-            
-            // Intentar autenticación anónima
-            attemptAuth();
+            setupFirestoreListener();
+            showToast('✨ ¡Bienvenido!', 'success');
         }
 
-        function attemptAuth() {
-            updateSyncStatus('Conectando...', 'warning');
-            auth.signInAnonymously()
-                .then(function(result) {
-                    currentUser = result.user;
-                    console.log('✅ Usuario anónimo autenticado:', currentUser.uid);
-                    document.getElementById('userDisplay').textContent = 'Usuario ' + currentUser.uid.slice(0,6);
-                    userDocRef = db.collection("usuarios").doc(currentUser.uid);
-                    setupFirestoreListener();
-                    showToast('Conectado al servidor', 'success');
-                    updateSyncStatus('Conectado', 'success');
-                })
-                .catch(function(error) {
-                    console.error('❌ Error de autenticación:', error.code, error.message);
-                    showToast('Error de autenticación: ' + error.message, 'error');
-                    updateSyncStatus('Error Auth', 'error');
-                    
-                    // Reintentar después de 3 segundos si no se pudo conectar
-                    setTimeout(function() {
-                        if (!currentUser) {
-                            console.log('🔄 Reintentando autenticación...');
-                            attemptAuth();
-                        }
-                    }, 3000);
-                });
-        }
-
+        // ========== LISTENER DE FIRESTORE (SIN AUTH) ==========
         function setupFirestoreListener() {
-            console.log('📡 Configurando listener de Firestore para usuario:', currentUser.uid);
+            console.log('📡 Configurando listener de Firestore');
             
-            userDocRef.onSnapshot(function(doc) {
+            docRef.onSnapshot(function(doc) {
                 isUpdatingFromDB = true;
                 if (doc.exists) {
                     var data = doc.data();
                     console.log('📥 Datos recibidos de Firestore');
+                    
                     document.getElementById('sueldoBase').value = data.sueldo !== undefined ? data.sueldo : '';
-                    if(data.temaColor) document.documentElement.style.setProperty('--primary', data.temaColor);
+                    
+                    if(data.temaColor) {
+                        document.documentElement.style.setProperty('--primary', data.temaColor);
+                        // Actualizar preset de color activo
+                        document.querySelectorAll('.color-preset').forEach(function(p) {
+                            p.classList.toggle('active', p.dataset.color.toLowerCase() === data.temaColor.toLowerCase());
+                        });
+                    }
+                    
                     if(data.darkMode !== undefined) {
                         var isDark = data.darkMode;
                         if(isDark) {
@@ -921,26 +894,26 @@
                         }
                         document.getElementById('themeToggle').classList.toggle('active', isDark);
                     }
+                    
                     if(data.currency) {
                         currentCurrency = data.currency;
                         updateCurrencyUI();
                     }
+                    
                     renderListsFromData(data.deudas || [], data.ahorros || []);
                 } else {
-                    console.log('📄 Documento nuevo, creando estructura inicial...');
+                    console.log('📄 Documento nuevo, estructura inicial');
                     document.getElementById('sueldoBase').value = '';
                     renderListsFromData([], []);
-                    // Guardar documento inicial para que exista
-                    saveToFirestore(true);
                 }
                 calculateTotals();
                 isUpdatingFromDB = false;
-                updateSyncStatus('Sincronizado', 'success');
+                updateSyncStatus('✅ Sincronizado', 'success');
                 document.getElementById('lastSync').textContent = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
             }, function(error) {
                 console.error('❌ Error en listener Firestore:', error);
-                updateSyncStatus('Error Sync', 'error');
-                showToast('Error al sincronizar: ' + error.message, 'error');
+                updateSyncStatus('❌ Error Sync', 'error');
+                showToast('Error de sincronización', 'error');
             });
         }
 
@@ -1094,15 +1067,12 @@
         function onUserInput() {
             if(isUpdatingFromDB) return;
             calculateTotals();
-            if (userDocRef) {
-                updateSyncStatus('Guardando...', 'warning');
-                clearTimeout(saveTimeout);
-                saveTimeout = setTimeout(function() { saveToFirestore(); }, 800);
-            }
+            updateSyncStatus('📡 Guardando...', 'warning');
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(function() { saveToFirestore(); }, 800);
         }
 
         function saveToFirestore(skipTimestamp) {
-            if(!userDocRef) return;
             var sueldo = parseFloat(document.getElementById('sueldoBase').value) || 0;
             var theme = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim();
             var isDark = !document.documentElement.hasAttribute('data-theme');
@@ -1140,18 +1110,18 @@
                 dataToSave.ultimaActualizacion = firebase.firestore.FieldValue.serverTimestamp();
             }
             
-            userDocRef.set(dataToSave, { merge: true }).then(function() {
+            docRef.set(dataToSave, { merge: true }).then(function() {
                 console.log('📤 Datos guardados en Firestore');
-                updateSyncStatus('Sincronizado', 'success');
+                updateSyncStatus('✅ Sincronizado', 'success');
                 document.getElementById('lastSync').textContent = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
             }).catch(function(err) {
                 console.error('❌ Error al guardar:', err);
-                updateSyncStatus('Error al guardar', 'error');
+                updateSyncStatus('❌ Error', 'error');
                 showToast('Error al guardar: ' + err.message, 'error');
             });
         }
 
-        // Funciones UI
+        // ========== FUNCIONES UI ==========
         function toggleMenu() {
             document.getElementById('sidebar').classList.toggle('active');
             document.getElementById('overlay').classList.toggle('active');
@@ -1163,13 +1133,13 @@
             if(isDark) html.setAttribute('data-theme', 'light');
             else html.removeAttribute('data-theme');
             document.getElementById('themeToggle').classList.toggle('active', !isDark);
-            if(!isUpdatingFromDB && userDocRef) onUserInput();
+            if(!isUpdatingFromDB) onUserInput();
         }
 
         function setCurrency(curr) {
             currentCurrency = curr;
             updateCurrencyUI();
-            if(userDocRef) onUserInput();
+            if(!isUpdatingFromDB) onUserInput();
             showToast('Moneda: ' + curr, 'success');
             toggleMenu();
         }
@@ -1186,9 +1156,9 @@
             var textSpan = document.getElementById('saveText');
             var icons = { success:'✅', warning:'📡', error:'❌' };
             if(iconSpan) iconSpan.textContent = icons[type] || '🔄';
-            if(textSpan) textSpan.textContent = text;
+            if(textSpan) textSpan.textContent = text.replace('✅ ', '').replace('📡 ', '').replace('❌ ', '');
             var statusLabel = document.getElementById('syncStatusText');
-            if(statusLabel) statusLabel.textContent = text;
+            if(statusLabel) statusLabel.textContent = text.replace('✅ ', '').replace('📡 ', '').replace('❌ ', '');
         }
 
         function showToast(msg, type) {
@@ -1210,7 +1180,8 @@
                     container.querySelectorAll('.color-preset').forEach(function(p) { p.classList.remove('active'); });
                     el.classList.add('active');
                     document.documentElement.style.setProperty('--primary', el.dataset.color);
-                    if(userDocRef) onUserInput();
+                    if(!isUpdatingFromDB) onUserInput();
+                    showToast('Color actualizado', 'success');
                 });
             });
         }
@@ -1234,15 +1205,14 @@
         }
 
         function exportData() {
-            if(!userDocRef) return showToast('No hay conexión', 'error');
-            userDocRef.get().then(function(doc) {
+            docRef.get().then(function(doc) {
                 if(doc.exists) {
                     var blob = new Blob([JSON.stringify(doc.data(), null, 2)], {type:'application/json'});
                     var a = document.createElement('a');
                     a.href = URL.createObjectURL(blob);
                     a.download = 'smartbudget_' + new Date().toISOString().slice(0,10) + '.json';
                     a.click();
-                    showToast('Datos exportados', 'success');
+                    showToast('📤 Datos exportados', 'success');
                 }
             });
             toggleMenu();
@@ -1260,12 +1230,10 @@
             reader.onload = function(e) {
                 try {
                     var data = JSON.parse(e.target.result);
-                    if(userDocRef) {
-                        userDocRef.set(data).then(function() { showToast('Importado correctamente', 'success'); });
-                    } else {
-                        showToast('Sin conexión', 'error');
-                    }
-                } catch(err) { showToast('Archivo inválido', 'error'); }
+                    docRef.set(data).then(function() { 
+                        showToast('📥 Importado correctamente', 'success'); 
+                    });
+                } catch(err) { showToast('❌ Archivo inválido', 'error'); }
             };
             reader.readAsText(file);
             event.target.value = '';
@@ -1286,22 +1254,18 @@
 
         function confirmReset() {
             showModal('🗑️ Borrar todo', '¿Eliminar todos tus datos permanentemente?', function() {
-                if(userDocRef) {
-                    userDocRef.delete().then(function() { showToast('Datos borrados', 'success'); });
-                } else {
-                    location.reload();
-                }
+                docRef.delete().then(function() { 
+                    showToast('🗑️ Datos borrados', 'success'); 
+                    setTimeout(function(){ location.reload(); }, 1000);
+                });
             });
             toggleMenu();
         }
 
         function forceSync() {
-            if(userDocRef) {
-                onUserInput();
-                showToast('Sincronizando...', 'success');
-            } else {
-                showToast('Sin conexión', 'error');
-            }
+            updateSyncStatus('🔄 Sincronizando...', 'warning');
+            onUserInput();
+            setTimeout(function() { showToast('✅ Sincronizado', 'success'); }, 1000);
             toggleMenu();
         }
 
@@ -1320,6 +1284,7 @@
         // Exponer globalmente
         window.toggleMenu = toggleMenu;
         window.toggleTheme = toggleTheme;
+        window.setCurrency = setCurrency;
         window.exportData = exportData;
         window.importData = importData;
         window.showDetailedStats = showDetailedStats;
