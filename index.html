@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calculadora Sincronizada Hernán</title>
-    <!-- Librerías de Firebase -->
+    <!-- Cargamos Firebase Versión 8 (La más estable para este tipo de apps) -->
     <script src="https://gstatic.com"></script>
     <script src="https://gstatic.com"></script>
     
@@ -15,7 +15,7 @@
         .sidebar.active { left: 0; }
         .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 2500; display: none; }
         .overlay.active { display: block; }
-        .top-banner { background: var(--primary-color); padding: 50px 20px; color: white; text-align: center; border-bottom-left-radius: 30px; border-bottom-right-radius: 30px; position: relative; transition: 0.3s; }
+        .top-banner { background: var(--primary-color); padding: 50px 20px; color: white; text-align: center; border-bottom-left-radius: 30px; border-bottom-right-radius: 30px; position: relative; }
         .menu-btn { position: absolute; left: 20px; top: 20px; font-size: 28px; cursor: pointer; }
         .save-indicator { position: absolute; right: 20px; top: 25px; font-size: 11px; background: rgba(0,0,0,0.3); padding: 4px 10px; border-radius: 10px; }
         .header-income input { background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); border-radius: 15px; color: white; font-size: 2rem; font-weight: 800; text-align: center; width: 85%; max-width: 380px; padding: 10px; outline: none; }
@@ -38,7 +38,7 @@
     <h3 style="color:var(--primary-color)">AJUSTES</h3>
     <label>Color de Interfaz:</label><br>
     <input type="color" id="themePicker" oninput="changeUITheme(this.value)" style="width:100%; height:40px; margin:10px 0; border:none; cursor:pointer;">
-    <button onclick="resetApp()" style="background:var(--danger); color:white; border:none; width:100%; padding:10px; border-radius:8px; cursor:pointer; margin-top:20px;">Reiniciar Todo</button>
+    <button onclick="resetApp()" style="background:var(--danger); color:white; border:none; width:100%; padding:10px; border-radius:8px; cursor:pointer; margin-top:20px;">Borrar Todo</button>
 </div>
 
 <div class="top-banner">
@@ -76,7 +76,8 @@
 </div>
 
 <script>
-    const firebaseConfig = {
+    // --- TUS CREDENCIALES ---
+    var firebaseConfig = {
         apiKey: "AIzaSyCLb7LaJypnUHQ0TKZ2aTRNK4yAa6SUiZE",
         authDomain: "://firebaseapp.com",
         projectId: "calculadoramensualsueldo",
@@ -85,8 +86,9 @@
         appId: "1:619721076451:web:56925f6251a3ba53ad5fd6"
     };
 
+    // Inicialización Versión 8
     firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+    var db = firebase.firestore();
 
     function toggleMenu() {
         document.getElementById('sidebar').classList.toggle('active');
@@ -150,16 +152,16 @@
             }).then(() => {
                 document.getElementById('saveIcon').innerText = "✅ Sincronizado";
             }).catch(e => {
-                document.getElementById('saveIcon').innerText = "❌ Error";
+                document.getElementById('saveIcon').innerText = "❌ Error Reglas";
+                console.log(e);
             });
         }, 1000);
     }
 
-    window.onload = async () => {
-        try {
-            const doc = await db.collection("usuarios").doc("datos").get();
+    window.onload = function() {
+        db.collection("usuarios").doc("datos").get().then((doc) => {
             if (doc.exists) {
-                const data = doc.data();
+                var data = doc.data();
                 document.getElementById('sueldoBase').value = data.sueldo || "";
                 if(data.temaColor) {
                     document.documentElement.style.setProperty('--primary-color', data.temaColor);
@@ -169,7 +171,9 @@
                 if(data.ahorros) data.ahorros.forEach(a => addItem('ahorros', a.nombre, a.monto, a.color));
             }
             updateAll();
-        } catch(e) { document.getElementById('saveIcon').innerText = "❌ Error"; }
+        }).catch((error) => {
+            document.getElementById('saveIcon').innerText = "❌ Error de Carga";
+        });
     };
 
     function resetApp() {
