@@ -3,93 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculadora de Gastos Mensuales</title>
+    <title>Calculadora de Gastos Sincronizada</title>
+    <!-- LIBRERÍAS DE FIREBASE -->
     <script src="https://gstatic.com"></script>
     <script src="https://gstatic.com"></script>
     
     <style>
-        :root {
-            --primary-color: #2c3e50;
-            --bg-color: #f0f2f5;
-            --card-bg: #ffffff;
-            --text-main: #333;
-            --danger: #e74c3c;
-            --success: #27ae60;
-        }
-
-        body {
-            font-family: 'Segoe UI', sans-serif;
-            background-color: var(--bg-color);
-            margin: 0; padding: 0; color: var(--text-main);
-        }
-
-        /* MENU LATERAL */
-        .sidebar {
-            position: fixed; left: -280px; top: 0; width: 280px; height: 100%;
-            background: var(--card-bg); z-index: 3000; transition: 0.3s ease;
-            box-shadow: 10px 0 30px rgba(0,0,0,0.1); padding: 30px; box-sizing: border-box;
-        }
-        .sidebar.active { left: 0; }
-        .sidebar-header { font-weight: 800; color: var(--primary-color); border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 20px; }
+        :root { --primary-color: #2c3e50; --bg-color: #f0f2f5; --card-bg: #ffffff; --danger: #e74c3c; --success: #27ae60; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-color); margin: 0; padding: 0; }
         
+        .sidebar { position: fixed; left: -280px; top: 0; width: 280px; height: 100%; background: white; z-index: 3000; transition: 0.3s; padding: 25px; box-sizing: border-box; box-shadow: 10px 0 30px rgba(0,0,0,0.1); }
+        .sidebar.active { left: 0; }
         .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 2500; display: none; }
         .overlay.active { display: block; }
 
-        /* HEADER */
-        .top-banner {
-            background: var(--primary-color);
-            padding: 50px 20px; color: white; text-align: center;
-            border-bottom-left-radius: 30px; border-bottom-right-radius: 30px;
-            position: relative; transition: 0.3s;
-        }
-
+        .top-banner { background: var(--primary-color); padding: 50px 20px; color: white; text-align: center; border-bottom-left-radius: 30px; border-bottom-right-radius: 30px; position: relative; }
         .menu-btn { position: absolute; left: 20px; top: 20px; font-size: 28px; cursor: pointer; }
-        
-        .save-indicator { 
-            position: absolute; right: 20px; top: 25px; font-size: 12px; opacity: 0.8; 
-            background: rgba(0,0,0,0.2); padding: 5px 10px; border-radius: 10px;
-        }
+        .save-indicator { position: absolute; right: 20px; top: 25px; font-size: 11px; background: rgba(0,0,0,0.3); padding: 4px 10px; border-radius: 10px; }
 
-        .header-income input {
-            background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3);
-            border-radius: 15px; color: white; font-size: 2rem; font-weight: 800;
-            text-align: center; width: 85%; max-width: 380px; padding: 10px; outline: none;
-        }
+        .header-income input { background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); border-radius: 15px; color: white; font-size: 2rem; font-weight: 800; text-align: center; width: 85%; max-width: 380px; padding: 10px; outline: none; }
 
         .container { max-width: 1000px; margin: -25px auto 120px; padding: 0 15px; }
         .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         @media (max-width: 768px) { .dashboard { grid-template-columns: 1fr; } }
 
-        .card { background: var(--card-bg); padding: 20px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .item-row { display: flex; gap: 10px; background: #f8f9fa; padding: 12px; border-radius: 12px; margin-bottom: 10px; align-items: center; border-left: 6px solid #ccc; }
+        .item-row input { background: transparent; border: none; font-weight: 600; outline: none; }
         
-        /* FILAS DE GASTOS ACTUALIZADAS */
-        .item-row { 
-            display: flex; gap: 10px; background: #f8f9fa; padding: 12px; 
-            border-radius: 12px; margin-bottom: 10px; align-items: center;
-            border-left: 6px solid #ccc;
-        }
-        .item-row input, .item-row input[type="number"] { 
-            background: transparent; border: none; font-weight: 600; outline: none; 
-        }
-        
-        .btn-add { 
-            background: var(--primary-color); color: white; border: none; 
-            width: 35px; height: 35px; border-radius: 50%; cursor: pointer; font-size: 20px;
-        }
+        .btn-add { background: var(--primary-color); color: white; border: none; width: 35px; height: 35px; border-radius: 50%; cursor: pointer; font-size: 20px; }
+        .input-color-box { width: 35px; height: 35px; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; background: white; }
 
-        /* SELECTOR DE COLOR EN LA POSICIÓN MARCADA */
-        .input-color-box {
-            width: 35px; height: 35px; border: none; border-radius: 8px;
-            cursor: pointer; padding: 0; background: none;
-        }
-
-        /* BARRA INFERIOR */
-        .footer-nav {
-            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-            width: 92%; max-width: 500px; background: white; border-radius: 25px;
-            display: flex; justify-content: space-around; align-items: center;
-            height: 85px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); z-index: 2000;
-        }
+        .footer-nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 92%; max-width: 500px; background: white; border-radius: 25px; display: flex; justify-content: space-around; align-items: center; height: 85px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); z-index: 2000; }
     </style>
 </head>
 <body>
@@ -97,12 +42,10 @@
 <div class="overlay" id="overlay" onclick="toggleMenu()"></div>
 
 <div class="sidebar" id="sidebar">
-    <div class="sidebar-header">AJUSTES</div>
-    <div style="margin-bottom: 20px;">
-        <label>Color de Interfaz:</label><br>
-        <input type="color" id="themePicker" oninput="changeUITheme(this.value)" style="width:100%; height:40px; border:none; cursor:pointer; margin-top:10px;">
-    </div>
-    <button onclick="resetApp()" style="background:var(--danger); color:white; border:none; width:100%; padding:10px; border-radius:8px; cursor:pointer;">Reiniciar Todo</button>
+    <h3 style="color:var(--primary-color)">AJUSTES</h3>
+    <label>Color de Interfaz:</label><br>
+    <input type="color" id="themePicker" oninput="changeUITheme(this.value)" style="width:100%; height:40px; margin:10px 0; border:none; cursor:pointer;">
+    <button onclick="resetApp()" style="background:var(--danger); color:white; border:none; width:100%; padding:10px; border-radius:8px; cursor:pointer; margin-top:20px;">Reiniciar Todo</button>
 </div>
 
 <div class="top-banner">
@@ -140,7 +83,7 @@
 </div>
 
 <script>
-    // --- TUS CREDENCIALES ---
+    // --- USA TU CONFIGURACIÓN DE FIREBASE ---
     const firebaseConfig = {
         apiKey: "AIzaSyCLb7LaJypnUHQ0TKZ2aTRNK4yAa6SUiZE",
         authDomain: "://firebaseapp.com",
@@ -169,13 +112,11 @@
         const div = document.createElement('div');
         div.className = 'item-row';
         div.style.borderLeftColor = color;
-        
-        // Estructura idéntica a tu imagen pero con el selector de color donde lo marcaste
         div.innerHTML = `
-            <span style="color: ${color}; font-size: 20px;">■</span>
-            <input type="text" placeholder="Nombre" value="${nombre}" oninput="updateAll()" style="flex:2">
-            <input type="number" placeholder="0" value="${monto}" oninput="updateAll()" style="flex:1; text-align: right;">
-            <input type="color" class="input-color-box" value="${color}" oninput="this.parentElement.style.borderLeftColor = this.value; this.parentElement.querySelector('span').style.color = this.value; updateAll()">
+            <span class="dot" style="color: ${color}; font-size: 20px;">■</span>
+            <input type="text" class="inp-nom" placeholder="Nombre" value="${nombre}" oninput="updateAll()" style="flex:2">
+            <input type="number" class="inp-mon" placeholder="0" value="${monto}" oninput="updateAll()" style="flex:1; text-align: right;">
+            <input type="color" class="input-color-box inp-col" value="${color}" oninput="this.parentElement.style.borderLeftColor = this.value; this.parentElement.querySelector('.dot').style.color = this.value; updateAll()">
             <button onclick="this.parentElement.remove(); updateAll()" style="background:none; border:none; color:#ccc; cursor:pointer;">✕</button>
         `;
         container.appendChild(div);
@@ -184,8 +125,9 @@
     function updateAll() {
         const sueldo = parseFloat(document.getElementById('sueldoBase').value) || 0;
         let g = 0, a = 0;
-        document.querySelectorAll('#listaDeudas input[type="number"]').forEach(i => g += parseFloat(i.value) || 0);
-        document.querySelectorAll('#listaAhorros input[type="number"]').forEach(i => a += parseFloat(i.value) || 0);
+        
+        document.querySelectorAll('#listaDeudas .inp-mon').forEach(i => g += parseFloat(i.value) || 0);
+        document.querySelectorAll('#listaAhorros .inp-mon').forEach(i => a += parseFloat(i.value) || 0);
         
         const disp = sueldo - g - a;
         document.getElementById('resGasto').innerText = `$ ${g.toLocaleString()}`;
@@ -197,24 +139,24 @@
 
         clearTimeout(window.sT);
         window.sT = setTimeout(() => {
-            const colorApp = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim();
+            const currentTheme = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim();
             docRef.set({
-                sueldo,
-                temaColor: colorApp,
-                deudas: getItemsData('listaDeudas'),
-                ahorros: getItemsData('listaAhorros')
+                sueldo: sueldo,
+                temaColor: currentTheme,
+                deudas: Array.from(document.querySelectorAll('#listaDeudas .item-row')).map(r => ({
+                    nombre: r.querySelector('.inp-nom').value,
+                    monto: r.querySelector('.inp-mon').value,
+                    color: r.querySelector('.inp-col').value
+                })),
+                ahorros: Array.from(document.querySelectorAll('#listaAhorros .item-row')).map(r => ({
+                    nombre: r.querySelector('.inp-nom').value,
+                    monto: r.querySelector('.inp-mon').value,
+                    color: r.querySelector('.inp-col').value
+                }))
             }).then(() => {
                 document.getElementById('saveIcon').innerText = "Sincronizado";
             });
         }, 1200);
-    }
-
-    function getItemsData(id) {
-        return Array.from(document.getElementById(id).querySelectorAll('.item-row')).map(r => ({
-            nombre: r.querySelector('input').value,
-            monto: r.querySelector('input[type="number"]').value,
-            color: r.querySelector('input[type="color"]').value
-        }));
     }
 
     window.onload = async () => {
@@ -228,10 +170,6 @@
             }
             if(data.deudas) data.deudas.forEach(d => addItem('deudas', d.nombre, d.monto, d.color));
             if(data.ahorros) data.ahorros.forEach(a => addItem('ahorros', a.nombre, a.monto, a.color));
-        } else {
-            // Un par de ejemplos si la base de datos está vacía
-            addItem('deudas', 'Nombre', 0, '#820ad1');
-            addItem('ahorros', 'Nombre', 0, '#820ad1');
         }
         updateAll();
     };
