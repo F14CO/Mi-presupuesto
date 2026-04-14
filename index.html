@@ -3,37 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculadora de Gastos Sincronizada</title>
-    <!-- LIBRERÍAS DE FIREBASE -->
+    <title>Calculadora Sincronizada Hernán</title>
+    <!-- CORRECCIÓN VITAL: Librerías completas de Firebase -->
     <script src="https://gstatic.com"></script>
     <script src="https://gstatic.com"></script>
     
     <style>
         :root { --primary-color: #2c3e50; --bg-color: #f0f2f5; --card-bg: #ffffff; --danger: #e74c3c; --success: #27ae60; }
         body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-color); margin: 0; padding: 0; }
-        
         .sidebar { position: fixed; left: -280px; top: 0; width: 280px; height: 100%; background: white; z-index: 3000; transition: 0.3s; padding: 25px; box-sizing: border-box; box-shadow: 10px 0 30px rgba(0,0,0,0.1); }
         .sidebar.active { left: 0; }
         .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 2500; display: none; }
         .overlay.active { display: block; }
-
         .top-banner { background: var(--primary-color); padding: 50px 20px; color: white; text-align: center; border-bottom-left-radius: 30px; border-bottom-right-radius: 30px; position: relative; }
         .menu-btn { position: absolute; left: 20px; top: 20px; font-size: 28px; cursor: pointer; }
         .save-indicator { position: absolute; right: 20px; top: 25px; font-size: 11px; background: rgba(0,0,0,0.3); padding: 4px 10px; border-radius: 10px; }
-
         .header-income input { background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); border-radius: 15px; color: white; font-size: 2rem; font-weight: 800; text-align: center; width: 85%; max-width: 380px; padding: 10px; outline: none; }
-
         .container { max-width: 1000px; margin: -25px auto 120px; padding: 0 15px; }
         .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         @media (max-width: 768px) { .dashboard { grid-template-columns: 1fr; } }
-
-        .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); min-height: 150px; }
         .item-row { display: flex; gap: 10px; background: #f8f9fa; padding: 12px; border-radius: 12px; margin-bottom: 10px; align-items: center; border-left: 6px solid #ccc; }
         .item-row input { background: transparent; border: none; font-weight: 600; outline: none; }
-        
         .btn-add { background: var(--primary-color); color: white; border: none; width: 35px; height: 35px; border-radius: 50%; cursor: pointer; font-size: 20px; }
         .input-color-box { width: 35px; height: 35px; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; background: white; }
-
         .footer-nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 92%; max-width: 500px; background: white; border-radius: 25px; display: flex; justify-content: space-around; align-items: center; height: 85px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); z-index: 2000; }
     </style>
 </head>
@@ -50,10 +43,10 @@
 
 <div class="top-banner">
     <div class="menu-btn" onclick="toggleMenu()">☰</div>
-    <div class="save-indicator" id="saveIcon">Sincronizado</div>
+    <div class="save-indicator" id="saveIcon">Nube lista</div>
     <div class="header-income">
         <label>CALCULADORA DE GASTOS</label><br>
-        <input type="number" id="sueldoBase" placeholder="Sueldo Neto" oninput="updateAll()">
+        <input type="number" id="sueldoBase" placeholder="Ingresa Sueldo" oninput="updateAll()">
     </div>
 </div>
 
@@ -78,12 +71,11 @@
 
 <div class="footer-nav">
     <div style="text-align:center"><span>GASTOS</span><br><strong id="resGasto" style="color:var(--danger)">$ 0</strong></div>
-    <div style="text-align:center"><span>NETO</span><br><strong id="resDisponible" style="font-size: 1.4rem;">$ 0</strong></div>
+    <div style="text-align:center"><span>DISPONIBLE</span><br><strong id="resDisponible" style="font-size: 1.4rem;">$ 0</strong></div>
     <div style="text-align:center"><span>AHORROS</span><br><strong id="resAhorro" style="color:var(--success)">$ 0</strong></div>
 </div>
 
 <script>
-    // --- USA TU CONFIGURACIÓN DE FIREBASE ---
     const firebaseConfig = {
         apiKey: "AIzaSyCLb7LaJypnUHQ0TKZ2aTRNK4yAa6SUiZE",
         authDomain: "://firebaseapp.com",
@@ -93,6 +85,7 @@
         appId: "1:619721076451:web:56925f6251a3ba53ad5fd6"
     };
 
+    // Inicialización Robusta
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const docRef = db.collection("usuarios").doc("presupuesto_hernan");
@@ -116,10 +109,16 @@
             <span class="dot" style="color: ${color}; font-size: 20px;">■</span>
             <input type="text" class="inp-nom" placeholder="Nombre" value="${nombre}" oninput="updateAll()" style="flex:2">
             <input type="number" class="inp-mon" placeholder="0" value="${monto}" oninput="updateAll()" style="flex:1; text-align: right;">
-            <input type="color" class="input-color-box inp-col" value="${color}" oninput="this.parentElement.style.borderLeftColor = this.value; this.parentElement.querySelector('.dot').style.color = this.value; updateAll()">
+            <input type="color" class="inp-col input-color-box" value="${color}" oninput="updateColorRow(this)">
             <button onclick="this.parentElement.remove(); updateAll()" style="background:none; border:none; color:#ccc; cursor:pointer;">✕</button>
         `;
         container.appendChild(div);
+    }
+
+    function updateColorRow(el) {
+        el.parentElement.style.borderLeftColor = el.value;
+        el.parentElement.querySelector('.dot').style.color = el.value;
+        updateAll();
     }
 
     function updateAll() {
@@ -135,7 +134,7 @@
         document.getElementById('resDisponible').innerText = `$ ${disp.toLocaleString()}`;
         document.getElementById('resDisponible').style.color = disp < 0 ? "var(--danger)" : "var(--success)";
 
-        document.getElementById('saveIcon').innerText = "Guardando...";
+        document.getElementById('saveIcon').innerText = "☁️ Guardando...";
 
         clearTimeout(window.sT);
         window.sT = setTimeout(() => {
@@ -154,24 +153,29 @@
                     color: r.querySelector('.inp-col').value
                 }))
             }).then(() => {
-                document.getElementById('saveIcon').innerText = "Sincronizado";
+                document.getElementById('saveIcon').innerText = "✅ Sincronizado";
+            }).catch(e => {
+                document.getElementById('saveIcon').innerText = "❌ Error";
+                console.error(e);
             });
-        }, 1200);
+        }, 1000);
     }
 
     window.onload = async () => {
-        const doc = await docRef.get();
-        if (doc.exists) {
-            const data = doc.data();
-            document.getElementById('sueldoBase').value = data.sueldo || "";
-            if(data.temaColor) {
-                document.documentElement.style.setProperty('--primary-color', data.temaColor);
-                document.getElementById('themePicker').value = data.temaColor;
+        try {
+            const doc = await docRef.get();
+            if (doc.exists) {
+                const data = doc.data();
+                document.getElementById('sueldoBase').value = data.sueldo || "";
+                if(data.temaColor) {
+                    document.documentElement.style.setProperty('--primary-color', data.temaColor);
+                    document.getElementById('themePicker').value = data.temaColor;
+                }
+                if(data.deudas) data.deudas.forEach(d => addItem('deudas', d.nombre, d.monto, d.color));
+                if(data.ahorros) data.ahorros.forEach(a => addItem('ahorros', a.nombre, a.monto, a.color));
             }
-            if(data.deudas) data.deudas.forEach(d => addItem('deudas', d.nombre, d.monto, d.color));
-            if(data.ahorros) data.ahorros.forEach(a => addItem('ahorros', a.nombre, a.monto, a.color));
-        }
-        updateAll();
+            updateAll();
+        } catch(e) { console.error("Error inicial:", e); }
     };
 
     function resetApp() {
