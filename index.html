@@ -3,120 +3,250 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editor de Presupuesto Nu</title>
+    <title>Gestor Financiero: Deudas y Ahorros</title>
     <style>
-        :root { --nu-purple: #820ad1; --nu-dark: #44066b; }
-        body { font-family: 'Inter', sans-serif; margin: 0; display: flex; height: 100vh; background: #f4f4f9; }
-        
-        /* Columna Izquierda: Editor */
-        .editor { width: 40%; background: white; padding: 25px; border-right: 2px solid #eee; overflow-y: auto; box-shadow: 5px 0 15px rgba(0,0,0,0.05); }
-        
-        /* Columna Derecha: Vista Previa */
-        .preview { width: 60%; display: flex; align-items: center; justify-content: center; background: var(--nu-purple); background: linear-gradient(135deg, #820ad1 0%, #44066b 100%); }
-        
-        .preview-card { background: white; width: 80%; padding: 40px; border-radius: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
+        :root {
+            --nu-purple: #820ad1;
+            --nu-dark: #44066b;
+            --bg-color: #f4f4f9;
+            --danger: #ff4d4d;
+            --success: #28a745;
+        }
 
-        h2 { color: var(--nu-purple); margin-top: 0; }
-        .input-group { margin-bottom: 20px; }
-        label { display: block; font-weight: bold; margin-bottom: 8px; color: #555; }
-        input { width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 10px; font-size: 16px; transition: 0.3s; }
-        input:focus { border-color: var(--nu-purple); outline: none; }
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
 
-        .gasto-row { display: flex; gap: 8px; margin-bottom: 12px; align-items: center; }
-        .btn-add { background: var(--nu-purple); color: white; border: none; padding: 12px; width: 100%; border-radius: 10px; cursor: pointer; font-weight: bold; margin: 10px 0; transition: 0.2s; }
-        .btn-add:hover { background: var(--nu-dark); }
-        .btn-del { background: #ffeded; color: #ff4d4d; border: none; padding: 10px; border-radius: 8px; cursor: pointer; }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
 
-        /* Estilos de la Vista Previa */
-        .stat-box { display: flex; justify-content: space-between; padding: 15px 0; border-bottom: 1px solid #eee; }
-        .total-final { font-size: 2.5em; font-weight: 800; color: var(--nu-purple); text-align: center; margin: 20px 0; }
-        .label-total { text-align: center; color: #888; text-transform: uppercase; letter-spacing: 1px; font-size: 0.8em; }
+        h1 {
+            text-align: center;
+            color: var(--nu-purple);
+            margin-bottom: 30px;
+        }
+
+        /* 1. DETECCIÓN DE DISPOSITIVO (GRID) */
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr; /* Dos columnas en PC */
+            gap: 25px;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr; /* Una columna en Móvil */
+            }
+        }
+
+        /* Estilos de las Tarjetas */
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--nu-dark);
+        }
+
+        /* Elementos de la lista */
+        .item-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .item-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            padding: 10px;
+            margin-bottom: 10px;
+            background: #fff;
+            border-radius: 12px;
+            border: 1px solid #eee;
+            border-left-width: 8px; /* Color dinámico aquí */
+        }
+
+        input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .input-name { flex: 2; }
+        .input-amount { flex: 1; }
+        .input-color { width: 40px; height: 35px; border: none; cursor: pointer; background: none; }
+
+        /* Botones */
+        .btn {
+            cursor: pointer;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+
+        .btn-add {
+            background: var(--nu-purple);
+            color: white;
+            padding: 10px 20px;
+        }
+
+        .btn-del {
+            background: #ffecec;
+            color: var(--danger);
+            padding: 8px 12px;
+        }
+
+        .btn:hover { opacity: 0.8; }
+
+        /* Totales */
+        .total-box {
+            margin-top: auto;
+            padding-top: 15px;
+            text-align: right;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .summary-bar {
+            background: var(--nu-dark);
+            color: white;
+            padding: 20px;
+            border-radius: 20px;
+            margin-bottom: 25px;
+            text-align: center;
+            font-size: 1.4rem;
+        }
+
+        .total-ahorros { color: var(--success); }
+        .total-deudas { color: var(--danger); }
     </style>
 </head>
 <body>
 
-<div class="editor">
-    <h2>⚙️ Configuración</h2>
-    <div class="input-group">
-        <label>Sueldo Neto ($)</label>
-        <input type="number" id="sueldoBase" placeholder="2500000" oninput="actualizar()">
+<div class="container">
+    <h1>Mi Control Financiero</h1>
+
+    <!-- Resumen General -->
+    <div class="summary-bar" id="resumenGeneral">
+        Balance Total: $ 0
     </div>
 
-    <label>Gastos Mensuales</label>
-    <div id="contenedorGastos"></div>
-    <button class="btn-add" onclick="agregarGasto()">+ Nuevo Gasto</button>
-    
-    <div style="margin-top: 30px; font-size: 12px; color: #aaa;">
-        * Los cambios se guardan automáticamente en este navegador.
-    </div>
-</div>
+    <div class="dashboard">
+        <!-- SECCIÓN DEUDAS -->
+        <section class="card">
+            <div class="card-header">
+                <span class="card-title">📉 Deudas</span>
+                <button class="btn btn-add" onclick="addItem('deudas')">+ Agregar</button>
+            </div>
+            <div id="listaDeudas" class="item-list"></div>
+            <div class="total-box">Total Deudas: <span id="totalDeudas" class="total-deudas">$ 0</span></div>
+        </section>
 
-<div class="preview">
-    <div class="preview-card">
-        <div class="label-total">Saldo Disponible</div>
-        <div class="total-final" id="saldoFinal">$ 0</div>
-        
-        <div class="stat-box">
-            <span>Ingresos Totales</span>
-            <span id="ingresoVista" style="font-weight: bold;">$ 0</span>
-        </div>
-        <div class="stat-box">
-            <span>Gastos Acumulados</span>
-            <span id="gastosVista" style="color: #ff4d4d; font-weight: bold;">$ 0</span>
-        </div>
+        <!-- SECCIÓN AHORROS -->
+        <section class="card">
+            <div class="card-header">
+                <span class="card-title">💰 Ahorros</span>
+                <button class="btn btn-add" onclick="addItem('ahorros')">+ Agregar</button>
+            </div>
+            <div id="listaAhorros" class="item-list"></div>
+            <div class="total-box">Total Ahorros: <span id="totalAhorros" class="total-ahorros">$ 0</span></div>
+        </section>
     </div>
 </div>
 
 <script>
-    window.onload = function() {
-        const salvado = JSON.parse(localStorage.getItem('nu_budget_v2'));
-        if (salvado) {
-            document.getElementById('sueldoBase').value = salvado.sueldo;
-            salvado.gastos.forEach(g => agregarGasto(g.nombre, g.monto, g.color));
-        } else {
-            agregarGasto("Arriendo", 1000000, "#820ad1");
+    // Cargar datos al iniciar
+    window.onload = () => {
+        const data = JSON.parse(localStorage.getItem('finanzas_data')) || { deudas: [], ahorros: [] };
+        data.deudas.forEach(item => addItem('deudas', item.nombre, item.monto, item.color));
+        data.ahorros.forEach(item => addItem('ahorros', item.nombre, item.monto, item.color));
+        if (data.deudas.length === 0 && data.ahorros.length === 0) {
+            addItem('deudas', 'Ejemplo Deuda', 0, '#ff4d4d');
+            addItem('ahorros', 'Ejemplo Ahorro', 0, '#28a745');
         }
-        actualizar();
+        updateCalculations();
     };
 
-    function agregarGasto(nom = "", mon = "", col = "#820ad1") {
+    function addItem(type, nombre = '', monto = '', color = '#820ad1') {
+        const container = document.getElementById(type === 'deudas' ? 'listaDeudas' : 'listaAhorros');
         const div = document.createElement('div');
-        div.className = 'gasto-row';
+        div.className = 'item-row';
+        div.style.borderLeftColor = color;
+
         div.innerHTML = `
-            <input type="text" placeholder="Gasto" value="${nom}" oninput="actualizar()" style="flex:2">
-            <input type="number" placeholder="$" value="${mon}" oninput="actualizar()" class="monto" style="flex:1">
-            <input type="color" value="${col}" oninput="actualizar()" style="width:40px; padding:2px; height:42px; border:none">
-            <button class="btn-del" onclick="this.parentElement.remove(); actualizar()">✕</button>
+            <input type="text" class="input-name" placeholder="Nombre" value="${nombre}" oninput="updateCalculations()">
+            <input type="number" class="input-amount" placeholder="Monto" value="${monto}" oninput="updateCalculations()">
+            <input type="color" class="input-color" value="${color}" oninput="this.parentElement.style.borderLeftColor = this.value; updateCalculations()">
+            <button class="btn btn-del" onclick="this.parentElement.remove(); updateCalculations()">✕</button>
         `;
-        document.getElementById('contenedorGastos').appendChild(div);
+        container.appendChild(div);
     }
 
-    function actualizar() {
-        const sueldo = parseFloat(document.getElementById('sueldoBase').value) || 0;
-        const filas = document.querySelectorAll('.gasto-row');
-        let totalG = 0;
-        let listaG = [];
+    function updateCalculations() {
+        const deudas = calculateTotal('listaDeudas');
+        const ahorros = calculateTotal('listaAhorros');
+        const balance = ahorros - deudas;
 
-        filas.forEach(f => {
-            const n = f.querySelectorAll('input')[0].value;
-            const m = parseFloat(f.querySelectorAll('input')[1].value) || 0;
-            const c = f.querySelectorAll('input')[2].value;
-            totalG += m;
-            listaG.push({nombre: n, monto: m, color: c});
-            f.style.borderLeft = `5px solid ${c}`;
+        // Actualizar UI
+        document.getElementById('totalDeudas').innerText = `$ ${deudas.toLocaleString('es-CO')}`;
+        document.getElementById('totalAhorros').innerText = `$ ${ahorros.toLocaleString('es-CO')}`;
+        document.getElementById('resumenGeneral').innerText = `Balance Neto: $ ${balance.toLocaleString('es-CO')}`;
+        document.getElementById('resumenGeneral').style.background = balance >= 0 ? '#44066b' : '#721c24';
+
+        // Guardar en LocalStorage
+        saveData();
+    }
+
+    function calculateTotal(containerId) {
+        const rows = document.getElementById(containerId).querySelectorAll('.item-row');
+        let total = 0;
+        rows.forEach(row => {
+            const val = parseFloat(row.querySelector('.input-amount').value) || 0;
+            total += val;
         });
+        return total;
+    }
 
-        const saldo = sueldo - totalG;
+    function saveData() {
+        const data = {
+            deudas: getItemsData('listaDeudas'),
+            ahorros: getItemsData('listaAhorros')
+        };
+        localStorage.setItem('finanzas_data', JSON.stringify(data));
+    }
 
-        // Mostrar en la columna derecha
-        document.getElementById('saldoFinal').innerText = '$ ' + saldo.toLocaleString('es-CO');
-        document.getElementById('ingresoVista').innerText = '$ ' + sueldo.toLocaleString('es-CO');
-        document.getElementById('gastosVista').innerText = '$ ' + totalG.toLocaleString('es-CO');
-        
-        document.getElementById('saldoFinal').style.color = saldo < 0 ? "#ff4d4d" : "#820ad1";
-
-        // Guardar
-        localStorage.setItem('nu_budget_v2', JSON.stringify({sueldo, gastos: listaG}));
+    function getItemsData(containerId) {
+        const rows = document.getElementById(containerId).querySelectorAll('.item-row');
+        return Array.from(rows).map(row => ({
+            nombre: row.querySelector('.input-name').value,
+            monto: row.querySelector('.input-amount').value,
+            color: row.querySelector('.input-color').value
+        }));
     }
 </script>
 
