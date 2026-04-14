@@ -6,16 +6,16 @@
     <meta name="theme-color" content="#0d0d1a">
     <title>💰 Smart Budget Pro</title>
     
-    <!-- Firebase SDK (Compatibilidad v9) -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <!-- Firebase SDK v8 (100% compatible con tu configuración) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     
     <!-- Fuente -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
     <style>
-        /* ===== ESTILOS OPTIMIZADOS ===== */
+        /* ===== ESTILOS (SIN CAMBIOS) ===== */
         :root {
             --primary: #6366f1;
             --primary-dark: #4f46e5;
@@ -407,7 +407,7 @@
         }
         .btn-add:hover { transform: scale(1.05); box-shadow: 0 10px 25px rgba(99, 102, 241, 0.5); }
 
-        /* ===== ITEM ROW (GRID MEJORADO) ===== */
+        /* ===== ITEM ROW ===== */
         .items-container { display: flex; flex-direction: column; gap: 12px; }
         
         .item-row {
@@ -778,7 +778,6 @@
 <!-- Contenido principal -->
 <div class="container">
     <div class="dashboard">
-        <!-- Gastos -->
         <div class="card">
             <div class="card-header">
                 <strong class="card-title" style="color:#f87171;">💸 Deudas y Gastos</strong>
@@ -791,7 +790,6 @@
             </div>
             <div id="excesoGastoMsg" style="margin-top:12px; font-size:0.8rem; color:var(--danger); display:none;">⚠️ Excedes tu presupuesto</div>
         </div>
-        <!-- Ahorros -->
         <div class="card">
             <div class="card-header">
                 <strong class="card-title" style="color:#4ade80;">🎯 Metas de Ahorro</strong>
@@ -830,9 +828,8 @@
     (function(){
         "use strict";
 
-        // ================= CONFIGURACIÓN DE FIREBASE =================
-        // Esta configuración ya está lista para tu proyecto.
-        const firebaseConfig = {
+        // ========== CONFIGURACIÓN DE FIREBASE (EXACTAMENTE LA PROPORCIONADA) ==========
+        var firebaseConfig = {
             apiKey: "AIzaSyCLb7LaJypnUHQ0TKZ2aTRNK4yAa6SUiZE",
             authDomain: "calculadoramensualsueldo.firebaseapp.com",
             projectId: "calculadoramensualsueldo",
@@ -841,57 +838,68 @@
             appId: "1:619721076451:web:56925f6251a3ba53ad5fd6"
         };
 
-        // Inicializar Firebase
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
+        // Inicializar Firebase (v8)
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        var auth = firebase.auth();
+        var db = firebase.firestore();
 
-        // ================= ESTADO GLOBAL =================
-        let currentUser = null;
-        let userDocRef = null;
-        let isUpdatingFromDB = false;
-        let saveTimeout;
-        let currentCurrency = 'USD';
-        const currencySymbols = { USD:'$', EUR:'€', MXN:'$', COP:'$' };
-        const categoryIcons = {
+        // ========== ESTADO GLOBAL ==========
+        var currentUser = null;
+        var userDocRef = null;
+        var isUpdatingFromDB = false;
+        var saveTimeout;
+        var currentCurrency = 'USD';
+        var currencySymbols = { USD:'$', EUR:'€', MXN:'$', COP:'$' };
+        var categoryIcons = {
             general:'📌', vivienda:'🏠', comida:'🍔', transporte:'🚗',
             servicios:'💡', ocio:'🎮', salud:'🏥', emergencia:'🚨',
             vacaciones:'✈️', inversion:'📈', compra:'🛒', educacion:'📚'
         };
-        const CIRCUMFERENCE = 2 * Math.PI * 54; // 339.292
+        var CIRCUMFERENCE = 2 * Math.PI * 54;
 
-        // ================= INICIALIZACIÓN =================
-        async function init() {
+        // ========== INICIALIZACIÓN ==========
+        function init() {
+            console.log('🔥 Iniciando Smart Budget Pro...');
             setupEventListeners();
             renderColorPresets();
             
-            try {
-                // Autenticación anónima automática
-                const result = await auth.signInAnonymously();
-                currentUser = result.user;
-                document.getElementById('userDisplay').textContent = `Usuario ${currentUser.uid.slice(0,6)}`;
-                userDocRef = db.collection("usuarios").doc(currentUser.uid);
-                setupFirestoreListener();
-                showToast('Conectado al servidor', 'success');
-            } catch (error) {
-                console.error("Error de autenticación:", error);
-                showToast('Error de conexión - modo offline', 'error');
-                updateSyncStatus('Offline', 'error');
-                // Modo demostración local (sin Firebase)
-                loadLocalFallback();
-            }
+            // Autenticación anónima
+            auth.signInAnonymously()
+                .then(function(result) {
+                    currentUser = result.user;
+                    console.log('✅ Usuario anónimo autenticado:', currentUser.uid);
+                    document.getElementById('userDisplay').textContent = 'Usuario ' + currentUser.uid.slice(0,6);
+                    userDocRef = db.collection("usuarios").doc(currentUser.uid);
+                    setupFirestoreListener();
+                    showToast('Conectado al servidor', 'success');
+                    updateSyncStatus('Conectado', 'success');
+                })
+                .catch(function(error) {
+                    console.error('❌ Error de autenticación:', error);
+                    showToast('Error de conexión - modo offline', 'error');
+                    updateSyncStatus('Offline', 'error');
+                    loadLocalFallback();
+                });
         }
 
         function setupFirestoreListener() {
-            userDocRef.onSnapshot((doc) => {
+            console.log('📡 Configurando listener de Firestore...');
+            userDocRef.onSnapshot(function(doc) {
                 isUpdatingFromDB = true;
                 if (doc.exists) {
-                    const data = doc.data();
-                    document.getElementById('sueldoBase').value = data.sueldo ?? '';
+                    var data = doc.data();
+                    console.log('📥 Datos recibidos de Firestore');
+                    document.getElementById('sueldoBase').value = data.sueldo !== undefined ? data.sueldo : '';
                     if(data.temaColor) document.documentElement.style.setProperty('--primary', data.temaColor);
                     if(data.darkMode !== undefined) {
-                        const isDark = data.darkMode;
-                        document.documentElement.toggleAttribute('data-theme', !isDark);
+                        var isDark = data.darkMode;
+                        if(isDark) {
+                            document.documentElement.removeAttribute('data-theme');
+                        } else {
+                            document.documentElement.setAttribute('data-theme', 'light');
+                        }
                         document.getElementById('themeToggle').classList.toggle('active', isDark);
                     }
                     if(data.currency) {
@@ -900,85 +908,86 @@
                     }
                     renderListsFromData(data.deudas || [], data.ahorros || []);
                 } else {
-                    // Nuevo usuario: documento vacío
+                    console.log('📄 Documento nuevo, creando...');
                     document.getElementById('sueldoBase').value = '';
                     renderListsFromData([], []);
                 }
                 calculateTotals();
                 isUpdatingFromDB = false;
-                updateSyncStatus('Conectado', 'success');
+                updateSyncStatus('Sincronizado', 'success');
                 document.getElementById('lastSync').textContent = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-            }, (error) => {
-                console.error("Error en sincronización:", error);
+            }, function(error) {
+                console.error('❌ Error en listener Firestore:', error);
                 updateSyncStatus('Error', 'error');
                 showToast('Error al sincronizar', 'error');
             });
         }
 
         function renderListsFromData(deudas, ahorros) {
-            const deudasContainer = document.getElementById('listaDeudas');
-            const ahorrosContainer = document.getElementById('listaAhorros');
+            var deudasContainer = document.getElementById('listaDeudas');
+            var ahorrosContainer = document.getElementById('listaAhorros');
             deudasContainer.innerHTML = '';
             ahorrosContainer.innerHTML = '';
             
             if(deudas.length) {
-                deudas.forEach(d => createItemElement('deudas', d, true));
+                deudas.forEach(function(d) { createItemElement('deudas', d, true); });
             } else {
                 showEmptyState(deudasContainer, '📭', 'Sin gastos', 'Agrega tu primer gasto');
             }
             if(ahorros.length) {
-                ahorros.forEach(a => createItemElement('ahorros', a, true));
+                ahorros.forEach(function(a) { createItemElement('ahorros', a, true); });
             } else {
                 showEmptyState(ahorrosContainer, '🏦', 'Sin metas', 'Define una meta de ahorro');
             }
         }
 
-        function createItemElement(type, itemData, append = true) {
-            const container = document.getElementById(type === 'deudas' ? 'listaDeudas' : 'listaAhorros');
+        function createItemElement(type, itemData, append) {
+            if (append === undefined) append = true;
+            var container = document.getElementById(type === 'deudas' ? 'listaDeudas' : 'listaAhorros');
             if(append && container.querySelector('.empty-state')) container.innerHTML = '';
             
-            const row = document.createElement('div');
+            var row = document.createElement('div');
             row.className = 'item-row' + (itemData.completed ? ' completed' : '');
             row.dataset.type = type;
             row.style.setProperty('--item-color', itemData.color || (type==='deudas'?'#ef4444':'#22c55e'));
             
-            const categories = type === 'deudas' 
+            var categories = type === 'deudas' 
                 ? ['general','vivienda','comida','transporte','servicios','ocio','salud']
                 : ['general','emergencia','vacaciones','inversion','compra','educacion'];
             
-            const catOptions = categories.map(c => `<option value="${c}" ${c===itemData.category?'selected':''}>${c.charAt(0).toUpperCase()+c.slice(1)}</option>`).join('');
+            var catOptions = categories.map(function(c) { 
+                return '<option value="' + c + '" ' + (c===itemData.category?'selected':'') + '>' + c.charAt(0).toUpperCase()+c.slice(1) + '</option>';
+            }).join('');
             
-            row.innerHTML = `
-                <div class="item-color-line"></div>
-                <div class="item-color-picker">
-                    <input type="color" class="item-color-input" value="${itemData.color || '#ef4444'}">
-                </div>
-                <div class="item-content">
-                    <span class="item-icon">${categoryIcons[itemData.category] || '📌'}</span>
-                    <div class="item-details">
-                        <input type="text" class="item-name-input" placeholder="${type==='deudas'?'Gasto...':'Meta...'}" value="${itemData.nombre || ''}">
-                        <div class="item-meta">
-                            <select class="category-select">${catOptions}</select>
-                            <input type="number" class="item-amount-input ${type==='deudas'?'deuda-mon':'ahorro-mon'}" placeholder="0" min="0" step="0.01" value="${itemData.monto || ''}">
-                        </div>
-                    </div>
-                </div>
-                <div class="item-actions">
-                    <button class="btn-complete" title="Marcar como completado">✔️</button>
-                    <button class="btn-remove" title="Eliminar">✕</button>
-                </div>
-            `;
+            row.innerHTML = 
+                '<div class="item-color-line"></div>' +
+                '<div class="item-color-picker">' +
+                    '<input type="color" class="item-color-input" value="' + (itemData.color || '#ef4444') + '">' +
+                '</div>' +
+                '<div class="item-content">' +
+                    '<span class="item-icon">' + (categoryIcons[itemData.category] || '📌') + '</span>' +
+                    '<div class="item-details">' +
+                        '<input type="text" class="item-name-input" placeholder="' + (type==='deudas'?'Gasto...':'Meta...') + '" value="' + (itemData.nombre || '') + '">' +
+                        '<div class="item-meta">' +
+                            '<select class="category-select">' + catOptions + '</select>' +
+                            '<input type="number" class="item-amount-input ' + (type==='deudas'?'deuda-mon':'ahorro-mon') + '" placeholder="0" min="0" step="0.01" value="' + (itemData.monto || '') + '">' +
+                        '</div>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="item-actions">' +
+                    '<button class="btn-complete" title="Marcar como completado">✔️</button>' +
+                    '<button class="btn-remove" title="Eliminar">✕</button>' +
+                '</div>';
             
-            // Event listeners
-            const nameInput = row.querySelector('.item-name-input');
-            const amountInput = row.querySelector('.item-amount-input');
-            const select = row.querySelector('.category-select');
-            const colorInput = row.querySelector('.item-color-input');
-            const completeBtn = row.querySelector('.btn-complete');
-            const removeBtn = row.querySelector('.btn-remove');
+            var nameInput = row.querySelector('.item-name-input');
+            var amountInput = row.querySelector('.item-amount-input');
+            var select = row.querySelector('.category-select');
+            var colorInput = row.querySelector('.item-color-input');
+            var completeBtn = row.querySelector('.btn-complete');
+            var removeBtn = row.querySelector('.btn-remove');
             
-            nameInput.addEventListener('input', () => { if(!isUpdatingFromDB) onUserInput(); });
-            amountInput.addEventListener('input', () => { if(!isUpdatingFromDB) onUserInput(); });
+            nameInput.addEventListener('input', function() { if(!isUpdatingFromDB) onUserInput(); });
+            amountInput.addEventListener('input', function() { if(!isUpdatingFromDB) onUserInput(); });
             select.addEventListener('change', function() {
                 row.querySelector('.item-icon').textContent = categoryIcons[this.value] || '📌';
                 if(!isUpdatingFromDB) onUserInput();
@@ -987,14 +996,14 @@
                 row.style.setProperty('--item-color', this.value);
                 if(!isUpdatingFromDB) onUserInput();
             });
-            completeBtn.addEventListener('click', () => {
+            completeBtn.addEventListener('click', function() {
                 row.classList.toggle('completed');
                 if(!isUpdatingFromDB) onUserInput();
             });
-            removeBtn.addEventListener('click', () => {
+            removeBtn.addEventListener('click', function() {
                 row.style.opacity = '0';
                 row.style.transform = 'translateX(20px)';
-                setTimeout(() => {
+                setTimeout(function() {
                     row.remove();
                     if(!container.querySelector('.item-row')) {
                         showEmptyState(container, type==='deudas'?'📭':'🏦', 
@@ -1009,56 +1018,55 @@
         }
 
         function showEmptyState(container, icon, title, subtitle) {
-            container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${icon}</div><p><strong>${title}</strong><br><small>${subtitle}</small></p></div>`;
+            container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">' + icon + '</div><p><strong>' + title + '</strong><br><small>' + subtitle + '</small></p></div>';
         }
 
         function calculateTotals() {
-            let sueldo = parseFloat(document.getElementById('sueldoBase').value) || 0;
-            let gastos = 0, ahorros = 0;
+            var sueldo = parseFloat(document.getElementById('sueldoBase').value) || 0;
+            var gastos = 0, ahorros = 0;
             
-            document.querySelectorAll('.deuda-mon').forEach(i => gastos += parseFloat(i.value) || 0);
-            document.querySelectorAll('.ahorro-mon').forEach(i => ahorros += parseFloat(i.value) || 0);
+            document.querySelectorAll('.deuda-mon').forEach(function(i) { gastos += parseFloat(i.value) || 0; });
+            document.querySelectorAll('.ahorro-mon').forEach(function(i) { ahorros += parseFloat(i.value) || 0; });
             
-            const totalComprometido = gastos + ahorros;
-            const disponible = Math.max(0, sueldo - totalComprometido);
-            const exceso = totalComprometido > sueldo;
+            var totalComprometido = gastos + ahorros;
+            var disponible = Math.max(0, sueldo - totalComprometido);
+            var exceso = totalComprometido > sueldo;
+            var symbol = currencySymbols[currentCurrency];
             
-            const symbol = currencySymbols[currentCurrency];
+            var gastosPercent = sueldo === 0 ? 0 : Math.min(100, (gastos / sueldo) * 100);
+            var ahorrosPercent = sueldo === 0 ? 0 : Math.min(100, (ahorros / sueldo) * 100);
+            var disponiblePercent = sueldo === 0 ? 0 : Math.max(0, (disponible / sueldo) * 100);
             
-            const gastosPercent = sueldo === 0 ? 0 : Math.min(100, (gastos / sueldo) * 100);
-            const ahorrosPercent = sueldo === 0 ? 0 : Math.min(100, (ahorros / sueldo) * 100);
-            const disponiblePercent = sueldo === 0 ? 0 : Math.max(0, (disponible / sueldo) * 100);
-            
-            document.getElementById('statGastos').textContent = `${symbol} ${gastos.toFixed(2)}`;
-            document.getElementById('statAhorros').textContent = `${symbol} ${ahorros.toFixed(2)}`;
-            document.getElementById('statDisponible').textContent = `${symbol} ${disponible.toFixed(2)}`;
+            document.getElementById('statGastos').textContent = symbol + ' ' + gastos.toFixed(2);
+            document.getElementById('statAhorros').textContent = symbol + ' ' + ahorros.toFixed(2);
+            document.getElementById('statDisponible').textContent = symbol + ' ' + disponible.toFixed(2);
             
             updateCircle('gastosProgress', gastosPercent);
             updateCircle('ahorrosProgress', ahorrosPercent);
             updateCircle('disponibleProgress', disponiblePercent);
             
-            document.getElementById('gastosPercent').textContent = sueldo===0 ? '0%' : `${Math.round(gastosPercent)}%`;
-            document.getElementById('ahorrosPercent').textContent = sueldo===0 ? '0%' : `${Math.round(ahorrosPercent)}%`;
-            document.getElementById('disponiblePercent').textContent = sueldo===0 ? '0%' : `${Math.round(disponiblePercent)}%`;
+            document.getElementById('gastosPercent').textContent = sueldo===0 ? '0%' : Math.round(gastosPercent) + '%';
+            document.getElementById('ahorrosPercent').textContent = sueldo===0 ? '0%' : Math.round(ahorrosPercent) + '%';
+            document.getElementById('disponiblePercent').textContent = sueldo===0 ? '0%' : Math.round(disponiblePercent) + '%';
             
-            document.getElementById('resGasto').textContent = `${symbol} ${gastos.toFixed(2)}`;
-            document.getElementById('resAhorro').textContent = `${symbol} ${ahorros.toFixed(2)}`;
-            document.getElementById('resDisponible').textContent = `${symbol} ${disponible.toFixed(2)}`;
-            document.getElementById('gastosFooterPercent').textContent = `${Math.round(gastosPercent)}%`;
-            document.getElementById('ahorrosFooterPercent').textContent = `${Math.round(ahorrosPercent)}%`;
-            document.getElementById('disponibleFooterPercent').textContent = `${Math.round(disponiblePercent)}%`;
+            document.getElementById('resGasto').textContent = symbol + ' ' + gastos.toFixed(2);
+            document.getElementById('resAhorro').textContent = symbol + ' ' + ahorros.toFixed(2);
+            document.getElementById('resDisponible').textContent = symbol + ' ' + disponible.toFixed(2);
+            document.getElementById('gastosFooterPercent').textContent = Math.round(gastosPercent) + '%';
+            document.getElementById('ahorrosFooterPercent').textContent = Math.round(ahorrosPercent) + '%';
+            document.getElementById('disponibleFooterPercent').textContent = Math.round(disponiblePercent) + '%';
             
-            document.getElementById('deudaProgressText').textContent = `${Math.round(gastosPercent)}%`;
-            document.getElementById('deudaBar').style.width = `${gastosPercent}%`;
-            document.getElementById('ahorroProgressText').textContent = `${Math.round(ahorrosPercent)}%`;
-            document.getElementById('ahorroBar').style.width = `${ahorrosPercent}%`;
+            document.getElementById('deudaProgressText').textContent = Math.round(gastosPercent) + '%';
+            document.getElementById('deudaBar').style.width = gastosPercent + '%';
+            document.getElementById('ahorroProgressText').textContent = Math.round(ahorrosPercent) + '%';
+            document.getElementById('ahorroBar').style.width = ahorrosPercent + '%';
             
             document.getElementById('excesoGastoMsg').style.display = exceso ? 'block' : 'none';
         }
 
         function updateCircle(id, percent) {
-            const circle = document.getElementById(id);
-            const offset = CIRCUMFERENCE - (percent / 100) * CIRCUMFERENCE;
+            var circle = document.getElementById(id);
+            var offset = CIRCUMFERENCE - (percent / 100) * CIRCUMFERENCE;
             circle.style.strokeDashoffset = offset;
         }
 
@@ -1068,54 +1076,63 @@
             if (userDocRef) {
                 updateSyncStatus('Guardando...', 'warning');
                 clearTimeout(saveTimeout);
-                saveTimeout = setTimeout(() => saveToFirestore(), 800);
+                saveTimeout = setTimeout(saveToFirestore, 800);
             }
         }
 
         function saveToFirestore() {
             if(!userDocRef) return;
-            const sueldo = parseFloat(document.getElementById('sueldoBase').value) || 0;
-            const theme = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim();
-            const isDark = !document.documentElement.hasAttribute('data-theme');
+            var sueldo = parseFloat(document.getElementById('sueldoBase').value) || 0;
+            var theme = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim();
+            var isDark = !document.documentElement.hasAttribute('data-theme');
             
-            const deudas = Array.from(document.querySelectorAll('#listaDeudas .item-row')).map(row => ({
-                nombre: row.querySelector('.item-name-input').value,
-                monto: parseFloat(row.querySelector('.item-amount-input').value) || 0,
-                color: row.style.getPropertyValue('--item-color').trim() || '#ef4444',
-                category: row.querySelector('.category-select').value,
-                completed: row.classList.contains('completed')
-            }));
+            var deudas = Array.from(document.querySelectorAll('#listaDeudas .item-row')).map(function(row) {
+                return {
+                    nombre: row.querySelector('.item-name-input').value,
+                    monto: parseFloat(row.querySelector('.item-amount-input').value) || 0,
+                    color: row.style.getPropertyValue('--item-color').trim() || '#ef4444',
+                    category: row.querySelector('.category-select').value,
+                    completed: row.classList.contains('completed')
+                };
+            });
             
-            const ahorros = Array.from(document.querySelectorAll('#listaAhorros .item-row')).map(row => ({
-                nombre: row.querySelector('.item-name-input').value,
-                monto: parseFloat(row.querySelector('.item-amount-input').value) || 0,
-                color: row.style.getPropertyValue('--item-color').trim() || '#22c55e',
-                category: row.querySelector('.category-select').value,
-                completed: row.classList.contains('completed')
-            }));
+            var ahorros = Array.from(document.querySelectorAll('#listaAhorros .item-row')).map(function(row) {
+                return {
+                    nombre: row.querySelector('.item-name-input').value,
+                    monto: parseFloat(row.querySelector('.item-amount-input').value) || 0,
+                    color: row.style.getPropertyValue('--item-color').trim() || '#22c55e',
+                    category: row.querySelector('.category-select').value,
+                    completed: row.classList.contains('completed')
+                };
+            });
             
             userDocRef.set({
-                sueldo, temaColor: theme, darkMode: isDark, currency: currentCurrency,
-                deudas, ahorros,
+                sueldo: sueldo,
+                temaColor: theme,
+                darkMode: isDark,
+                currency: currentCurrency,
+                deudas: deudas,
+                ahorros: ahorros,
                 ultimaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
-            }).then(() => {
+            }).then(function() {
+                console.log('📤 Datos guardados en Firestore');
                 updateSyncStatus('Sincronizado', 'success');
                 document.getElementById('lastSync').textContent = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-            }).catch(err => {
+            }).catch(function(err) {
+                console.error('❌ Error al guardar:', err);
                 updateSyncStatus('Error', 'error');
-                console.error(err);
             });
         }
 
-        // ================= FUNCIONES UI =================
+        // Funciones UI (sin cambios significativos)
         function toggleMenu() {
             document.getElementById('sidebar').classList.toggle('active');
             document.getElementById('overlay').classList.toggle('active');
         }
 
         function toggleTheme() {
-            const html = document.documentElement;
-            const isDark = !html.hasAttribute('data-theme');
+            var html = document.documentElement;
+            var isDark = !html.hasAttribute('data-theme');
             if(isDark) html.setAttribute('data-theme', 'light');
             else html.removeAttribute('data-theme');
             document.getElementById('themeToggle').classList.toggle('active', !isDark);
@@ -1126,43 +1143,44 @@
             currentCurrency = curr;
             updateCurrencyUI();
             if(userDocRef) onUserInput();
-            showToast(`Moneda: ${curr}`, 'success');
+            showToast('Moneda: ' + curr, 'success');
             toggleMenu();
         }
 
         function updateCurrencyUI() {
-            document.querySelectorAll('[data-curr]').forEach(btn => {
+            document.querySelectorAll('[data-curr]').forEach(function(btn) {
                 btn.classList.toggle('active', btn.dataset.curr === currentCurrency);
             });
             calculateTotals();
         }
 
         function updateSyncStatus(text, type) {
-            const iconSpan = document.querySelector('#saveIcon span:first-child');
-            const textSpan = document.getElementById('saveText');
-            const icons = { success:'✅', warning:'📡', error:'❌' };
+            var iconSpan = document.querySelector('#saveIcon span:first-child');
+            var textSpan = document.getElementById('saveText');
+            var icons = { success:'✅', warning:'📡', error:'❌' };
             if(iconSpan) iconSpan.textContent = icons[type] || '🔄';
             if(textSpan) textSpan.textContent = text;
-            const statusLabel = document.getElementById('syncStatusText');
+            var statusLabel = document.getElementById('syncStatusText');
             if(statusLabel) statusLabel.textContent = text;
         }
 
-        function showToast(msg, type='success') {
-            const container = document.getElementById('toastContainer');
-            const toast = document.createElement('div');
-            toast.className = `toast ${type}`;
-            toast.innerHTML = `<span>${type==='success'?'✅':type==='error'?'❌':'⚠️'}</span><span>${msg}</span>`;
+        function showToast(msg, type) {
+            type = type || 'success';
+            var container = document.getElementById('toastContainer');
+            var toast = document.createElement('div');
+            toast.className = 'toast ' + type;
+            toast.innerHTML = '<span>' + (type==='success'?'✅':type==='error'?'❌':'⚠️') + '</span><span>' + msg + '</span>';
             container.appendChild(toast);
-            setTimeout(() => toast.remove(), 3000);
+            setTimeout(function() { toast.remove(); }, 3000);
         }
 
         function renderColorPresets() {
-            const presets = ['#6366f1','#ec4899','#10b981','#f59e0b','#3b82f6','#8b5cf6','#ef4444','#14b8a6','#a855f7','#22c55e'];
-            const container = document.getElementById('colorPresets');
-            container.innerHTML = presets.map(c => `<div class="color-preset" style="background:${c}" data-color="${c}"></div>`).join('');
-            container.querySelectorAll('.color-preset').forEach(el => {
-                el.addEventListener('click', () => {
-                    container.querySelectorAll('.color-preset').forEach(p => p.classList.remove('active'));
+            var presets = ['#6366f1','#ec4899','#10b981','#f59e0b','#3b82f6','#8b5cf6','#ef4444','#14b8a6','#a855f7','#22c55e'];
+            var container = document.getElementById('colorPresets');
+            container.innerHTML = presets.map(function(c) { return '<div class="color-preset" style="background:' + c + '" data-color="' + c + '"></div>'; }).join('');
+            container.querySelectorAll('.color-preset').forEach(function(el) {
+                el.addEventListener('click', function() {
+                    container.querySelectorAll('.color-preset').forEach(function(p) { p.classList.remove('active'); });
                     el.classList.add('active');
                     document.documentElement.style.setProperty('--primary', el.dataset.color);
                     if(userDocRef) onUserInput();
@@ -1172,30 +1190,30 @@
 
         function setupEventListeners() {
             document.getElementById('sueldoBase').addEventListener('input', onUserInput);
-            document.getElementById('addGastoBtn').addEventListener('click', () => {
+            document.getElementById('addGastoBtn').addEventListener('click', function() {
                 createItemElement('deudas', { nombre:'', monto:'', color:'#ef4444', category:'general' });
                 onUserInput();
             });
-            document.getElementById('addAhorroBtn').addEventListener('click', () => {
+            document.getElementById('addAhorroBtn').addEventListener('click', function() {
                 createItemElement('ahorros', { nombre:'', monto:'', color:'#22c55e', category:'general' });
                 onUserInput();
             });
-            document.querySelectorAll('[data-curr]').forEach(btn => {
-                btn.addEventListener('click', () => setCurrency(btn.dataset.curr));
+            document.querySelectorAll('[data-curr]').forEach(function(btn) {
+                btn.addEventListener('click', function() { setCurrency(btn.dataset.curr); });
             });
-            document.addEventListener('keydown', e => { if(e.key==='Escape') toggleMenu(); });
+            document.addEventListener('keydown', function(e) { if(e.key==='Escape') toggleMenu(); });
             document.getElementById('overlay').addEventListener('click', toggleMenu);
             document.getElementById('importFile').addEventListener('change', handleImport);
         }
 
         function exportData() {
             if(!userDocRef) return showToast('No hay conexión', 'error');
-            userDocRef.get().then(doc => {
+            userDocRef.get().then(function(doc) {
                 if(doc.exists) {
-                    const blob = new Blob([JSON.stringify(doc.data(), null, 2)], {type:'application/json'});
-                    const a = document.createElement('a');
+                    var blob = new Blob([JSON.stringify(doc.data(), null, 2)], {type:'application/json'});
+                    var a = document.createElement('a');
                     a.href = URL.createObjectURL(blob);
-                    a.download = `smartbudget_${new Date().toISOString().slice(0,10)}.json`;
+                    a.download = 'smartbudget_' + new Date().toISOString().slice(0,10) + '.json';
                     a.click();
                     showToast('Datos exportados', 'success');
                 }
@@ -1209,14 +1227,14 @@
         }
 
         function handleImport(event) {
-            const file = event.target.files[0];
+            var file = event.target.files[0];
             if(!file) return;
-            const reader = new FileReader();
-            reader.onload = (e) => {
+            var reader = new FileReader();
+            reader.onload = function(e) {
                 try {
-                    const data = JSON.parse(e.target.result);
+                    var data = JSON.parse(e.target.result);
                     if(userDocRef) {
-                        userDocRef.set(data).then(() => showToast('Importado correctamente', 'success'));
+                        userDocRef.set(data).then(function() { showToast('Importado correctamente', 'success'); });
                     } else {
                         showToast('Sin conexión', 'error');
                     }
@@ -1227,22 +1245,22 @@
         }
 
         function showDetailedStats() {
-            const sueldo = parseFloat(document.getElementById('sueldoBase').value)||0;
-            const gastos = Array.from(document.querySelectorAll('.deuda-mon')).reduce((s,i)=>s+(parseFloat(i.value)||0),0);
-            const ahorros = Array.from(document.querySelectorAll('.ahorro-mon')).reduce((s,i)=>s+(parseFloat(i.value)||0),0);
+            var sueldo = parseFloat(document.getElementById('sueldoBase').value)||0;
+            var gastos = Array.from(document.querySelectorAll('.deuda-mon')).reduce(function(s,i) { return s + (parseFloat(i.value)||0); },0);
+            var ahorros = Array.from(document.querySelectorAll('.ahorro-mon')).reduce(function(s,i) { return s + (parseFloat(i.value)||0); },0);
             showModal('📊 Estadísticas', 
-                `💵 Ingreso: ${currencySymbols[currentCurrency]}${sueldo.toFixed(2)}\n` +
-                `💸 Gastos: ${currencySymbols[currentCurrency]}${gastos.toFixed(2)} (${sueldo?((gastos/sueldo)*100).toFixed(1):0}%)\n` +
-                `🎯 Ahorros: ${currencySymbols[currentCurrency]}${ahorros.toFixed(2)} (${sueldo?((ahorros/sueldo)*100).toFixed(1):0}%)\n` +
-                `💎 Disponible: ${currencySymbols[currentCurrency]}${Math.max(0,sueldo-gastos-ahorros).toFixed(2)}`
+                '💵 Ingreso: ' + currencySymbols[currentCurrency] + sueldo.toFixed(2) + '\n' +
+                '💸 Gastos: ' + currencySymbols[currentCurrency] + gastos.toFixed(2) + ' (' + (sueldo?((gastos/sueldo)*100).toFixed(1):0) + '%)\n' +
+                '🎯 Ahorros: ' + currencySymbols[currentCurrency] + ahorros.toFixed(2) + ' (' + (sueldo?((ahorros/sueldo)*100).toFixed(1):0) + '%)\n' +
+                '💎 Disponible: ' + currencySymbols[currentCurrency] + Math.max(0,sueldo-gastos-ahorros).toFixed(2)
             );
             toggleMenu();
         }
 
         function confirmReset() {
-            showModal('🗑️ Borrar todo', '¿Eliminar todos tus datos permanentemente?', () => {
+            showModal('🗑️ Borrar todo', '¿Eliminar todos tus datos permanentemente?', function() {
                 if(userDocRef) {
-                    userDocRef.delete().then(() => showToast('Datos borrados', 'success'));
+                    userDocRef.delete().then(function() { showToast('Datos borrados', 'success'); });
                 } else {
                     location.reload();
                 }
@@ -1263,8 +1281,8 @@
         function showModal(title, text, onConfirm) {
             document.getElementById('modalTitle').textContent = title;
             document.getElementById('modalText').textContent = text;
-            const confirmBtn = document.getElementById('modalConfirm');
-            confirmBtn.onclick = () => { closeModal(); if(onConfirm) onConfirm(); };
+            var confirmBtn = document.getElementById('modalConfirm');
+            confirmBtn.onclick = function() { closeModal(); if(onConfirm) onConfirm(); };
             document.getElementById('modal').classList.add('active');
         }
 
@@ -1273,13 +1291,12 @@
         }
 
         function loadLocalFallback() {
-            // Modo offline simple
             renderListsFromData([], []);
             document.getElementById('userDisplay').textContent = 'Modo offline';
             showToast('Funcionando sin conexión', 'warning');
         }
 
-        // Exponer funciones globales necesarias
+        // Exponer globalmente
         window.toggleMenu = toggleMenu;
         window.toggleTheme = toggleTheme;
         window.exportData = exportData;
@@ -1290,7 +1307,7 @@
         window.closeModal = closeModal;
         window.onUserInput = onUserInput;
 
-        // Iniciar aplicación
+        // Iniciar
         init();
     })();
 </script>
