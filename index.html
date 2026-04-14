@@ -4,9 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calculadora Sincronizada Hernán</title>
-    <!-- Cargamos Firebase Versión 8 (La más estable para este tipo de apps) -->
-    <script src="https://gstatic.com"></script>
-    <script src="https://gstatic.com"></script>
+    
+    <!-- ✅ Firebase SDK v8 (Compat) - CORREGIDO -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     
     <style>
         :root { --primary-color: #2c3e50; --bg-color: #f0f2f5; --card-bg: #ffffff; --danger: #e74c3c; --success: #27ae60; }
@@ -76,19 +77,30 @@
 </div>
 
 <script>
-    // --- TUS CREDENCIALES ---
+    // ✅ CONFIGURACIÓN DE FIREBASE - CORREGIDA
     var firebaseConfig = {
         apiKey: "AIzaSyCLb7LaJypnUHQ0TKZ2aTRNK4yAa6SUiZE",
-        authDomain: "://firebaseapp.com",
+        authDomain: "calculadoramensualsueldo.firebaseapp.com",
         projectId: "calculadoramensualsueldo",
-        storageBucket: "calculadoramensualsueldo.firebasestorage.app",
+        storageBucket: "calculadoramensualsueldo.appspot.com",
         messagingSenderId: "619721076451",
         appId: "1:619721076451:web:56925f6251a3ba53ad5fd6"
     };
 
-    // Inicialización Versión 8
-    firebase.initializeApp(firebaseConfig);
+    // ✅ Inicialización segura de Firebase v8
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
     var db = firebase.firestore();
+
+    // ✅ Habilitar persistencia offline (opcional pero recomendado)
+    db.enablePersistence().catch(err => {
+        if (err.code === 'failed-precondition') {
+            console.log('⚠️ Persistencia: Múltiples pestañas abiertas');
+        } else if (err.code === 'unimplemented') {
+            console.log('⚠️ Persistencia: Navegador no compatible');
+        }
+    });
 
     function toggleMenu() {
         document.getElementById('sidebar').classList.toggle('active');
@@ -124,60 +136,81 @@
     function updateAll() {
         const sueldo = parseFloat(document.getElementById('sueldoBase').value) || 0;
         let g = 0, a = 0;
+        
         document.querySelectorAll('#listaDeudas .inp-mon').forEach(i => g += parseFloat(i.value) || 0);
         document.querySelectorAll('#listaAhorros .inp-mon').forEach(i => a += parseFloat(i.value) || 0);
+        
         const disp = sueldo - g - a;
+        
         document.getElementById('resGasto').innerText = `$ ${g.toLocaleString()}`;
         document.getElementById('resAhorro').innerText = `$ ${a.toLocaleString()}`;
         document.getElementById('resDisponible').innerText = `$ ${disp.toLocaleString()}`;
         document.getElementById('resDisponible').style.color = disp < 0 ? "var(--danger)" : "var(--success)";
 
+        // Indicador de guardado
         document.getElementById('saveIcon').innerText = "☁️ Guardando...";
         clearTimeout(window.sT);
+        
         window.sT = setTimeout(() => {
             const currentTheme = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim();
+            
             db.collection("usuarios").doc("datos").set({
                 sueldo: sueldo,
                 temaColor: currentTheme,
                 deudas: Array.from(document.querySelectorAll('#listaDeudas .item-row')).map(r => ({
                     nombre: r.querySelector('.inp-nom').value,
-                    monto: r.querySelector('.inp-mon').value,
+                    monto: parseFloat(r.querySelector('.inp-mon').value) || 0,
                     color: r.querySelector('.inp-col').value
                 })),
                 ahorros: Array.from(document.querySelectorAll('#listaAhorros .item-row')).map(r => ({
                     nombre: r.querySelector('.inp-nom').value,
-                    monto: r.querySelector('.inp-mon').value,
+                    monto: parseFloat(r.querySelector('.inp-mon').value) || 0,
                     color: r.querySelector('.inp-col').value
-                }))
+                })),
+                ultimaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
             }).then(() => {
                 document.getElementById('saveIcon').innerText = "✅ Sincronizado";
             }).catch(e => {
-                document.getElementById('saveIcon').innerText = "❌ Error Reglas";
-                console.log(e);
+                document.getElementById('saveIcon').innerText = "❌ Error";
+                console.error("Error al sincronizar:", e);
             });
         }, 1000);
     }
 
+    // ✅ Carga inicial con manejo de errores mejorado
     window.onload = function() {
         db.collection("usuarios").doc("datos").get().then((doc) => {
             if (doc.exists) {
                 var data = doc.data();
                 document.getElementById('sueldoBase').value = data.sueldo || "";
+                
                 if(data.temaColor) {
                     document.documentElement.style.setProperty('--primary-color', data.temaColor);
                     document.getElementById('themePicker').value = data.temaColor;
                 }
+                
                 if(data.deudas) data.deudas.forEach(d => addItem('deudas', d.nombre, d.monto, d.color));
                 if(data.ahorros) data.ahorros.forEach(a => addItem('ahorros', a.nombre, a.monto, a.color));
             }
             updateAll();
         }).catch((error) => {
             document.getElementById('saveIcon').innerText = "❌ Error de Carga";
+            console.error("Error al cargar datos:", error);
         });
     };
 
     function resetApp() {
-        if(confirm("¿Borrar todo?")) db.collection("usuarios").doc("datos").delete().then(()=>location.reload());
+        if(confirm("¿Estás seguro de borrar todos los datos? Esta acción no se puede deshacer.")) {
+            db.collection("usuarios").doc("datos").delete()
+                .then(() => {
+                    localStorage.clear();
+                    location.reload();
+                })
+                .catch((error) => {
+                    console.error("Error al borrar:", error);
+                    alert("Error al borrar los datos");
+                });
+        }
     }
 </script>
 </body>
