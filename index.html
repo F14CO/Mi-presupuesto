@@ -2,13 +2,12 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Budget Pro | Full Suite</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Smart Budget Pro | Full Sync</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
     <style>
@@ -16,29 +15,29 @@
             --primary: #6366f1;
             --secondary: #a855f7;
             --accent: #f43f5e;
-            --bg-dark: #0b0e14;
-            --card-bg: rgba(30, 41, 59, 0.6);
+            --bg-dark: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
             --text-main: #f8fafc;
             --text-dim: #94a3b8;
             --glass-border: rgba(255, 255, 255, 0.1);
-            --transition: all 0.3s ease;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
             background-color: var(--bg-dark);
-            background-image: radial-gradient(circle at top right, rgba(99, 102, 241, 0.1), transparent);
+            background-image: radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.1) 0px, transparent 50%);
             color: var(--text-main);
             margin: 0;
-            padding-bottom: 100px;
+            padding-bottom: 120px;
         }
 
-        /* Menú Lateral (Sidebar) */
+        /* BARRA LATERAL */
         .sidebar {
             position: fixed;
-            left: -280px;
+            left: -300px;
             top: 0;
-            width: 250px;
+            width: 260px;
             height: 100%;
             background: rgba(15, 23, 42, 0.95);
             backdrop-filter: blur(20px);
@@ -49,37 +48,45 @@
         }
         .sidebar.active { left: 0; }
 
-        /* Banner Principal */
+        /* HEADER */
         .top-banner {
             background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-            padding: 40px 20px;
-            border-radius: 0 0 35px 35px;
+            padding: 50px 20px 60px;
+            border-radius: 0 0 40px 40px;
             text-align: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            position: relative;
         }
 
-        .income-input-main {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+        .menu-toggle {
+            position: absolute;
+            left: 20px;
+            top: 25px;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .main-income-input {
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.2);
             border-radius: 20px;
             color: white;
-            font-size: 2.2rem;
+            font-size: 2.5rem;
             font-weight: 800;
-            width: 80%;
-            max-width: 300px;
-            padding: 10px;
+            width: 250px;
             text-align: center;
+            padding: 10px;
+            margin-top: 15px;
             outline: none;
-            margin-top: 10px;
+            transition: var(--transition);
         }
 
         .container {
-            max-width: 600px;
-            margin: -25px auto 0;
+            max-width: 550px;
+            margin: -30px auto 0;
             padding: 0 20px;
         }
 
-        /* Tarjetas de Estadísticas */
+        /* ESTADÍSTICAS RÁPIDAS */
         .quick-stats {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -89,215 +96,259 @@
 
         .stat-card {
             background: var(--card-bg);
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(15px);
             border: 1px solid var(--glass-border);
             padding: 20px;
-            border-radius: 24px;
+            border-radius: 28px;
             text-align: center;
         }
 
-        /* Gráfico */
-        .chart-container {
+        /* GRÁFICO */
+        .chart-box {
             background: var(--card-bg);
-            border-radius: 24px;
+            border-radius: 28px;
             padding: 20px;
             margin-bottom: 25px;
             border: 1px solid var(--glass-border);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
-        /* Filas de Gastos con Estilo de Línea */
+        /* FILAS DE GASTOS (CONSERVANDO LÓGICA DE PERSISTENCIA) */
         .expense-item {
             background: var(--card-bg);
             border: 1px solid var(--glass-border);
             border-radius: 20px;
-            padding: 12px 15px;
-            margin-bottom: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
             display: grid;
-            grid-template-columns: 6px 1fr auto auto 30px;
+            grid-template-columns: 8px 1fr auto auto 30px;
             align-items: center;
             gap: 12px;
+            transition: var(--transition);
         }
 
+        .expense-item:hover { border-color: var(--primary); }
+
+        /* Selector de Color Minimalista */
         input[type="color"] {
             -webkit-appearance: none;
             border: none;
-            width: 6px;
-            height: 35px;
+            width: 8px;
+            height: 40px;
             background: none;
             cursor: pointer;
             padding: 0;
         }
         input[type="color"]::-webkit-color-swatch { border: none; border-radius: 10px; }
 
-        select, .input-flat {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid var(--glass-border);
+        .input-name, .input-val, select {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid transparent;
             color: white;
-            border-radius: 8px;
-            padding: 5px;
+            border-radius: 10px;
+            padding: 8px;
             outline: none;
         }
 
         select option { background: #1e293b; color: white; }
 
-        /* Barra de progreso integrada */
-        .row-progress {
+        .input-val { width: 80px; font-weight: 700; color: var(--primary); text-align: right; }
+
+        /* BARRA DE PROGRESO INVISIBLE HASTA QUE SE USA */
+        .progress-row {
             grid-column: 1 / -1;
-            height: 3px;
-            background: rgba(255,255,255,0.05);
+            height: 4px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
             margin-top: 5px;
-            border-radius: 5px;
+            overflow: hidden;
         }
 
-        /* Floating Button */
+        .progress-fill { height: 100%; transition: width 0.5s ease; }
+
+        /* FAB */
         .fab {
             position: fixed;
             bottom: 110px;
             right: 25px;
             background: var(--primary);
-            width: 55px; height: 55px;
-            border-radius: 18px;
+            width: 60px; height: 60px;
+            border-radius: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 24px;
+            font-size: 28px;
             color: white;
-            box-shadow: 0 10px 20px rgba(99, 102, 241, 0.4);
+            box-shadow: 0 10px 25px rgba(99, 102, 241, 0.4);
             cursor: pointer;
             z-index: 1000;
         }
 
-        /* Barra Inferior */
-        .nav-bar {
+        /* FOOTER NAV */
+        .footer-nav {
             position: fixed;
             bottom: 0; left: 0; width: 100%;
-            background: rgba(15, 23, 42, 0.8);
-            backdrop-filter: blur(20px);
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(25px);
             border-top: 1px solid var(--glass-border);
-            padding: 20px;
+            padding: 20px 0;
             display: flex;
             justify-content: space-around;
-            text-align: center;
+            z-index: 1500;
         }
+
+        .footer-nav div { text-align: center; }
+        .footer-nav span { display: block; font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; }
+        .footer-nav strong { font-size: 1.1rem; }
     </style>
 </head>
 <body>
 
     <div class="sidebar" id="sidebar">
-        <h3>Configuración</h3>
-        <p onclick="toggleTheme()">🌓 Cambiar Tema</p>
-        <p onclick="exportData()">📥 Exportar Datos</p>
+        <h2 style="margin-top: 0">Ajustes</h2>
+        <p onclick="syncWithServer()">🔄 Forzar Sincronización</p>
+        <p onclick="exportReport()">📊 Exportar Informe</p>
+        <p onclick="toggleTheme()">🌙 Modo Noche</p>
         <hr style="opacity: 0.1">
-        <p style="color: #f43f5e;" onclick="clearAll()">🗑️ Borrar Todo</p>
+        <p style="color: var(--accent);" onclick="confirmClear()">🗑️ Borrar Todo</p>
     </div>
 
     <div class="top-banner">
-        <div onclick="toggleMenu()" style="position: absolute; left: 20px; top: 30px; cursor: pointer;">☰</div>
-        <span style="font-size: 0.8rem; opacity: 0.8; letter-spacing: 1px;">PRESUPUESTO DISPONIBLE</span><br>
-        <input type="number" class="income-input-main" value="5000" id="mainIncome">
+        <div class="menu-toggle" onclick="toggleSidebar()">☰</div>
+        <span style="font-size: 0.8rem; font-weight: 600; opacity: 0.8;">MI PRESUPUESTO MENSUAL</span><br>
+        <input type="number" class="main-income-input" id="totalIncome" value="0" oninput="calculateAll()">
     </div>
 
     <div class="container">
         <div class="quick-stats">
             <div class="stat-card">
-                <small style="color: var(--text-dim)">GASTADO</small>
-                <div id="totalSpent" style="font-size: 1.4rem; font-weight: 700; color: var(--accent);">$0</div>
+                <span>GASTADO</span>
+                <div id="spentDisplay" style="color: var(--accent); font-size: 1.5rem; font-weight: 800;">$0</div>
             </div>
             <div class="stat-card">
-                <small style="color: var(--text-dim)">RESTANTE</small>
-                <div id="totalRemaining" style="font-size: 1.4rem; font-weight: 700; color: #10b981;">$0</div>
+                <span>LIBRE</span>
+                <div id="freeDisplay" style="color: #10b981; font-size: 1.5rem; font-weight: 800;">$0</div>
             </div>
         </div>
 
-        <div class="chart-container">
-            <canvas id="budgetChart"></canvas>
+        <div class="chart-box">
+            <canvas id="mainChart" width="200" height="200"></canvas>
+            <p id="savingAdvice" style="font-size: 0.85rem; color: var(--text-dim); margin-top: 15px; text-align: center;"></p>
         </div>
 
-        <div id="expenseList">
+        <div id="expenseContainer">
             </div>
     </div>
 
-    <div class="fab" onclick="addExpense()">+</div>
+    <div class="fab" onclick="createNewExpense()">+</div>
 
-    <nav class="nav-bar">
-        <div><small>Ahorro Sugerido</small><br><strong id="savingTip">$0</strong></div>
-        <div><small>Meta (10%)</small><br><strong id="savingGoal">$0</strong></div>
+    <nav class="footer-nav">
+        <div><span>Meta Ahorro</span><strong id="goalDisplay">$0</strong></div>
+        <div><span>% Gastado</span><strong id="percentDisplay">0%</strong></div>
     </nav>
 
     <script>
-        // 1. Configuración Firebase (Reemplaza con tus datos reales)
+        // CONFIGURACIÓN FIREBASE (REEMPLAZAR CON TUS CREDENCIALES)
         const firebaseConfig = {
-            apiKey: "TU_API_KEY",
-            projectId: "TU_PROJECT_ID",
-            storageBucket: "TU_BUCKET",
+            apiKey: "AIzaSy...",
+            projectId: "budget-pro-...",
+            appId: "1:..."
         };
+        
+        // Inicialización (Comentar si no tienes Firebase activo aún)
         // firebase.initializeApp(firebaseConfig);
         // const db = firebase.firestore();
 
-        // 2. Lógica de Gráfico
-        const ctx = document.getElementById('budgetChart').getContext('2d');
-        const myChart = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Gastado', 'Disponible'],
-                datasets: [{
-                    data: [0, 100],
-                    backgroundColor: ['#f43f5e', '#6366f1'],
-                    borderWidth: 0,
-                    hoverOffset: 4
-                }]
-            },
-            options: { cutout: '80%', plugins: { legend: { display: false } } }
-        });
+        let chart;
 
-        // 3. Funciones de Interfaz
-        function toggleMenu() {
-            document.getElementById('sidebar').classList.toggle('active');
+        // INICIALIZACIÓN DE GRÁFICO
+        function initChart() {
+            const ctx = document.getElementById('mainChart').getContext('2d');
+            chart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Gastos', 'Ahorro'],
+                    datasets: [{
+                        data: [0, 100],
+                        backgroundColor: ['#f43f5e', '#6366f1'],
+                        borderWidth: 0
+                    }]
+                },
+                options: { cutout: '80%', plugins: { legend: { display: false } } }
+            });
         }
 
-        function addExpense() {
-            const list = document.getElementById('expenseList');
-            const div = document.createElement('div');
-            div.className = 'expense-item';
-            div.innerHTML = `
-                <input type="color" value="#6366f1" onchange="updateColors(this)">
-                <input type="text" class="input-flat" placeholder="Nombre" style="width: 100%">
-                <select>
+        // LÓGICA DE NEGOCIO (REINTEGRADA)
+        function calculateAll() {
+            const income = parseFloat(document.getElementById('totalIncome').value) || 0;
+            let totalSpent = 0;
+
+            document.querySelectorAll('.expense-item').forEach(item => {
+                const val = parseFloat(item.querySelector('.input-val').value) || 0;
+                const color = item.querySelector('input[type="color"]').value;
+                totalSpent += val;
+                
+                // Actualizar barra de progreso de la fila
+                const prog = item.querySelector('.progress-fill');
+                const perc = income > 0 ? (val / income) * 100 : 0;
+                prog.style.width = Math.min(perc, 100) + '%';
+                prog.style.background = color;
+            });
+
+            const remaining = income - totalSpent;
+            const percent = income > 0 ? (totalSpent / income) * 100 : 0;
+
+            // Actualizar Interfaz
+            document.getElementById('spentDisplay').innerText = `$${totalSpent.toLocaleString()}`;
+            document.getElementById('freeDisplay').innerText = `$${remaining.toLocaleString()}`;
+            document.getElementById('goalDisplay').innerText = `$${(income * 0.1).toLocaleString()}`;
+            document.getElementById('percentDisplay').innerText = `${percent.toFixed(1)}%`;
+
+            // Actualizar Gráfico
+            chart.data.datasets[0].data = [totalSpent, remaining > 0 ? remaining : 0];
+            chart.update();
+
+            // Sincronizar (Llamada al servidor)
+            saveToServer({ income, totalSpent, remaining });
+        }
+
+        function createNewExpense() {
+            const container = document.getElementById('expenseContainer');
+            const item = document.createElement('div');
+            item.className = 'expense-item';
+            item.innerHTML = `
+                <input type="color" value="#6366f1" oninput="calculateAll()">
+                <input type="text" class="input-name" placeholder="Gasto...">
+                <select onchange="calculateAll()">
+                    <option>📌 General</option>
                     <option>🏠 Vivienda</option>
                     <option>🍔 Comida</option>
                     <option>🚗 Transporte</option>
-                    <option>🎮 Ocio</option>
                 </select>
-                <input type="number" class="input-flat" value="0" style="width: 70px; color: var(--primary); font-weight: bold; text-align: right;" oninput="calculate()">
-                <button style="background:transparent; border:none; color:var(--text-dim); cursor:pointer" onclick="this.parentElement.remove(); calculate();">✕</button>
-                <div class="row-progress"><div style="width: 30%; height:100%; background: var(--primary); border-radius:10px;"></div></div>
+                <input type="number" class="input-val" value="0" oninput="calculateAll()">
+                <button style="background:transparent; border:none; color:var(--text-dim); cursor:pointer" onclick="this.parentElement.remove(); calculateAll()">✕</button>
+                <div class="progress-row"><div class="progress-fill" style="width:0%"></div></div>
             `;
-            list.appendChild(div);
+            container.appendChild(item);
         }
 
-        function calculate() {
-            const income = parseFloat(document.getElementById('mainIncome').value) || 0;
-            let total = 0;
-            document.querySelectorAll('.expense-item input[type="number"]').forEach(input => {
-                total += parseFloat(input.value) || 0;
-            });
-
-            document.getElementById('totalSpent').innerText = `$${total.toLocaleString()}`;
-            document.getElementById('totalRemaining').innerText = `$${(income - total).toLocaleString()}`;
-            document.getElementById('savingGoal').innerText = `$${(income * 0.1).toLocaleString()}`;
-            
-            // Actualizar Gráfico
-            myChart.data.datasets[0].data = [total, income - total > 0 ? income - total : 0];
-            myChart.update();
+        // PERSISTENCIA
+        function saveToServer(data) {
+            console.log("Sincronizando con Firestore...", data);
+            // db.collection('users').doc('mi-usuario').set(data, {merge: true});
         }
 
-        function updateColors(el) {
-            const bar = el.parentElement.querySelector('.row-progress div');
-            bar.style.background = el.value;
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('active');
         }
 
-        // Inicializar con una fila
-        addExpense();
+        // Ejecutar al cargar
+        window.onload = () => {
+            initChart();
+            createNewExpense(); // Iniciar con una fila limpia
+        };
     </script>
 </body>
 </html>
