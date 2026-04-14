@@ -42,7 +42,6 @@
             --safe-area-top: env(safe-area-inset-top);
             --safe-area-bottom: env(safe-area-inset-bottom);
             --shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            --shadow-glow: 0 0 40px rgba(99, 102, 241, 0.3);
         }
 
         [data-theme="light"] {
@@ -74,7 +73,7 @@
             padding-bottom: 120px;
         }
 
-        /* ===== SIDEBAR MEJORADO ===== */
+        /* ===== SIDEBAR ===== */
         .sidebar {
             position: fixed;
             left: calc(-1 * var(--sidebar-width));
@@ -194,14 +193,6 @@
         .sidebar-option.danger:hover { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
         .sidebar-option-icon { font-size: 1.2rem; width: 26px; text-align: center; flex-shrink: 0; }
         .sidebar-option-label { flex: 1; }
-        .sidebar-option-badge {
-            background: var(--danger);
-            color: white;
-            font-size: 0.6rem;
-            padding: 2px 8px;
-            border-radius: 10px;
-            font-weight: 700;
-        }
 
         .toggle-switch {
             position: relative;
@@ -282,7 +273,7 @@
         }
         .color-preset.active::after { opacity: 1; }
 
-        /* ===== SYNC STATUS ENHANCED ===== */
+        /* ===== SYNC STATUS ===== */
         .sync-status-card {
             background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(22, 163, 74, 0.1));
             border: 1px solid rgba(34, 197, 94, 0.3);
@@ -747,7 +738,7 @@
         .progress-fill.red { background: linear-gradient(90deg, #ef4444, #f87171); }
         .progress-fill.green { background: linear-gradient(90deg, #22c55e, #4ade80); }
 
-        /* ===== FOOTER ===== */
+        /* ===== FOOTER CON COLORES ===== */
         .footer-nav {
             position: fixed;
             bottom: calc(20px + var(--safe-area-bottom));
@@ -760,15 +751,90 @@
             border-radius: 28px;
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            padding: 14px 18px;
+            padding: 16px 18px;
             box-shadow: var(--shadow-lg);
             z-index: 2000;
             border: 1px solid rgba(255,255,255,0.12);
+            overflow: hidden;
         }
-        .footer-item { text-align: center; }
-        .footer-item span { display: block; font-size: 0.58rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.05em; }
-        .footer-amount { font-size: 1.25rem; font-weight: 800; }
-        .footer-percent { font-size: 0.68rem; font-weight: 600; opacity: 0.85; margin-top: 2px; }
+        
+        .footer-item { 
+            text-align: center; 
+            padding: 8px 12px;
+            border-radius: 16px;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+        .footer-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--footer-color, var(--primary));
+            opacity: 0.6;
+        }
+        .footer-item:nth-child(1) { 
+            --footer-color: var(--danger);
+            background: rgba(239, 68, 68, 0.08);
+        }
+        .footer-item:nth-child(2) { 
+            --footer-color: var(--info);
+            background: rgba(59, 130, 246, 0.08);
+        }
+        .footer-item:nth-child(3) { 
+            --footer-color: var(--success);
+            background: rgba(34, 197, 94, 0.08);
+        }
+        
+        .footer-item span { 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            font-size: 0.65rem; 
+            font-weight: 700; 
+            color: var(--text-muted); 
+            text-transform: uppercase; 
+            margin-bottom: 6px; 
+            letter-spacing: 0.05em; 
+        }
+        .footer-item:nth-child(1) span { color: var(--danger); }
+        .footer-item:nth-child(2) span { color: var(--info); }
+        .footer-item:nth-child(3) span { color: var(--success); }
+        
+        .footer-amount { 
+            font-size: 1.35rem; 
+            font-weight: 800;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        .footer-item:nth-child(1) .footer-amount { color: var(--danger); }
+        .footer-item:nth-child(2) .footer-amount { color: var(--info); }
+        .footer-item:nth-child(3) .footer-amount { color: var(--success); }
+        
+        .footer-percent { 
+            font-size: 0.75rem; 
+            font-weight: 700; 
+            margin-top: 4px;
+            padding: 3px 10px;
+            border-radius: 12px;
+            display: inline-block;
+        }
+        .footer-item:nth-child(1) .footer-percent { 
+            color: var(--danger);
+            background: rgba(239, 68, 68, 0.15);
+        }
+        .footer-item:nth-child(2) .footer-percent { 
+            color: var(--info);
+            background: rgba(59, 130, 246, 0.15);
+        }
+        .footer-item:nth-child(3) .footer-percent { 
+            color: var(--success);
+            background: rgba(34, 197, 94, 0.15);
+        }
+        .footer-icon { font-size: 1rem; }
 
         /* ===== TOAST ===== */
         .toast-container { position: fixed; bottom: 150px; right: 20px; z-index: 4000; display: flex; flex-direction: column; gap: 10px; max-width: 320px; }
@@ -896,6 +962,37 @@
         .achievement.locked { opacity: 0.5; }
         .achievement.locked .achievement-icon { filter: grayscale(1); }
 
+        /* ===== SHORTCUTS ===== */
+        .shortcut-key {
+            background: rgba(255,255,255,0.1);
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-weight: 700;
+            font-size: 0.8rem;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        /* ===== OFFLINE INDICATOR ===== */
+        .offline-indicator {
+            position: fixed;
+            top: calc(10px + var(--safe-area-top));
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(245, 158, 11, 0.9);
+            color: #1a1a2e;
+            padding: 8px 20px;
+            border-radius: 25px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            z-index: 6000;
+            display: none;
+            animation: slideDown 0.3s ease;
+            box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4);
+        }
+        .offline-indicator.active { display: flex; align-items: center; gap: 8px; }
+        @keyframes slideDown { from { transform: translate(-50%, -100%); } to { transform: translate(-50%, 0); } }
+
         /* ===== RESPONSIVE ===== */
         @media (max-width: 768px) {
             .stats-grid { grid-template-columns: 1fr; gap: 14px; }
@@ -929,43 +1026,12 @@
         }
         .empty-state-icon { font-size: 2.8rem; margin-bottom: 10px; opacity: 0.5; }
         .empty-state-text { font-size: 0.9rem; }
-
-        /* ===== KEYBOARD SHORTCUTS ===== */
-        .shortcut-key {
-            background: rgba(255,255,255,0.1);
-            padding: 2px 8px;
-            border-radius: 6px;
-            font-family: monospace;
-            font-weight: 700;
-            font-size: 0.8rem;
-            border: 1px solid rgba(255,255,255,0.2);
-        }
-
-        /* ===== OFFLINE INDICATOR ===== */
-        .offline-indicator {
-            position: fixed;
-            top: calc(10px + var(--safe-area-top));
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(245, 158, 11, 0.9);
-            color: #1a1a2e;
-            padding: 8px 20px;
-            border-radius: 25px;
-            font-size: 0.8rem;
-            font-weight: 700;
-            z-index: 6000;
-            display: none;
-            animation: slideDown 0.3s ease;
-            box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4);
-        }
-        .offline-indicator.active { display: flex; align-items: center; gap: 8px; }
-        @keyframes slideDown { from { transform: translate(-50%, -100%); } to { transform: translate(-50%, 0); } }
     </style>
 </head>
 <body>
 
 <div class="offline-indicator" id="offlineIndicator">
-    <span>📡</span> <span>Modo sin conexión - Los cambios se sincronizarán automáticamente</span>
+    <span>📡</span> <span>Modo sin conexión - Se sincronizará automáticamente</span>
 </div>
 
 <div class="overlay" id="overlay" onclick="toggleMenu()"></div>
@@ -1071,7 +1137,7 @@
 <div class="stats-section">
     <div class="stats-grid">
         <div class="stat-card stat-card-gastos">
-            <span class="health-badge" id="gastosHealth">Normal</span>
+            <span class="health-badge healthy" id="gastosHealth">Excelente</span>
             <div class="circular-progress">
                 <svg viewBox="0 0 120 120"><circle class="bg-circle" cx="60" cy="60" r="54"></circle><circle class="progress-circle gastos" id="gastosProgress" cx="60" cy="60" r="54"></circle></svg>
                 <div class="center-text"><span class="center-percent" id="gastosPercent">0%</span><span class="center-label">gastos</span></div>
@@ -1087,7 +1153,7 @@
             <div><div class="stat-value" id="statDisponible">$0</div><div class="stat-label">💎 Disponible</div></div>
         </div>
         <div class="stat-card stat-card-ahorros">
-            <span class="health-badge" id="ahorrosHealth">En progreso</span>
+            <span class="health-badge critical" id="ahorrosHealth">A Mejorar</span>
             <div class="circular-progress">
                 <svg viewBox="0 0 120 120"><circle class="bg-circle" cx="60" cy="60" r="54"></circle><circle class="progress-circle ahorros" id="ahorrosProgress" cx="60" cy="60" r="54"></circle></svg>
                 <div class="center-text"><span class="center-percent" id="ahorrosPercent">0%</span><span class="center-label">ahorros</span></div>
@@ -1128,11 +1194,23 @@
     </div>
 </div>
 
-<!-- Footer -->
+<!-- Footer con colores -->
 <div class="footer-nav">
-    <div class="footer-item"><span>💸 Gastos</span><div class="footer-amount" id="resGasto">$0</div><div class="footer-percent" id="gastosFooterPercent">0%</div></div>
-    <div class="footer-item"><span>💎 Disponible</span><div class="footer-amount" id="resDisponible">$0</div><div class="footer-percent" id="disponibleFooterPercent">0%</div></div>
-    <div class="footer-item"><span>🎯 Ahorros</span><div class="footer-amount" id="resAhorro">$0</div><div class="footer-percent" id="ahorrosFooterPercent">0%</div></div>
+    <div class="footer-item">
+        <span><span class="footer-icon">💸</span> Gastos</span>
+        <div class="footer-amount" id="resGasto">$0</div>
+        <div class="footer-percent" id="gastosFooterPercent">0%</div>
+    </div>
+    <div class="footer-item">
+        <span><span class="footer-icon">💎</span> Disponible</span>
+        <div class="footer-amount" id="resDisponible">$0</div>
+        <div class="footer-percent" id="disponibleFooterPercent">0%</div>
+    </div>
+    <div class="footer-item">
+        <span><span class="footer-icon">🎯</span> Ahorros</span>
+        <div class="footer-amount" id="resAhorro">$0</div>
+        <div class="footer-percent" id="ahorrosFooterPercent">0%</div>
+    </div>
 </div>
 
 <div class="toast-container" id="toastContainer"></div>
@@ -1243,9 +1321,7 @@
     <div class="modal-content">
         <h4 class="modal-title">🏆 Tus Logros</h4>
         <p class="modal-text">¡Gana insignias al usar Smart Budget Pro!</p>
-        <div class="achievements-grid" id="achievementsList">
-            <!-- Se llena dinámicamente -->
-        </div>
+        <div class="achievements-grid" id="achievementsList"></div>
         <div class="modal-buttons" style="margin-top:20px;">
             <button class="btn btn-primary" onclick="closeAchievements()">Cerrar</button>
         </div>
@@ -1268,17 +1344,9 @@
             appId: "1:619721076451:web:56925f6251a3ba53ad5fd6"
         };
 
-        // Inicializar Firebase
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         var db = firebase.firestore();
-
-        // Configuración de Firestore
-        db.settings({
-            experimentalForceLongPolling: true,
-            merge: true
-        });
+        db.settings({ experimentalForceLongPolling: true, merge: true });
 
         // ========== ESTADO GLOBAL ==========
         var isUpdatingFromDB = false;
@@ -1300,7 +1368,7 @@
             pro: { name: 'Pro User', icon: '⭐', unlocked: false }
         };
 
-        // ========== REFERENCIA DE FIRESTORE - ¡NO CAMBIAR! ==========
+        // ========== REFERENCIA FIRESTORE - ¡NO CAMBIAR! ==========
         var docRef = db.collection("usuarios").doc("x9k2mP7qLz4wN1vB8cR5Hernan2026");
 
         // ========== INICIALIZACIÓN ==========
@@ -1313,8 +1381,6 @@
             checkOnlineStatus();
             loadPreferences();
             showToast('✨ ¡Bienvenido a Smart Budget Pro v3.0!', 'success');
-            
-            // Verificar logros al cargar
             setTimeout(checkAchievements, 2000);
         }
 
@@ -1325,17 +1391,13 @@
             
             docRef.onSnapshot(function(doc) {
                 isUpdatingFromDB = true;
-                
                 if (doc.exists) {
                     var data = doc.data();
                     console.log('📥 Datos sincronizados desde el servidor');
-                    
-                    // Cargar datos del documento
                     document.getElementById('sueldoBase').value = data.sueldo !== undefined ? data.sueldo : '';
                     
                     if(data.temaColor) {
                         document.documentElement.style.setProperty('--primary', data.temaColor);
-                        // Actualizar preset activo
                         document.querySelectorAll('.color-preset').forEach(function(p) {
                             p.classList.toggle('active', p.dataset.color.toLowerCase() === data.temaColor.toLowerCase());
                         });
@@ -1351,15 +1413,9 @@
                         document.getElementById('themeToggle').classList.toggle('active', isDark);
                     }
                     
-                    if(data.currency) {
-                        currentCurrency = data.currency;
-                        updateCurrencyUI();
-                    }
-                    
-                    // Renderizar listas
+                    if(data.currency) { currentCurrency = data.currency; updateCurrencyUI(); }
                     renderListsFromData(data.deudas || [], data.ahorros || []);
                     
-                    // Actualizar logros si existen guardados
                     if(data.achievements) {
                         Object.assign(achievements, data.achievements);
                         renderAchievements();
@@ -1372,14 +1428,9 @@
                 calculateTotals();
                 updateHealthBadges();
                 isUpdatingFromDB = false;
-                
-                // Actualizar estado de sincronización
                 updateSyncStatus('✅ Sincronizado', 'success');
                 updateLastSyncTime();
-                
-                // Guardar preferencias locales
                 savePreferences();
-                
             }, function(error) {
                 console.error('❌ Error en Firestore:', error.code, error.message);
                 updateSyncStatus('❌ Error de conexión', 'error');
@@ -1443,7 +1494,6 @@
                     '<button class="btn-remove" title="Eliminar">✕</button>' +
                 '</div>';
             
-            // Event listeners
             var nameInput = row.querySelector('.item-name-input');
             var amountInput = row.querySelector('.item-amount-input');
             var select = row.querySelector('.category-select');
@@ -1472,7 +1522,7 @@
                 setTimeout(function() {
                     row.remove();
                     if(!container.querySelector('.item-row')) {
-                        showEmptyState(container, type==='deudas'?'📭':'🏦', 
+                        showEmptyState(container, type==='deudas'?'📭':'', 
                             type==='deudas'?'Sin gastos':'Sin metas', 
                             type==='deudas'?'Agrega tu primer gasto':'Define una meta de ahorro');
                     }
@@ -1480,14 +1530,11 @@
                 }, 250);
             });
             
-            // Swipe to delete (mobile)
             var touchStartX = 0;
             row.addEventListener('touchstart', function(e) { touchStartX = e.touches[0].clientX; }, {passive:true});
             row.addEventListener('touchend', function(e) {
                 var touchEndX = e.changedTouches[0].clientX;
-                if(touchStartX - touchEndX > 50) { // Swipe left
-                    removeBtn.click();
-                }
+                if(touchStartX - touchEndX > 50) removeBtn.click();
             }, {passive:true});
             
             if(append) container.appendChild(row);
@@ -1506,32 +1553,26 @@
             document.querySelectorAll('.deuda-mon').forEach(function(i) { gastos += parseFloat(i.value) || 0; });
             document.querySelectorAll('.ahorro-mon').forEach(function(i) { ahorros += parseFloat(i.value) || 0; });
             
-            var totalComprometido = gastos + ahorros;
-            var disponible = Math.max(0, sueldo - totalComprometido);
-            var exceso = totalComprometido > sueldo;
+            var disponible = Math.max(0, sueldo - gastos - ahorros);
+            var exceso = (gastos + ahorros) > sueldo;
             var symbol = currencySymbols[currentCurrency];
             
-            // Porcentajes
             var gastosPercent = sueldo === 0 ? 0 : Math.min(100, (gastos / sueldo) * 100);
             var ahorrosPercent = sueldo === 0 ? 0 : Math.min(100, (ahorros / sueldo) * 100);
             var disponiblePercent = sueldo === 0 ? 0 : Math.max(0, (disponible / sueldo) * 100);
             
-            // Actualizar UI con animación suave
             animateValue('statGastos', gastos, symbol, 'danger');
             animateValue('statAhorros', ahorros, symbol, 'success');
             animateValue('statDisponible', disponible, symbol, disponible < 0 ? 'danger' : 'success');
             
-            // Círculos de progreso
             updateCircle('gastosProgress', gastosPercent);
             updateCircle('ahorrosProgress', ahorrosPercent);
             updateCircle('disponibleProgress', disponiblePercent);
             
-            // Porcentajes de texto
             document.getElementById('gastosPercent').textContent = sueldo===0 ? '0%' : Math.round(gastosPercent) + '%';
             document.getElementById('ahorrosPercent').textContent = sueldo===0 ? '0%' : Math.round(ahorrosPercent) + '%';
             document.getElementById('disponiblePercent').textContent = sueldo===0 ? '0%' : Math.round(disponiblePercent) + '%';
             
-            // Footer
             document.getElementById('resGasto').textContent = symbol + ' ' + formatNumber(gastos);
             document.getElementById('resAhorro').textContent = symbol + ' ' + formatNumber(ahorros);
             document.getElementById('resDisponible').textContent = symbol + ' ' + formatNumber(disponible);
@@ -1539,19 +1580,13 @@
             document.getElementById('ahorrosFooterPercent').textContent = Math.round(ahorrosPercent) + '%';
             document.getElementById('disponibleFooterPercent').textContent = Math.round(disponiblePercent) + '%';
             
-            // Barras de progreso
             document.getElementById('deudaProgressText').textContent = Math.round(gastosPercent) + '%';
             document.getElementById('deudaBar').style.width = gastosPercent + '%';
             document.getElementById('ahorroProgressText').textContent = Math.round(ahorrosPercent) + '%';
             document.getElementById('ahorroBar').style.width = ahorrosPercent + '%';
             
-            // Mensaje de exceso
             document.getElementById('excesoGastoMsg').style.display = exceso ? 'block' : 'none';
-            
-            // Actualizar badges de salud
             updateHealthBadges();
-            
-            // Verificar logros
             checkAchievements();
         }
 
@@ -1567,11 +1602,9 @@
                 step++;
                 var newValue = current + stepValue * step;
                 el.textContent = symbol + ' ' + formatNumber(Math.round(newValue * 100) / 100);
-                if(colorClass) {
-                    if(elementId.includes('Gastos')) el.style.color = 'var(--danger)';
-                    else if(elementId.includes('Ahorro')) el.style.color = 'var(--success)';
-                    else el.style.color = value < 0 ? 'var(--danger)' : 'var(--success)';
-                }
+                if(elementId.includes('Gastos')) el.style.color = 'var(--danger)';
+                else if(elementId.includes('Ahorro')) el.style.color = 'var(--success)';
+                else el.style.color = value < 0 ? 'var(--danger)' : 'var(--success)';
                 if(step >= steps) {
                     clearInterval(timer);
                     el.textContent = symbol + ' ' + formatNumber(value);
@@ -1589,32 +1622,60 @@
             circle.style.strokeDashoffset = offset;
         }
 
+        // ===== BADGES CORREGIDOS: Lógica de salud financiera =====
         function updateHealthBadges() {
             var sueldo = parseFloat(document.getElementById('sueldoBase').value) || 1;
             var gastos = Array.from(document.querySelectorAll('.deuda-mon')).reduce(function(s,i){return s+(parseFloat(i.value)||0);},0);
             var ahorros = Array.from(document.querySelectorAll('.ahorro-mon')).reduce(function(s,i){return s+(parseFloat(i.value)||0);},0);
             
-            // Badge de gastos
+            // Gastos: Menos es mejor
             var gastosPercent = (gastos / sueldo) * 100;
             var gastosBadge = document.getElementById('gastosHealth');
-            if(gastosPercent < 50) { gastosBadge.textContent = 'Excelente'; gastosBadge.className = 'health-badge healthy'; }
-            else if(gastosPercent < 80) { gastosBadge.textContent = 'Normal'; gastosBadge.className = 'health-badge warning'; }
-            else { gastosBadge.textContent = 'Crítico'; gastosBadge.className = 'health-badge critical'; }
+            if(gastosPercent < 50) { 
+                gastosBadge.textContent = 'Excelente'; 
+                gastosBadge.className = 'health-badge healthy'; 
+            }
+            else if(gastosPercent < 80) { 
+                gastosBadge.textContent = 'Normal'; 
+                gastosBadge.className = 'health-badge warning'; 
+            }
+            else { 
+                gastosBadge.textContent = 'Crítico'; 
+                gastosBadge.className = 'health-badge critical'; 
+            }
             
-            // Badge de disponible
+            // Disponible: Más es mejor
             var disponible = sueldo - gastos - ahorros;
             var disponibleBadge = document.getElementById('disponibleHealth');
             var disponiblePercent = (disponible / sueldo) * 100;
-            if(disponiblePercent > 30) { disponibleBadge.textContent = 'Saludable'; disponibleBadge.className = 'health-badge healthy'; }
-            else if(disponiblePercent > 10) { disponibleBadge.textContent = 'Ajustado'; disponibleBadge.className = 'health-badge warning'; }
-            else { disponibleBadge.textContent = 'Crítico'; disponibleBadge.className = 'health-badge critical'; }
+            if(disponiblePercent > 30) { 
+                disponibleBadge.textContent = 'Saludable'; 
+                disponibleBadge.className = 'health-badge healthy'; 
+            }
+            else if(disponiblePercent > 10) { 
+                disponibleBadge.textContent = 'Ajustado'; 
+                disponibleBadge.className = 'health-badge warning'; 
+            }
+            else { 
+                disponibleBadge.textContent = 'Crítico'; 
+                disponibleBadge.className = 'health-badge critical'; 
+            }
             
-            // Badge de ahorros
+            // Ahorros: Más es mejor (¡Aquí estaba el error!)
             var ahorrosBadge = document.getElementById('ahorrosHealth');
-            var ahorrosPercent = (ahorros / sueldo) * 100;
-            if(ahorrosPercent >= 20) { ahorrosBadge.textContent = '¡Genial!'; ahorrosBadge.className = 'health-badge healthy'; }
-            else if(ahorrosPercent >= 10) { ahorrosBadge.textContent = 'En progreso'; ahorrosBadge.className = 'health-badge warning'; }
-            else { ahorrosBadge.textContent = 'A mejorar'; ahorrosBadge.className = 'health-badge critical'; }
+            var ahorrosPercentCalc = (ahorros / sueldo) * 100;
+            if(ahorrosPercentCalc >= 20) { 
+                ahorrosBadge.textContent = '¡Excelente!'; 
+                ahorrosBadge.className = 'health-badge healthy'; 
+            }
+            else if(ahorrosPercentCalc >= 10) { 
+                ahorrosBadge.textContent = 'Bien'; 
+                ahorrosBadge.className = 'health-badge warning'; 
+            }
+            else { 
+                ahorrosBadge.textContent = 'A Mejorar'; 
+                ahorrosBadge.className = 'health-badge critical'; 
+            }
         }
 
         // ========== GUARDADO EN FIRESTORE - SISTEMA ORIGINAL ==========
@@ -1626,7 +1687,7 @@
             saveTimeout = setTimeout(function() { saveToFirestore(); }, 900);
         }
 
-        function saveToFirestore(skipTimestamp) {
+        function saveToFirestore() {
             var sueldo = parseFloat(document.getElementById('sueldoBase').value) || 0;
             var theme = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim();
             var isDark = !document.documentElement.hasAttribute('data-theme');
@@ -1674,7 +1735,7 @@
             });
         }
 
-        // ========== FUNCIONES DE UI ==========
+        // ========== FUNCIONES UI ==========
         function toggleMenu() {
             document.getElementById('sidebar').classList.toggle('active');
             document.getElementById('overlay').classList.toggle('active');
@@ -1718,14 +1779,12 @@
             if(textSpan) textSpan.textContent = text.replace(/^[✅📡❌]\s*/, '');
             if(syncIcon) { syncIcon.textContent = icons[type]; syncIcon.className = 'sync-status-icon ' + classes[type]; }
             if(syncText) syncText.textContent = text.replace(/^[✅📡❌]\s*/, '');
-            
             document.getElementById('saveIcon').className = 'save-indicator ' + classes[type];
         }
 
         function updateLastSyncTime() {
             var now = new Date();
-            var time = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-            document.getElementById('lastSync').textContent = time;
+            document.getElementById('lastSync').textContent = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
         }
 
         function showToast(msg, type) {
@@ -1733,7 +1792,7 @@
             var container = document.getElementById('toastContainer');
             var toast = document.createElement('div');
             toast.className = 'toast ' + type;
-            toast.innerHTML = '<span style="font-size:1.2rem">' + (type==='success'?'✅':type==='error'?'❌':'⚠️') + '</span><span>' + msg + '</span>';
+            toast.innerHTML = '<span style="font-size:1.2rem">' + (type==='success'?'✅':type==='error'?'❌':'️') + '</span><span>' + msg + '</span>';
             container.appendChild(toast);
             setTimeout(function() { 
                 toast.style.opacity = '0'; 
@@ -1763,13 +1822,11 @@
             document.getElementById('sueldoBase').addEventListener('input', onUserInput);
             document.getElementById('addGastoBtn').addEventListener('click', function() {
                 createItemElement('deudas', { nombre:'', monto:'', color:'#ef4444', category:'general' });
-                onUserInput();
-                checkAchievements();
+                onUserInput(); checkAchievements();
             });
             document.getElementById('addAhorroBtn').addEventListener('click', function() {
                 createItemElement('ahorros', { nombre:'', monto:'', color:'#22c55e', category:'general' });
-                onUserInput();
-                checkAchievements();
+                onUserInput(); checkAchievements();
             });
             document.querySelectorAll('[data-curr]').forEach(function(btn) {
                 btn.addEventListener('click', function() { setCurrency(btn.dataset.curr); });
@@ -1790,7 +1847,6 @@
 
         function handleKeyboardShortcuts(e) {
             if(e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-            
             if(e.key.toLowerCase() === 'm') { e.preventDefault(); toggleMenu(); }
             if(e.key.toLowerCase() === 'g') { e.preventDefault(); document.getElementById('addGastoBtn').click(); }
             if(e.key.toLowerCase() === 'a') { e.preventDefault(); document.getElementById('addAhorroBtn').click(); }
@@ -1822,26 +1878,13 @@
         }
 
         function exportCSV() {
-            var sueldo = document.getElementById('sueldoBase').value || '0';
             var rows = [['Tipo', 'Nombre', 'Categoría', 'Monto', 'Completado', 'Moneda']];
-            
             document.querySelectorAll('#listaDeudas .item-row').forEach(function(row) {
-                rows.push(['Gasto', 
-                    row.querySelector('.item-name-input').value,
-                    row.querySelector('.category-select').value,
-                    row.querySelector('.item-amount-input').value,
-                    row.classList.contains('completed') ? 'Sí' : 'No',
-                    currentCurrency]);
+                rows.push(['Gasto', row.querySelector('.item-name-input').value, row.querySelector('.category-select').value, row.querySelector('.item-amount-input').value, row.classList.contains('completed') ? 'Sí' : 'No', currentCurrency]);
             });
             document.querySelectorAll('#listaAhorros .item-row').forEach(function(row) {
-                rows.push(['Ahorro', 
-                    row.querySelector('.item-name-input').value,
-                    row.querySelector('.category-select').value,
-                    row.querySelector('.item-amount-input').value,
-                    row.classList.contains('completed') ? 'Sí' : 'No',
-                    currentCurrency]);
+                rows.push(['Ahorro', row.querySelector('.item-name-input').value, row.querySelector('.category-select').value, row.querySelector('.item-amount-input').value, row.classList.contains('completed') ? 'Sí' : 'No', currentCurrency]);
             });
-            
             var csv = rows.map(function(r) { return r.map(function(c) { return '"' + c + '"'; }).join(','); }).join('\n');
             var blob = new Blob(['\ufeff' + csv], {type: 'text/csv;charset=utf-8;'});
             var a = document.createElement('a');
@@ -1852,10 +1895,7 @@
             toggleMenu();
         }
 
-        function importData() {
-            document.getElementById('importFile').click();
-            toggleMenu();
-        }
+        function importData() { document.getElementById('importFile').click(); toggleMenu(); }
 
         function handleImport(event) {
             var file = event.target.files[0];
@@ -1869,9 +1909,7 @@
                             showToast('📥 Datos importados correctamente', 'success');
                             setTimeout(function(){ location.reload(); }, 1500);
                         });
-                    } else {
-                        throw new Error('Formato inválido');
-                    }
+                    } else { throw new Error('Formato inválido'); }
                 } catch(err) { showToast('❌ Archivo inválido o corrupto', 'error'); }
             };
             reader.readAsText(file);
@@ -1887,10 +1925,7 @@
             document.querySelectorAll('#listaDeudas .item-row').forEach(function(row) {
                 var cat = row.querySelector('.category-select').value || 'general';
                 var monto = parseFloat(row.querySelector('.item-amount-input').value) || 0;
-                if(monto > 0) {
-                    categories[cat] = (categories[cat] || 0) + monto;
-                    total += monto;
-                }
+                if(monto > 0) { categories[cat] = (categories[cat] || 0) + monto; total += monto; }
             });
             
             if(total === 0) {
@@ -1899,9 +1934,7 @@
                 return;
             }
             
-            var labels = Object.keys(categories).map(function(c) {
-                return (categoryIcons[c] || '📌') + ' ' + c.charAt(0).toUpperCase() + c.slice(1);
-            });
+            var labels = Object.keys(categories).map(function(c) { return (categoryIcons[c] || '📌') + ' ' + c.charAt(0).toUpperCase() + c.slice(1); });
             var data = Object.values(categories);
             var colors = ['#6366f1','#ec4899','#10b981','#f59e0b','#3b82f6','#8b5cf6','#ef4444','#14b8a6','#a855f7','#22c55e'];
             
@@ -1911,12 +1944,7 @@
                 type: 'doughnut',
                 data: {
                     labels: labels,
-                    datasets: [{
-                        data: data,
-                        backgroundColor: colors.slice(0, data.length),
-                        borderWidth: 0,
-                        hoverOffset: 15
-                    }]
+                    datasets: [{ data: data, backgroundColor: colors.slice(0, data.length), borderWidth: 0, hoverOffset: 15 }]
                 },
                 options: {
                     responsive: true,
@@ -1927,10 +1955,8 @@
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
-                                    var label = context.label || '';
-                                    var value = context.parsed;
-                                    var percent = ((value / total) * 100).toFixed(1);
-                                    return label + ': ' + currencySymbols[currentCurrency] + value.toFixed(2) + ' (' + percent + '%)';
+                                    var percent = ((context.parsed / total) * 100).toFixed(1);
+                                    return context.label + ': ' + currencySymbols[currentCurrency] + context.parsed.toFixed(2) + ' (' + percent + '%)';
                                 }
                             }
                         }
@@ -1939,7 +1965,6 @@
                 }
             });
             
-            // Generar leyenda con porcentajes
             var legend = document.getElementById('chartLegend');
             legend.innerHTML = labels.map(function(label, i) {
                 var percent = ((data[i] / total) * 100).toFixed(1);
@@ -1950,9 +1975,7 @@
             toggleMenu();
         }
 
-        function closeChartModal() {
-            document.getElementById('chartModal').classList.remove('active');
-        }
+        function closeChartModal() { document.getElementById('chartModal').classList.remove('active'); }
 
         function exportChart() {
             var canvas = document.getElementById('expenseChart');
@@ -1970,60 +1993,41 @@
             var ahorros = Array.from(document.querySelectorAll('.ahorro-mon')).reduce(function(s,i){return s+(parseFloat(i.value)||0);},0);
             var disponible = sueldo - gastos - ahorros;
             var symbol = currencySymbols[currentCurrency];
-            
             var completedGastos = document.querySelectorAll('#listaDeudas .item-row.completed').length;
             var totalGastos = document.querySelectorAll('#listaDeudas .item-row').length;
             var completedAhorros = document.querySelectorAll('#listaAhorros .item-row.completed').length;
             var totalAhorros = document.querySelectorAll('#listaAhorros .item-row').length;
             
             showModal('📊 Estadísticas Detalladas', 
-                '💵 <strong>Ingreso Mensual:</strong> ' + symbol + formatNumber(sueldo) + '\n\n' +
-                '💸 <strong>Gastos Totales:</strong> ' + symbol + formatNumber(gastos) + '\n' +
-                '   • Progreso: ' + (sueldo>0?((gastos/sueldo)*100).toFixed(1):0) + '% del ingreso\n' +
-                '   • Completados: ' + completedGastos + '/' + totalGastos + ' ítems\n\n' +
-                '🎯 <strong>Ahorros Totales:</strong> ' + symbol + formatNumber(ahorros) + '\n' +
-                '   • Meta: ' + (sueldo>0?((ahorros/sueldo)*100).toFixed(1):0) + '% del ingreso\n' +
-                '   • Completados: ' + completedAhorros + '/' + totalAhorros + ' ítems\n\n' +
-                '💎 <strong>Disponible:</strong> ' + symbol + formatNumber(disponible) + '\n' +
-                '   • ' + (sueldo>0?((disponible/sueldo)*100).toFixed(1):0) + '% libre para usar\n\n' +
-                '📈 <strong>Salud Financiera:</strong> ' + 
-                (disponible > sueldo*0.3 ? '✅ Excelente' : disponible > sueldo*0.1 ? '⚠️ Ajustado' : '❌ Crítico'),
+                '💵 <strong>Ingreso:</strong> ' + symbol + formatNumber(sueldo) + '\n\n' +
+                '💸 <strong>Gastos:</strong> ' + symbol + formatNumber(gastos) + ' (' + (sueldo>0?((gastos/sueldo)*100).toFixed(1):0) + '%)\n' +
+                '   Completados: ' + completedGastos + '/' + totalGastos + '\n\n' +
+                '🎯 <strong>Ahorros:</strong> ' + symbol + formatNumber(ahorros) + ' (' + (sueldo>0?((ahorros/sueldo)*100).toFixed(1):0) + '%)\n' +
+                '   Completados: ' + completedAhorros + '/' + totalAhorros + '\n\n' +
+                '💎 <strong>Disponible:</strong> ' + symbol + formatNumber(disponible) + '\n\n' +
+                '📈 <strong>Salud:</strong> ' + (disponible > sueldo*0.3 ? '✅ Excelente' : disponible > sueldo*0.1 ? '⚠️ Ajustado' : '❌ Crítico'),
                 null
             );
             toggleMenu();
         }
 
-        // ========== MANUAL DE USO ==========
-        function showManual() {
-            document.getElementById('manualModal').classList.add('active');
-            toggleMenu();
-        }
+        // ========== MODALES AUXILIARES ==========
+        function showManual() { document.getElementById('manualModal').classList.add('active'); toggleMenu(); }
         function closeManual() { document.getElementById('manualModal').classList.remove('active'); }
-
-        // ========== ATAJOS DE TECLADO ==========
-        function showShortcuts() {
-            document.getElementById('shortcutsModal').classList.add('active');
-            toggleMenu();
-        }
+        function showShortcuts() { document.getElementById('shortcutsModal').classList.add('active'); toggleMenu(); }
         function closeShortcuts() { document.getElementById('shortcutsModal').classList.remove('active'); }
 
-        // ========== LOGROS / ACHIEVEMENTS ==========
         function renderAchievements() {
             var container = document.getElementById('achievementsList');
             container.innerHTML = Object.keys(achievements).map(function(key) {
                 var a = achievements[key];
                 return '<div class="achievement ' + (a.unlocked ? 'unlocked' : 'locked') + '">' +
                     '<div class="achievement-icon">' + a.icon + '</div>' +
-                    '<div class="achievement-name">' + a.name + '</div>' +
-                '</div>';
+                    '<div class="achievement-name">' + a.name + '</div></div>';
             }).join('');
         }
 
-        function showAchievements() {
-            renderAchievements();
-            document.getElementById('achievementsModal').classList.add('active');
-            toggleMenu();
-        }
+        function showAchievements() { renderAchievements(); document.getElementById('achievementsModal').classList.add('active'); toggleMenu(); }
         function closeAchievements() { document.getElementById('achievementsModal').classList.remove('active'); }
 
         function checkAchievements() {
@@ -2034,32 +2038,13 @@
             var ahorros = Array.from(document.querySelectorAll('.ahorro-mon')).reduce(function(s,i){return s+(parseFloat(i.value)||0);},0);
             
             var changed = false;
+            if(gastosCount + ahorrosCount >= 1 && !achievements.firstItem.unlocked) { achievements.firstItem.unlocked = true; changed = true; showToast('🏆 Logro: ' + achievements.firstItem.icon + ' ' + achievements.firstItem.name, 'success'); }
+            if(sueldo > 0 && !achievements.budget100.unlocked) { achievements.budget100.unlocked = true; changed = true; showToast('🏆 Logro: ' + achievements.budget100.icon + ' ' + achievements.budget100.name, 'success'); }
+            if(ahorros >= sueldo * 0.1 && !achievements.saver.unlocked) { achievements.saver.unlocked = true; changed = true; showToast('🏆 Logro: ' + achievements.saver.icon + ' ' + achievements.saver.name, 'success'); }
+            if(completedCount >= 3 && !achievements.organized.unlocked) { achievements.organized.unlocked = true; changed = true; showToast('🏆 Logro: ' + achievements.organized.icon + ' ' + achievements.organized.name, 'success'); }
+            if(gastosCount + ahorrosCount >= 10 && completedCount >= 5 && !achievements.pro.unlocked) { achievements.pro.unlocked = true; changed = true; showToast('🏆 Logro PRO: ' + achievements.pro.icon + ' ' + achievements.pro.name, 'success'); }
             
-            if(gastosCount + ahorrosCount >= 1 && !achievements.firstItem.unlocked) {
-                achievements.firstItem.unlocked = true; changed = true;
-                showToast('🏆 Logro desbloqueado: ' + achievements.firstItem.icon + ' ' + achievements.firstItem.name, 'success');
-            }
-            if(sueldo > 0 && !achievements.budget100.unlocked) {
-                achievements.budget100.unlocked = true; changed = true;
-                showToast('🏆 Logro desbloqueado: ' + achievements.budget100.icon + ' ' + achievements.budget100.name, 'success');
-            }
-            if(ahorros >= sueldo * 0.1 && !achievements.saver.unlocked) {
-                achievements.saver.unlocked = true; changed = true;
-                showToast('🏆 Logro desbloqueado: ' + achievements.saver.icon + ' ' + achievements.saver.name, 'success');
-            }
-            if(completedCount >= 3 && !achievements.organized.unlocked) {
-                achievements.organized.unlocked = true; changed = true;
-                showToast('🏆 Logro desbloqueado: ' + achievements.organized.icon + ' ' + achievements.organized.name, 'success');
-            }
-            if(gastosCount + ahorrosCount >= 10 && completedCount >= 5 && !achievements.pro.unlocked) {
-                achievements.pro.unlocked = true; changed = true;
-                showToast('🏆 ¡Logro PRO desbloqueado! ' + achievements.pro.icon + ' ' + achievements.pro.name, 'success');
-            }
-            
-            if(changed && !isUpdatingFromDB) {
-                saveToFirestore();
-                renderAchievements();
-            }
+            if(changed && !isUpdatingFromDB) { saveToFirestore(); renderAchievements(); }
         }
 
         // ========== MODALES GENÉRICOS ==========
@@ -2073,17 +2058,14 @@
         }
         function closeModal() { document.getElementById('modal').classList.remove('active'); }
 
-        // ========== RESET CONFIRMADO ==========
         function confirmReset() {
             showModal('🗑️ ¿Borrar todo?', 
                 '<strong>⚠️ Esta acción es irreversible.</strong><br><br>Se eliminarán permanentemente todos tus datos del servidor. ¿Continuar?',
                 function() {
                     docRef.delete().then(function() { 
-                        showToast('🗑️ Datos eliminados exitosamente', 'success'); 
+                        showToast('🗑️ Datos eliminados', 'success'); 
                         setTimeout(function(){ location.reload(); }, 1200);
-                    }).catch(function(err) {
-                        showToast('Error: ' + err.message, 'error');
-                    });
+                    }).catch(function(err) { showToast('Error: ' + err.message, 'error'); });
                 }
             );
             toggleMenu();
@@ -2092,7 +2074,7 @@
         function forceSync() {
             updateSyncStatus('🔄 Sincronizando...', 'warning');
             onUserInput();
-            setTimeout(function() { showToast('✅ Sincronización forzada completada', 'success'); }, 1500);
+            setTimeout(function() { showToast('✅ Sincronización completada', 'success'); }, 1500);
             toggleMenu();
         }
 
@@ -2102,7 +2084,7 @@
                 localStorage.setItem('sbp_theme', document.documentElement.hasAttribute('data-theme') ? 'light' : 'dark');
                 localStorage.setItem('sbp_currency', currentCurrency);
                 localStorage.setItem('sbp_primary', getComputedStyle(document.documentElement).getPropertyValue('--primary').trim());
-            } catch(e) { console.log('LocalStorage no disponible'); }
+            } catch(e) {}
         }
         
         function loadPreferences() {
@@ -2121,14 +2103,11 @@
                         p.classList.toggle('active', p.dataset.color.toLowerCase() === color.toLowerCase());
                     });
                 }
-            } catch(e) { console.log('No se pudieron cargar preferencias'); }
+            } catch(e) {}
         }
 
-        // ========== ESTADO DE CONEXIÓN ==========
         function checkOnlineStatus() {
-            if(!navigator.onLine) {
-                document.getElementById('offlineIndicator').classList.add('active');
-            }
+            if(!navigator.onLine) document.getElementById('offlineIndicator').classList.add('active');
         }
 
         // ========== EXPOSICIÓN GLOBAL ==========
@@ -2153,12 +2132,8 @@
         window.closeModal = closeModal;
         window.onUserInput = onUserInput;
 
-        // ========== INICIAR APLICACIÓN ==========
-        if(document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', init);
-        } else {
-            init();
-        }
+        if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+        else init();
     })();
 </script>
 </body>
