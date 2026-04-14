@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Presupuesto Nu - Guardado Automático</title>
+    <style>
+        :root { --nu-purple: #820ad1; --nu-light: #f0e6f7; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--nu-light); display: flex; justify-content: center; padding: 20px; }
+        .card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 8px 30px rgba(0,0,0,0.1); width: 100%; max-width: 500px; }
+        h2 { color: var(--nu-purple); text-align: center; margin-bottom: 5px; }
+        .save-status { text-align: center; font-size: 12px; color: #666; margin-bottom: 20px; }
+        .input-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: 600; }
+        input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        
+        .gasto-item { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; padding: 10px; border-radius: 8px; background: #fafafa; border-left: 5px solid #ccc; }
+        .btn-add { background: var(--nu-purple); color: white; border: none; padding: 10px; width: 100%; border-radius: 8px; cursor: pointer; font-weight: bold; margin-bottom: 20px; }
+        .btn-del { background: #ff4d4d; color: white; border: none; border-radius: 5px; cursor: pointer; padding: 5px 10px; }
+        
+        .summary { background: #fdfbff; padding: 15px; border-radius: 12px; border: 2px solid var(--nu-purple); margin-top: 20px; }
+        .row { display: flex; justify-content: space-between; margin-bottom: 8px; }
+        .total-disponible { font-size: 1.2em; font-weight: bold; color: var(--nu-purple); border-top: 1px solid #eee; padding-top: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Mi Presupuesto Permanente</h2>
+    <div class="save-status">✓ Se guarda automáticamente en este equipo</div>
+    
+    <div class="input-group">
+        <label>Sueldo Neto Mensual ($)</label>
+        <input type="number" id="sueldoBase" placeholder="Ej: 2500000" oninput="calcularYGuardar()">
+    </div>
+
+    <div id="listaGastos">
+        <label>Tus Gastos:</label>
+    </div>
+
+    <button class="btn-add" onclick="agregarGasto(); calcularYGuardar();">+ Agregar Gasto</button>
+
+    <div class="summary">
+        <div class="row"><span>Total en Gastos:</span> <span id="totalGastos">$ 0</span></div>
+        <div class="row total-disponible"><span>Saldo Disponible:</span> <span id="saldoFinal">$ 0</span></div>
+    </div>
+</div>
+
+<script>
+    // 1. Al cargar la página, recuperamos los datos
+    window.onload = function() {
+        const datosGuardados = JSON.parse(localStorage.getItem('presupuestoData'));
+        if (datosGuardados) {
+            document.getElementById('sueldoBase').value = datosGuardados.sueldo;
+            datosGuardados.gastos.forEach(g => agregarGasto(g.nombre, g.monto, g.color));
+        } else {
+            agregarGasto(); // Un gasto vacío por defecto
+        }
+        calcularYGuardar();
+    };
+
+    function agregarGasto(nombre = '', monto = '', color = '#820ad1') {
+        const container = document.getElementById('listaGastos');
+        const div = document.createElement('div');
+        div.className = 'gasto-item';
+        div.style.borderLeftColor = color;
+        
+        div.innerHTML = `
+            <input type="text" class="nom-gasto" placeholder="Nombre" value="${nombre}" oninput="calcularYGuardar()">
+            <input type="number" class="monto-gasto" placeholder="Monto" value="${monto}" oninput="calcularYGuardar()">
+            <input type="color" class="color-gasto" value="${color}" oninput="actualizarColor(this); calcularYGuardar()">
+            <button class="btn-del" onclick="this.parentElement.remove(); calcularYGuardar();">X</button>
+        `;
+        container.appendChild(div);
+    }
+
+    function actualizarColor(el) {
+        el.parentElement.style.borderLeftColor = el.value;
+    }
+
+    function calcularYGuardar() {
+        const sueldo = parseFloat(document.getElementById('sueldoBase').value) || 0;
+        const items = document.querySelectorAll('.gasto-item');
+        let sumaGastos = 0;
+        let gastosArray = [];
+
+        items.forEach(item => {
+            const nom = item.querySelector('.nom-gasto').value;
+            const mon = parseFloat(item.querySelector('.monto-gasto').value) || 0;
+            const col = item.querySelector('.color-gasto').value;
+            
+            sumaGastos += mon;
+            gastosArray.push({ nombre: nom, monto: mon, color: col });
+        });
+
+        const saldo = sueldo - sumaGastos;
+
+        // Actualizar UI
+        document.getElementById('totalGastos').innerText = '$ ' + sumaGastos.toLocaleString('es-CO');
+        document.getElementById('saldoFinal').innerText = '$ ' + saldo.toLocaleString('es-CO');
+        document.getElementById('saldoFinal').style.color = saldo < 0 ? "#ff4d4d" : "#820ad1";
+
+        // 2. GUARDAR EN LOCALSTORAGE
+        const dataParaGuardar = {
+            sueldo: sueldo,
+            gastos: gastosArray
+        };
+        localStorage.setItem('presupuestoData', JSON.stringify(dataParaGuardar));
+    }
+</script>
+
+</body>
+</html>
