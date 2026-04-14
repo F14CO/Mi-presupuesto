@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calculadora Sincronizada Hernán</title>
     
-    <!-- ✅ Firebase SDK v8 (Compat) - CORREGIDO -->
+    <!-- ✅ Firebase SDK v8 (Compat) - Carga correcta -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     
@@ -38,7 +38,7 @@
 <div class="sidebar" id="sidebar">
     <h3 style="color:var(--primary-color)">AJUSTES</h3>
     <label>Color de Interfaz:</label><br>
-    <input type="color" id="themePicker" oninput="changeUITheme(this.value)" style="width:100%; height:40px; margin:10px 0; border:none; cursor:pointer;">
+    <input type="color" id="themePicker" oninput="onUserInput()" style="width:100%; height:40px; margin:10px 0; border:none; cursor:pointer;">
     <button onclick="resetApp()" style="background:var(--danger); color:white; border:none; width:100%; padding:10px; border-radius:8px; cursor:pointer; margin-top:20px;">Borrar Todo</button>
 </div>
 
@@ -47,7 +47,7 @@
     <div class="save-indicator" id="saveIcon">Conectando...</div>
     <div class="header-income">
         <label>CALCULADORA DE GASTOS</label><br>
-        <input type="number" id="sueldoBase" placeholder="Sueldo Neto" oninput="updateAll()">
+        <input type="number" id="sueldoBase" placeholder="Sueldo Neto" oninput="onUserInput()">
     </div>
 </div>
 
@@ -77,7 +77,7 @@
 </div>
 
 <script>
-    // ✅ CONFIGURACIÓN DE FIREBASE - CORREGIDA
+    // --- CONFIGURACIÓN FIREBASE ---
     var firebaseConfig = {
         apiKey: "AIzaSyCLb7LaJypnUHQ0TKZ2aTRNK4yAa6SUiZE",
         authDomain: "calculadoramensualsueldo.firebaseapp.com",
@@ -87,19 +87,42 @@
         appId: "1:619721076451:web:56925f6251a3ba53ad5fd6"
     };
 
-    // ✅ Inicialización segura de Firebase v8
-    if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-    }
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     var db = firebase.firestore();
 
-    // ✅ Habilitar persistencia offline (opcional pero recomendado)
-    db.enablePersistence().catch(err => {
-        if (err.code === 'failed-precondition') {
-            console.log('⚠️ Persistencia: Múltiples pestañas abiertas');
-        } else if (err.code === 'unimplemented') {
-            console.log('⚠️ Persistencia: Navegador no compatible');
+    // --- ESTADO GLOBAL ---
+    var isUpdatingFromDB = false;
+    var saveTimeout;
+    var docRef = db.collection("usuarios").doc("datos"); // ⚠️ Ver nota de seguridad abajo
+
+    // ✅ LISTENER EN TIEMPO REAL (Sincroniza PC ↔ Celular al instante)
+    docRef.onSnapshot((doc) => {
+        if (doc.exists) {
+            isUpdatingFromDB = true;
+            var data = doc.data();
+            
+            document.getElementById('sueldoBase').value = data.sueldo ?? "";
+            if(data.temaColor) {
+                document.documentElement.style.setProperty('--primary-color', data.temaColor);
+                document.getElementById('themePicker').value = data.temaColor;
+            }
+            
+            // Limpiar y reconstruir listas sin activar eventos de escritura
+            document.getElementById('listaDeudas').innerHTML = '';
+            document.getElementById('listaAhorros').innerHTML = '';
+            
+            if(data.deudas) data.deudas.forEach(d => addItem('deudas', d.nombre, d.monto, d.color, true));
+            if(data.ahorros) data.ahorros.forEach(a => addItem('ahorros', a.nombre, a.monto, a.color, true));
+            
+            calculateTotals();
+            isUpdatingFromDB = false;
+            document.getElementById('saveIcon').innerText = "✅ Sincronizado";
+        } else {
+            document.getElementById('saveIcon').innerText = "📡 Esperando datos...";
         }
+    }, (error) => {
+        console.error("Error de sincronización:", error);
+        document.getElementById('saveIcon').innerText = "❌ Sin conexión";
     });
 
     function toggleMenu() {
@@ -107,109 +130,70 @@
         document.getElementById('overlay').classList.toggle('active');
     }
 
-    function changeUITheme(color) {
-        document.documentElement.style.setProperty('--primary-color', color);
-        updateAll();
-    }
-
-    function addItem(type, nombre = '', monto = '', color = '#820ad1') {
+    function addItem(type, nombre = '', monto = '', color = '#820ad1', fromDB = false) {
         const container = document.getElementById(type === 'deudas' ? 'listaDeudas' : 'listaAhorros');
         const div = document.createElement('div');
         div.className = 'item-row';
         div.style.borderLeftColor = color;
+        // ✅ Solo llama a onUserInput() si NO viene de la BD (evita bucles)
+        const inputEvent = fromDB ? '' : 'oninput="onUserInput()"';
         div.innerHTML = `
             <span class="dot" style="color: ${color}; font-size: 20px;">■</span>
-            <input type="text" class="inp-nom" placeholder="Nombre" value="${nombre}" oninput="updateAll()" style="flex:2">
-            <input type="number" class="inp-mon" placeholder="0" value="${monto}" oninput="updateAll()" style="flex:1; text-align: right;">
-            <input type="color" class="inp-col input-color-box" value="${color}" oninput="updateColorRow(this)">
-            <button onclick="this.parentElement.remove(); updateAll()" style="background:none; border:none; color:#ccc; cursor:pointer;">✕</button>
+            <input type="text" class="inp-nom" placeholder="Nombre" value="${nombre}" ${inputEvent} style="flex:2">
+            <input type="number" class="inp-mon" placeholder="0" value="${monto}" ${inputEvent} style="flex:1; text-align: right;">
+            <input type="color" class="inp-col input-color-box" value="${color}" ${inputEvent} style="width:35px;height:35px;border:1px solid #ddd;border-radius:8px;cursor:pointer;">
+            <button onclick="this.parentElement.remove(); onUserInput()" style="background:none; border:none; color:#ccc; cursor:pointer;">✕</button>
         `;
         container.appendChild(div);
     }
 
-    function updateColorRow(el) {
-        el.parentElement.style.borderLeftColor = el.value;
-        el.parentElement.querySelector('.dot').style.color = el.value;
-        updateAll();
+    function onUserInput() {
+        if (isUpdatingFromDB) return; // Bloquea escrituras durante sincronización entrante
+        calculateTotals();
+        
+        document.getElementById('saveIcon').innerText = "☁️ Guardando...";
+        clearTimeout(saveTimeout);
+        
+        saveTimeout = setTimeout(() => {
+            const theme = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim();
+            docRef.set({
+                sueldo: parseFloat(document.getElementById('sueldoBase').value) || 0,
+                temaColor: theme,
+                deudas: getItemsArray('deudas'),
+                ahorros: getItemsArray('ahorros'),
+                ultimaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
+            }).catch(err => {
+                document.getElementById('saveIcon').innerText = "❌ Error al guardar";
+                console.error(err);
+            });
+        }, 800); // Debounce de 800ms
     }
 
-    function updateAll() {
+    function calculateTotals() {
         const sueldo = parseFloat(document.getElementById('sueldoBase').value) || 0;
         let g = 0, a = 0;
-        
         document.querySelectorAll('#listaDeudas .inp-mon').forEach(i => g += parseFloat(i.value) || 0);
         document.querySelectorAll('#listaAhorros .inp-mon').forEach(i => a += parseFloat(i.value) || 0);
-        
         const disp = sueldo - g - a;
         
         document.getElementById('resGasto').innerText = `$ ${g.toLocaleString()}`;
         document.getElementById('resAhorro').innerText = `$ ${a.toLocaleString()}`;
         document.getElementById('resDisponible').innerText = `$ ${disp.toLocaleString()}`;
         document.getElementById('resDisponible').style.color = disp < 0 ? "var(--danger)" : "var(--success)";
-
-        // Indicador de guardado
-        document.getElementById('saveIcon').innerText = "☁️ Guardando...";
-        clearTimeout(window.sT);
-        
-        window.sT = setTimeout(() => {
-            const currentTheme = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim();
-            
-            db.collection("usuarios").doc("datos").set({
-                sueldo: sueldo,
-                temaColor: currentTheme,
-                deudas: Array.from(document.querySelectorAll('#listaDeudas .item-row')).map(r => ({
-                    nombre: r.querySelector('.inp-nom').value,
-                    monto: parseFloat(r.querySelector('.inp-mon').value) || 0,
-                    color: r.querySelector('.inp-col').value
-                })),
-                ahorros: Array.from(document.querySelectorAll('#listaAhorros .item-row')).map(r => ({
-                    nombre: r.querySelector('.inp-nom').value,
-                    monto: parseFloat(r.querySelector('.inp-mon').value) || 0,
-                    color: r.querySelector('.inp-col').value
-                })),
-                ultimaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
-            }).then(() => {
-                document.getElementById('saveIcon').innerText = "✅ Sincronizado";
-            }).catch(e => {
-                document.getElementById('saveIcon').innerText = "❌ Error";
-                console.error("Error al sincronizar:", e);
-            });
-        }, 1000);
     }
 
-    // ✅ Carga inicial con manejo de errores mejorado
-    window.onload = function() {
-        db.collection("usuarios").doc("datos").get().then((doc) => {
-            if (doc.exists) {
-                var data = doc.data();
-                document.getElementById('sueldoBase').value = data.sueldo || "";
-                
-                if(data.temaColor) {
-                    document.documentElement.style.setProperty('--primary-color', data.temaColor);
-                    document.getElementById('themePicker').value = data.temaColor;
-                }
-                
-                if(data.deudas) data.deudas.forEach(d => addItem('deudas', d.nombre, d.monto, d.color));
-                if(data.ahorros) data.ahorros.forEach(a => addItem('ahorros', a.nombre, a.monto, a.color));
-            }
-            updateAll();
-        }).catch((error) => {
-            document.getElementById('saveIcon').innerText = "❌ Error de Carga";
-            console.error("Error al cargar datos:", error);
-        });
-    };
+    function getItemsArray(type) {
+        const listId = type === 'deudas' ? 'listaDeudas' : 'listaAhorros';
+        return Array.from(document.querySelectorAll(`#${listId} .item-row`)).map(r => ({
+            nombre: r.querySelector('.inp-nom').value,
+            monto: parseFloat(r.querySelector('.inp-mon').value) || 0,
+            color: r.querySelector('.inp-col').value
+        }));
+    }
 
     function resetApp() {
-        if(confirm("¿Estás seguro de borrar todos los datos? Esta acción no se puede deshacer.")) {
-            db.collection("usuarios").doc("datos").delete()
-                .then(() => {
-                    localStorage.clear();
-                    location.reload();
-                })
-                .catch((error) => {
-                    console.error("Error al borrar:", error);
-                    alert("Error al borrar los datos");
-                });
+        if(confirm("¿Borrar todos los datos? Esta acción es irreversible.")) {
+            docRef.delete().then(() => location.reload()).catch(err => alert("Error: " + err.message));
         }
     }
 </script>
