@@ -2,82 +2,793 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculadora Sincronizada Hernán</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>💰 Calculadora Hernán</title>
     
     <!-- Firebase SDK v8 -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
     <style>
-        :root { --primary-color: #2c3e50; --bg-color: #f0f2f5; --card-bg: #ffffff; --danger: #e74c3c; --success: #27ae60; }
-        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-color); margin: 0; padding: 0; padding-bottom: 100px; }
-        .sidebar { position: fixed; left: -280px; top: 0; width: 280px; height: 100%; background: white; z-index: 3000; transition: 0.3s; padding: 25px; box-sizing: border-box; box-shadow: 10px 0 30px rgba(0,0,0,0.1); }
+        /* ===== VARIABLES CSS ===== */
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #8b5cf6;
+            --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --card-shadow: 0 10px 40px -10px rgba(0,0,0,0.1);
+            --card-shadow-hover: 0 20px 60px -15px rgba(0,0,0,0.15);
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --danger: #ef4444;
+            --danger-light: #fef2f2;
+            --success: #22c55e;
+            --success-light: #f0fdf4;
+            --warning: #f59e0b;
+            --warning-light: #fffbeb;
+            --border-radius: 20px;
+            --border-radius-sm: 12px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --sidebar-width: 320px;
+        }
+
+        /* ===== DARK MODE ===== */
+        [data-theme="dark"] {
+            --bg-gradient: linear-gradient(135deg, #1e1e2e 0%, #313244 100%);
+            --bg-color: #0f0f1a;
+            --card-bg: #1e1e2e;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --card-shadow: 0 10px 40px -10px rgba(0,0,0,0.3);
+        }
+
+        /* ===== BASE ===== */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-color);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+            transition: var(--transition);
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            position: fixed;
+            left: calc(-1 * var(--sidebar-width));
+            top: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: var(--card-bg);
+            z-index: 3000;
+            transition: var(--transition);
+            padding: 24px;
+            box-shadow: 20px 0 60px rgba(0,0,0,0.15);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
         .sidebar.active { left: 0; }
-        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 2500; display: none; }
+        
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+        }
+        .sidebar-header h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            background: var(--bg-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .sidebar-close {
+            margin-left: auto;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: var(--transition);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .sidebar-close:hover { background: rgba(0,0,0,0.05); color: var(--text-primary); }
+
+        .sidebar-section { margin-bottom: 24px; }
+        .sidebar-section-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+
+        .sidebar-option {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: var(--border-radius-sm);
+            cursor: pointer;
+            transition: var(--transition);
+            margin-bottom: 4px;
+        }
+        .sidebar-option:hover, .sidebar-option.active {
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--primary);
+        }
+        .sidebar-option.danger:hover { background: var(--danger-light); color: var(--danger); }
+        .sidebar-option-icon { font-size: 1.25rem; width: 24px; text-align: center; }
+        .sidebar-option-label { font-weight: 500; font-size: 0.95rem; }
+
+        .sidebar-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 0;
+        }
+        .toggle-switch {
+            position: relative;
+            width: 48px;
+            height: 28px;
+            background: #cbd5e1;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            background: white;
+            border-radius: 50%;
+            top: 3px;
+            left: 3px;
+            transition: var(--transition);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .toggle-switch.active { background: var(--primary); }
+        .toggle-switch.active::after { left: 23px; }
+
+        .color-picker-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 0;
+        }
+        .color-picker-wrapper input[type="color"] {
+            width: 44px;
+            height: 44px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            background: none;
+            padding: 0;
+        }
+        .color-picker-wrapper span { font-size: 0.9rem; }
+
+        .sidebar-footer {
+            margin-top: auto;
+            padding-top: 20px;
+            border-top: 1px solid rgba(0,0,0,0.08);
+            text-align: center;
+        }
+        .sidebar-footer small { color: var(--text-secondary); font-size: 0.75rem; }
+
+        /* ===== OVERLAY ===== */
+        .overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.4);
+            z-index: 2500;
+            display: none;
+            backdrop-filter: blur(4px);
+            animation: fadeIn 0.2s ease;
+        }
         .overlay.active { display: block; }
-        .top-banner { background: var(--primary-color); padding: 50px 20px; color: white; text-align: center; border-bottom-left-radius: 30px; border-bottom-right-radius: 30px; position: relative; }
-        .menu-btn { position: absolute; left: 20px; top: 20px; font-size: 28px; cursor: pointer; }
-        .save-indicator { position: absolute; right: 20px; top: 25px; font-size: 11px; background: rgba(0,0,0,0.3); padding: 4px 10px; border-radius: 10px; }
-        .header-income input { background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); border-radius: 15px; color: white; font-size: 2rem; font-weight: 800; text-align: center; width: 85%; max-width: 380px; padding: 10px; outline: none; }
-        .container { max-width: 1000px; margin: -25px auto 0; padding: 0 15px; }
-        .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* ===== TOP BANNER ===== */
+        .top-banner {
+            background: var(--bg-gradient);
+            padding: 60px 20px 40px;
+            color: white;
+            text-align: center;
+            border-bottom-left-radius: 40px;
+            border-bottom-right-radius: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+        .top-banner::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: pulse 4s ease-in-out infinite;
+        }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+        
+        .menu-btn {
+            position: absolute;
+            left: 20px;
+            top: 20px;
+            font-size: 1.75rem;
+            cursor: pointer;
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+            background: rgba(255,255,255,0.15);
+        }
+        .menu-btn:hover { background: rgba(255,255,255,0.25); transform: scale(1.05); }
+        
+        .save-indicator {
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            background: rgba(255,255,255,0.2);
+            padding: 6px 14px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            animation: slideIn 0.3s ease;
+        }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+        
+        .header-income { position: relative; z-index: 2; }
+        .header-income label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            opacity: 0.9;
+            margin-bottom: 12px;
+            letter-spacing: 0.02em;
+        }
+        .header-income input {
+            background: rgba(255,255,255,0.2);
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 18px;
+            color: white;
+            font-size: 2.25rem;
+            font-weight: 800;
+            text-align: center;
+            width: 90%;
+            max-width: 400px;
+            padding: 14px 20px;
+            outline: none;
+            transition: var(--transition);
+        }
+        .header-income input::placeholder { color: rgba(255,255,255,0.6); }
+        .header-income input:focus {
+            background: rgba(255,255,255,0.3);
+            border-color: rgba(255,255,255,0.6);
+            box-shadow: 0 0 0 4px rgba(255,255,255,0.1);
+        }
+
+        /* ===== CONTAINER & DASHBOARD ===== */
+        .container { max-width: 1100px; margin: -30px auto 0; padding: 0 20px; position: relative; z-index: 10; }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
         @media (max-width: 768px) { .dashboard { grid-template-columns: 1fr; } }
-        .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); min-height: 150px; }
-        .item-row { display: flex; gap: 10px; background: #f8f9fa; padding: 12px; border-radius: 12px; margin-bottom: 10px; align-items: center; border-left: 6px solid #ccc; }
-        .item-row input { background: transparent; border: none; font-weight: 600; outline: none; }
-        .btn-add { background: var(--primary-color); color: white; border: none; width: 35px; height: 35px; border-radius: 50%; cursor: pointer; font-size: 20px; }
-        .input-color-box { width: 35px; height: 35px; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; background: white; }
-        .footer-nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 92%; max-width: 500px; background: white; border-radius: 25px; display: flex; justify-content: space-around; align-items: center; height: 85px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); z-index: 2000; }
+
+        /* ===== CARDS ===== */
+        .card {
+            background: var(--card-bg);
+            padding: 24px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            transition: var(--transition);
+            animation: cardEnter 0.4s ease backwards;
+        }
+        .card:nth-child(1) { animation-delay: 0.1s; }
+        .card:nth-child(2) { animation-delay: 0.2s; }
+        @keyframes cardEnter { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .card:hover { box-shadow: var(--card-shadow-hover); transform: translateY(-2px); }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid rgba(0,0,0,0.06);
+        }
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .card-title.danger { color: var(--danger); }
+        .card-title.success { color: var(--success); }
+        
+        .btn-add {
+            background: var(--primary);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+            box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
+        }
+        .btn-add:hover {
+            transform: scale(1.1) rotate(90deg);
+            background: var(--primary-dark);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.6);
+        }
+        .btn-add:active { transform: scale(0.95); }
+
+        /* ===== ITEM ROWS ===== */
+        .item-row {
+            display: flex;
+            gap: 12px;
+            background: rgba(0,0,0,0.03);
+            padding: 14px 16px;
+            border-radius: var(--border-radius-sm);
+            margin-bottom: 12px;
+            align-items: center;
+            border-left: 4px solid var(--primary);
+            transition: var(--transition);
+            animation: itemSlide 0.3s ease;
+        }
+        @keyframes itemSlide { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
+        .item-row:hover { background: rgba(0,0,0,0.05); transform: translateX(4px); }
+        
+        .item-row .dot { font-size: 1.25rem; cursor: grab; }
+        .item-row .dot:active { cursor: grabbing; }
+        
+        .item-row input[type="text"],
+        .item-row input[type="number"] {
+            background: transparent;
+            border: none;
+            font-weight: 600;
+            outline: none;
+            color: var(--text-primary);
+            padding: 4px 0;
+        }
+        .item-row input[type="text"] { flex: 2; font-size: 0.95rem; }
+        .item-row input[type="number"] { flex: 1; text-align: right; font-size: 1rem; }
+        .item-row input[type="number"]::-webkit-inner-spin-button { opacity: 1; }
+        
+        .item-row input[type="color"] {
+            width: 36px;
+            height: 36px;
+            border: 2px solid rgba(0,0,0,0.1);
+            border-radius: 10px;
+            cursor: pointer;
+            background: none;
+            padding: 0;
+            transition: var(--transition);
+        }
+        .item-row input[type="color"]:hover { transform: scale(1.1); border-color: var(--primary); }
+        
+        .btn-remove {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 1.25rem;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+        .btn-remove:hover { background: var(--danger-light); color: var(--danger); transform: rotate(90deg); }
+
+        /* ===== FOOTER NAV ===== */
+        .footer-nav {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 92%;
+            max-width: 520px;
+            background: var(--card-bg);
+            border-radius: 28px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            height: 90px;
+            box-shadow: var(--card-shadow-hover);
+            z-index: 2000;
+            padding: 0 8px;
+            animation: float 3s ease-in-out infinite;
+        }
+        @keyframes float { 0%, 100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(-4px); } }
+        
+        .footer-item {
+            text-align: center;
+            padding: 8px 12px;
+            border-radius: 16px;
+            transition: var(--transition);
+            min-width: 80px;
+        }
+        .footer-item:hover { background: rgba(0,0,0,0.05); }
+        .footer-item span {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .footer-item strong {
+            font-size: 1.3rem;
+            font-weight: 800;
+            display: block;
+        }
+        .footer-item:nth-child(2) strong { font-size: 1.6rem; }
+
+        /* ===== TOAST NOTIFICATIONS ===== */
+        .toast-container {
+            position: fixed;
+            bottom: 130px;
+            right: 20px;
+            z-index: 4000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 320px;
+        }
+        .toast {
+            background: var(--card-bg);
+            padding: 14px 20px;
+            border-radius: 14px;
+            box-shadow: var(--card-shadow-hover);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: toastIn 0.3s ease, toastOut 0.3s ease 2.7s forwards;
+            border-left: 4px solid var(--primary);
+        }
+        .toast.success { border-left-color: var(--success); }
+        .toast.error { border-left-color: var(--danger); }
+        .toast.warning { border-left-color: var(--warning); }
+        @keyframes toastIn { from { opacity: 0; transform: translateX(100px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes toastOut { to { opacity: 0; transform: translateX(100px); } }
+        .toast-icon { font-size: 1.25rem; }
+        .toast-message { font-size: 0.9rem; font-weight: 500; }
+
+        /* ===== MODAL ===== */
+        .modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 5000;
+            padding: 20px;
+            backdrop-filter: blur(4px);
+        }
+        .modal.active { display: flex; animation: fadeIn 0.2s ease; }
+        .modal-content {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 28px;
+            max-width: 480px;
+            width: 100%;
+            box-shadow: var(--card-shadow-hover);
+            animation: modalSlide 0.3s ease;
+        }
+        @keyframes modalSlide { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: translateY(0); } }
+        .modal-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 16px; }
+        .modal-text { color: var(--text-secondary); margin-bottom: 24px; line-height: 1.6; }
+        .modal-buttons { display: flex; gap: 12px; justify-content: flex-end; }
+        .btn {
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            border: none;
+            font-size: 0.95rem;
+        }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-dark); transform: translateY(-2px); }
+        .btn-secondary { background: rgba(0,0,0,0.08); color: var(--text-primary); }
+        .btn-secondary:hover { background: rgba(0,0,0,0.12); }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-danger:hover { background: #dc2626; }
+
+        /* ===== EMPTY STATE ===== */
+        .empty-state {
+            text-align: center;
+            padding: 30px 20px;
+            color: var(--text-secondary);
+        }
+        .empty-state-icon { font-size: 3rem; margin-bottom: 12px; opacity: 0.5; }
+        .empty-state-text { font-size: 0.9rem; }
+
+        /* ===== PROGRESS BAR ===== */
+        .progress-container {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px dashed rgba(0,0,0,0.1);
+        }
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+        }
+        .progress-bar {
+            height: 8px;
+            background: rgba(0,0,0,0.08);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: var(--bg-gradient);
+            border-radius: 4px;
+            transition: width 0.5s ease;
+            width: 0%;
+        }
+
+        /* ===== UTILITIES ===== */
+        .hidden { display: none !important; }
+        .text-danger { color: var(--danger); }
+        .text-success { color: var(--success); }
+        .text-warning { color: var(--warning); }
+        .flex-center { display: flex; align-items: center; justify-content: center; }
+        .gap-2 { gap: 8px; }
+        .gap-3 { gap: 12px; }
+        .mt-2 { margin-top: 8px; }
+        .mt-3 { margin-top: 12px; }
+        .mb-2 { margin-bottom: 8px; }
+        .mb-3 { margin-bottom: 12px; }
+
+        /* ===== ANIMATIONS ===== */
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        .loading {
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 8px;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 480px) {
+            .top-banner { padding: 50px 16px 35px; border-radius: 0 0 32px 32px; }
+            .header-income input { font-size: 1.75rem; padding: 12px 16px; }
+            .footer-nav { width: 95%; height: 80px; bottom: 16px; }
+            .footer-item strong { font-size: 1.1rem; }
+            .footer-item:nth-child(2) strong { font-size: 1.3rem; }
+            .sidebar { width: 280px; }
+            :root { --sidebar-width: 280px; }
+        }
     </style>
 </head>
 <body>
 
+<!-- Overlay -->
 <div class="overlay" id="overlay" onclick="toggleMenu()"></div>
 
+<!-- Sidebar -->
 <div class="sidebar" id="sidebar">
-    <h3 style="color:var(--primary-color)">AJUSTES</h3>
-    <label>Color de Interfaz:</label><br>
-    <input type="color" id="themePicker" oninput="onUserInput()" style="width:100%; height:40px; margin:10px 0; border:none; cursor:pointer;">
-    <button onclick="resetApp()" style="background:var(--danger); color:white; border:none; width:100%; padding:10px; border-radius:8px; cursor:pointer; margin-top:20px;">Borrar Todo</button>
+    <div class="sidebar-header">
+        <h3>⚙️ Configuración</h3>
+        <button class="sidebar-close" onclick="toggleMenu()">✕</button>
+    </div>
+
+    <div class="sidebar-section">
+        <div class="sidebar-section-title">Apariencia</div>
+        
+        <div class="sidebar-option" onclick="toggleDarkMode()">
+            <span class="sidebar-option-icon">🌙</span>
+            <span class="sidebar-option-label">Modo Oscuro</span>
+            <div class="toggle-switch" id="darkModeToggle"></div>
+        </div>
+        
+        <div class="sidebar-option">
+            <span class="sidebar-option-icon">🎨</span>
+            <span class="sidebar-option-label">Color Principal</span>
+        </div>
+        <div class="color-picker-wrapper">
+            <input type="color" id="themePicker" oninput="onUserInput()">
+            <span>Personalizar interfaz</span>
+        </div>
+    </div>
+
+    <div class="sidebar-section">
+        <div class="sidebar-section-title">Datos</div>
+        
+        <div class="sidebar-option" onclick="exportData()">
+            <span class="sidebar-option-icon">📤</span>
+            <span class="sidebar-option-label">Exportar Datos</span>
+        </div>
+        
+        <div class="sidebar-option" onclick="importData()">
+            <span class="sidebar-option-icon">📥</span>
+            <span class="sidebar-option-label">Importar Datos</span>
+        </div>
+        
+        <div class="sidebar-option" onclick="showStats()">
+            <span class="sidebar-option-icon">📊</span>
+            <span class="sidebar-option-label">Ver Estadísticas</span>
+        </div>
+    </div>
+
+    <div class="sidebar-section">
+        <div class="sidebar-section-title">Sincronización</div>
+        
+        <div class="sidebar-option">
+            <span class="sidebar-option-icon">☁️</span>
+            <span class="sidebar-option-label" id="syncStatus">Conectado</span>
+        </div>
+        
+        <div class="sidebar-option" onclick="forceSync()">
+            <span class="sidebar-option-icon">🔄</span>
+            <span class="sidebar-option-label">Sincronizar Ahora</span>
+        </div>
+    </div>
+
+    <div class="sidebar-section">
+        <div class="sidebar-section-title">Ayuda</div>
+        
+        <div class="sidebar-option" onclick="showAbout()">
+            <span class="sidebar-option-icon">ℹ️</span>
+            <span class="sidebar-option-label">Acerca de</span>
+        </div>
+        
+        <div class="sidebar-option danger" onclick="confirmReset()">
+            <span class="sidebar-option-icon">🗑️</span>
+            <span class="sidebar-option-label">Borrar Todo</span>
+        </div>
+    </div>
+
+    <div class="sidebar-footer">
+        <small>💰 Calculadora Hernán<br>v2.0 • Sincronizado con Firebase</small>
+    </div>
 </div>
 
+<!-- Top Banner -->
 <div class="top-banner">
     <div class="menu-btn" onclick="toggleMenu()">☰</div>
-    <div class="save-indicator" id="saveIcon">Conectando...</div>
+    <div class="save-indicator" id="saveIcon">
+        <span>🔄</span> Conectando...
+    </div>
     <div class="header-income">
-        <label>CALCULADORA DE GASTOS</label><br>
-        <input type="number" id="sueldoBase" placeholder="Sueldo Neto" oninput="onUserInput()">
+        <label>💵 INGRESO MENSUAL</label>
+        <input type="number" id="sueldoBase" placeholder="$ 0" oninput="onUserInput()">
     </div>
 </div>
 
+<!-- Main Container -->
 <div class="container">
     <div class="dashboard">
+        <!-- Deudas Card -->
         <div class="card">
-            <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
-                <strong style="color:var(--danger)">DEUDAS</strong>
-                <button class="btn-add" onclick="addItem('deudas')">+</button>
+            <div class="card-header">
+                <strong class="card-title danger">💸 Deudas</strong>
+                <button class="btn-add" onclick="addItem('deudas')" title="Agregar deuda">+</button>
             </div>
-            <div id="listaDeudas"></div>
+            <div id="listaDeudas">
+                <div class="empty-state">
+                    <div class="empty-state-icon">📭</div>
+                    <p class="empty-state-text">Sin deudas registradas<br><small>Agrega tu primera deuda</small></p>
+                </div>
+            </div>
+            <div class="progress-container">
+                <div class="progress-label">
+                    <span>Progreso de pago</span>
+                    <span id="deudaProgress">0%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="deudaBar"></div>
+                </div>
+            </div>
         </div>
+
+        <!-- Ahorros Card -->
         <div class="card">
-            <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
-                <strong style="color:var(--success)">AHORROS</strong>
-                <button class="btn-add" onclick="addItem('ahorros')">+</button>
+            <div class="card-header">
+                <strong class="card-title success">🎯 Ahorros</strong>
+                <button class="btn-add" onclick="addItem('ahorros')" title="Agregar ahorro">+</button>
             </div>
-            <div id="listaAhorros"></div>
+            <div id="listaAhorros">
+                <div class="empty-state">
+                    <div class="empty-state-icon">🏦</div>
+                    <p class="empty-state-text">Sin metas de ahorro<br><small>¡Empieza a ahorrar hoy!</small></p>
+                </div>
+            </div>
+            <div class="progress-container">
+                <div class="progress-label">
+                    <span>Meta alcanzada</span>
+                    <span id="ahorroProgress">0%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="ahorroBar" style="background: linear-gradient(135deg, #22c55e, #16a34a);"></div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
+<!-- Footer Navigation -->
 <div class="footer-nav">
-    <div style="text-align:center"><span>GASTOS</span><br><strong id="resGasto" style="color:var(--danger)">$ 0</strong></div>
-    <div style="text-align:center"><span>NETO</span><br><strong id="resDisponible" style="font-size: 1.4rem;">$ 0</strong></div>
-    <div style="text-align:center"><span>AHORROS</span><br><strong id="resAhorro" style="color:var(--success)">$ 0</strong></div>
+    <div class="footer-item">
+        <span>💸 Gastos</span>
+        <strong id="resGasto" class="text-danger">$ 0</strong>
+    </div>
+    <div class="footer-item">
+        <span>💎 Disponible</span>
+        <strong id="resDisponible">$ 0</strong>
+    </div>
+    <div class="footer-item">
+        <span>🎯 Ahorros</span>
+        <strong id="resAhorro" class="text-success">$ 0</strong>
+    </div>
 </div>
 
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Modal -->
+<div class="modal" id="modal">
+    <div class="modal-content">
+        <h4 class="modal-title" id="modalTitle">Confirmar</h4>
+        <p class="modal-text" id="modalText">¿Estás seguro de realizar esta acción?</p>
+        <div class="modal-buttons">
+            <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+            <button class="btn btn-primary" id="modalConfirm">Confirmar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden file input for import -->
+<input type="file" id="importFile" accept=".json" style="display:none" onchange="handleImport(event)">
+
 <script>
-    // --- CONFIGURACIÓN FIREBASE ---
+    // ===== FIREBASE CONFIG =====
     var firebaseConfig = {
         apiKey: "AIzaSyCLb7LaJypnUHQ0TKZ2aTRNK4yAa6SUiZE",
         authDomain: "calculadoramensualsueldo.firebaseapp.com",
@@ -90,14 +801,14 @@
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     var db = firebase.firestore();
 
-    // --- ESTADO GLOBAL ---
+    // ===== STATE =====
     var isUpdatingFromDB = false;
     var saveTimeout;
-    
-    // 🔐 NOMBRE SECRETO DEL DOCUMENTO (cámbialo por uno único)
     var docRef = db.collection("usuarios").doc("x9k2mP7qLz4wN1vB8cR5Hernan2026");
+    var goalDebt = 0; // Meta de pago de deudas
+    var goalSavings = 0; // Meta de ahorro
 
-    // ✅ LISTENER EN TIEMPO REAL (Sincroniza PC ↔ Celular)
+    // ===== REAL-TIME SYNC =====
     docRef.onSnapshot((doc) => {
         if (doc.exists) {
             isUpdatingFromDB = true;
@@ -105,81 +816,235 @@
             
             document.getElementById('sueldoBase').value = data.sueldo ?? "";
             if(data.temaColor) {
-                document.documentElement.style.setProperty('--primary-color', data.temaColor);
+                document.documentElement.style.setProperty('--primary', data.temaColor);
                 document.getElementById('themePicker').value = data.temaColor;
             }
+            if(data.darkMode) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                document.getElementById('darkModeToggle').classList.add('active');
+            }
+            if(data.goalDebt) goalDebt = data.goalDebt;
+            if(data.goalSavings) goalSavings = data.goalSavings;
             
             document.getElementById('listaDeudas').innerHTML = '';
             document.getElementById('listaAhorros').innerHTML = '';
             
-            if(data.deudas) data.deudas.forEach(d => addItem('deudas', d.nombre, d.monto, d.color, true));
-            if(data.ahorros) data.ahorros.forEach(a => addItem('ahorros', a.nombre, a.monto, a.color, true));
+            if(data.deudas && data.deudas.length) {
+                data.deudas.forEach(d => addItem('deudas', d.nombre, d.monto, d.color, true));
+            } else {
+                showEmptyState('listaDeudas', '📭', 'Sin deudas', 'Agrega tu primera deuda');
+            }
+            
+            if(data.ahorros && data.ahorros.length) {
+                data.ahorros.forEach(a => addItem('ahorros', a.nombre, a.monto, a.color, true));
+            } else {
+                showEmptyState('listaAhorros', '🏦', 'Sin metas', '¡Empieza a ahorrar hoy!');
+            }
             
             calculateTotals();
+            updateProgressBars();
             isUpdatingFromDB = false;
-            document.getElementById('saveIcon').innerText = "✅ Sincronizado";
+            updateSyncStatus('✅ Sincronizado', 'success');
         } else {
-            document.getElementById('saveIcon').innerText = "📡 Listo para guardar";
+            updateSyncStatus('📡 Listo para guardar', 'warning');
         }
     }, (error) => {
-        console.error("Error de sincronización:", error);
-        document.getElementById('saveIcon').innerText = "❌ Sin conexión";
+        console.error("Sync error:", error);
+        updateSyncStatus('❌ Sin conexión', 'error');
+        showToast('Error de sincronización', 'error');
     });
 
+    // ===== UI FUNCTIONS =====
     function toggleMenu() {
         document.getElementById('sidebar').classList.toggle('active');
         document.getElementById('overlay').classList.toggle('active');
     }
 
-    function addItem(type, nombre = '', monto = '', color = '#820ad1', fromDB = false) {
+    function toggleDarkMode() {
+        const html = document.documentElement;
+        const toggle = document.getElementById('darkModeToggle');
+        const isDark = html.getAttribute('data-theme') === 'dark';
+        
+        if(isDark) {
+            html.removeAttribute('data-theme');
+            toggle.classList.remove('active');
+        } else {
+            html.setAttribute('data-theme', 'dark');
+            toggle.classList.add('active');
+        }
+        onUserInput();
+        showToast(isDark ? '☀️ Modo claro activado' : '🌙 Modo oscuro activado', 'success');
+    }
+
+    function updateSyncStatus(text, type) {
+        const icon = document.getElementById('saveIcon');
+        icon.innerHTML = `<span>${text.split(' ')[0]}</span> ${text.split(' ').slice(1).join(' ')}`;
+        icon.style.background = type === 'error' ? 'rgba(239,68,68,0.2)' : 
+                               type === 'warning' ? 'rgba(245,158,11,0.2)' : 
+                               'rgba(34,197,94,0.2)';
+    }
+
+    function showToast(message, type = 'success') {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.innerHTML = `
+            <span class="toast-icon">${type === 'success' ? '✅' : type === 'error' ? '❌' : '⚠️'}</span>
+            <span class="toast-message">${message}</span>
+        `;
+        container.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
+
+    function showModal(title, text, onConfirm) {
+        document.getElementById('modalTitle').textContent = title;
+        document.getElementById('modalText').textContent = text;
+        document.getElementById('modalConfirm').onclick = () => {
+            closeModal();
+            if(onConfirm) onConfirm();
+        };
+        document.getElementById('modal').classList.add('active');
+    }
+
+    function closeModal() {
+        document.getElementById('modal').classList.remove('active');
+    }
+
+    function showEmptyState(containerId, icon, title, subtitle) {
+        document.getElementById(containerId).innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">${icon}</div>
+                <p><strong>${title}</strong><br><small>${subtitle}</small></p>
+            </div>
+        `;
+    }
+
+    function updateProgressBars() {
+        const totalDebt = Array.from(document.querySelectorAll('#listaDeudas .inp-mon'))
+            .reduce((sum, i) => sum + (parseFloat(i.value) || 0), 0);
+        const totalSavings = Array.from(document.querySelectorAll('#listaAhorros .inp-mon'))
+            .reduce((sum, i) => sum + (parseFloat(i.value) || 0), 0);
+        
+        if(goalDebt > 0) {
+            const debtPercent = Math.min(100, Math.round((totalDebt / goalDebt) * 100));
+            document.getElementById('deudaProgress').textContent = `${debtPercent}%`;
+            document.getElementById('deudaBar').style.width = `${debtPercent}%`;
+        }
+        
+        if(goalSavings > 0) {
+            const savingsPercent = Math.min(100, Math.round((totalSavings / goalSavings) * 100));
+            document.getElementById('ahorroProgress').textContent = `${savingsPercent}%`;
+            document.getElementById('ahorroBar').style.width = `${savingsPercent}%`;
+        }
+    }
+
+    // ===== CORE FUNCTIONS =====
+    function addItem(type, nombre = '', monto = '', color = '#6366f1', fromDB = false) {
         const container = document.getElementById(type === 'deudas' ? 'listaDeudas' : 'listaAhorros');
+        
+        // Remove empty state if exists
+        const emptyState = container.querySelector('.empty-state');
+        if(emptyState) emptyState.remove();
+        
         const div = document.createElement('div');
         div.className = 'item-row';
         div.style.borderLeftColor = color;
         const inputEvent = fromDB ? '' : 'oninput="onUserInput()"';
+        
         div.innerHTML = `
-            <span class="dot" style="color: ${color}; font-size: 20px;">■</span>
+            <span class="dot" style="color: ${color}">●</span>
             <input type="text" class="inp-nom" placeholder="Nombre" value="${nombre}" ${inputEvent} style="flex:2">
             <input type="number" class="inp-mon" placeholder="0" value="${monto}" ${inputEvent} style="flex:1; text-align: right;">
-            <input type="color" class="inp-col input-color-box" value="${color}" ${inputEvent} style="width:35px;height:35px;border:1px solid #ddd;border-radius:8px;cursor:pointer;">
-            <button onclick="this.parentElement.remove(); onUserInput()" style="background:none; border:none; color:#ccc; cursor:pointer;">✕</button>
+            <input type="color" class="inp-col" value="${color}" ${inputEvent}>
+            <button class="btn-remove" onclick="removeItem(this)" title="Eliminar">✕</button>
         `;
         container.appendChild(div);
+        
+        if(!fromDB) onUserInput();
+    }
+
+    function removeItem(btn) {
+        const row = btn.closest('.item-row');
+        row.style.opacity = '0';
+        row.style.transform = 'translateX(20px)';
+        setTimeout(() => {
+            row.remove();
+            // Check if list is empty
+            const container = row.parentElement;
+            if(!container.querySelector('.item-row')) {
+                const type = container.id === 'listaDeudas' ? 'deudas' : 'ahorros';
+                showEmptyState(container.id, type === 'deudas' ? '📭' : '🏦', 
+                    type === 'deudas' ? 'Sin deudas' : 'Sin metas',
+                    type === 'deudas' ? 'Agrega tu primera deuda' : '¡Empieza a ahorrar hoy!');
+            }
+            onUserInput();
+        }, 300);
     }
 
     function onUserInput() {
         if (isUpdatingFromDB) return;
         calculateTotals();
+        updateProgressBars();
         
-        document.getElementById('saveIcon').innerText = "☁️ Guardando...";
+        updateSyncStatus('☁️ Guardando...', 'warning');
         clearTimeout(saveTimeout);
         
         saveTimeout = setTimeout(() => {
-            const theme = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim();
+            const theme = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim();
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            
             docRef.set({
                 sueldo: parseFloat(document.getElementById('sueldoBase').value) || 0,
                 temaColor: theme,
+                darkMode: isDark,
+                goalDebt: goalDebt,
+                goalSavings: goalSavings,
                 deudas: getItemsArray('deudas'),
                 ahorros: getItemsArray('ahorros'),
                 ultimaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
+            }).then(() => {
+                updateSyncStatus('✅ Sincronizado', 'success');
             }).catch(err => {
-                document.getElementById('saveIcon').innerText = "❌ Error al guardar";
+                updateSyncStatus('❌ Error', 'error');
                 console.error(err);
+                showToast('Error al guardar', 'error');
             });
         }, 800);
     }
 
     function calculateTotals() {
         const sueldo = parseFloat(document.getElementById('sueldoBase').value) || 0;
-        let g = 0, a = 0;
-        document.querySelectorAll('#listaDeudas .inp-mon').forEach(i => g += parseFloat(i.value) || 0);
-        document.querySelectorAll('#listaAhorros .inp-mon').forEach(i => a += parseFloat(i.value) || 0);
-        const disp = sueldo - g - a;
+        let gastos = 0, ahorros = 0;
         
-        document.getElementById('resGasto').innerText = `$ ${g.toLocaleString()}`;
-        document.getElementById('resAhorro').innerText = `$ ${a.toLocaleString()}`;
-        document.getElementById('resDisponible').innerText = `$ ${disp.toLocaleString()}`;
-        document.getElementById('resDisponible').style.color = disp < 0 ? "var(--danger)" : "var(--success)";
+        document.querySelectorAll('#listaDeudas .inp-mon').forEach(i => gastos += parseFloat(i.value) || 0);
+        document.querySelectorAll('#listaAhorros .inp-mon').forEach(i => ahorros += parseFloat(i.value) || 0);
+        
+        const disponible = sueldo - gastos - ahorros;
+        
+        // Animate numbers
+        animateValue('resGasto', gastos, 'danger');
+        animateValue('resAhorro', ahorros, 'success');
+        animateValue('resDisponible', disponible, disponible < 0 ? 'danger' : 'success');
+    }
+
+    function animateValue(elementId, value, colorClass) {
+        const el = document.getElementById(elementId);
+        const current = parseInt(el.textContent.replace(/[^0-9]/g, '')) || 0;
+        const duration = 300;
+        const steps = 20;
+        const stepValue = (value - current) / steps;
+        let step = 0;
+        
+        const timer = setInterval(() => {
+            step++;
+            const newValue = Math.round(current + stepValue * step);
+            el.textContent = `$ ${newValue.toLocaleString()}`;
+            el.className = `text-${colorClass}`;
+            if(step >= steps) {
+                clearInterval(timer);
+                el.textContent = `$ ${value.toLocaleString()}`;
+            }
+        }, duration / steps);
     }
 
     function getItemsArray(type) {
@@ -191,11 +1056,114 @@
         }));
     }
 
-    function resetApp() {
-        if(confirm("¿Borrar todos los datos? Esta acción es irreversible.")) {
-            docRef.delete().then(() => location.reload()).catch(err => alert("Error: " + err.message));
-        }
+    // ===== EXTRA FEATURES =====
+    function exportData() {
+        docRef.get().then(doc => {
+            if(doc.exists) {
+                const data = JSON.stringify(doc.data(), null, 2);
+                const blob = new Blob([data], {type: 'application/json'});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `calculadora-backup-${new Date().toISOString().split('T')[0]}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+                showToast('📤 Datos exportados', 'success');
+            }
+        });
+        toggleMenu();
     }
+
+    function importData() {
+        document.getElementById('importFile').click();
+        toggleMenu();
+    }
+
+    function handleImport(event) {
+        const file = event.target.files[0];
+        if(!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const data = JSON.parse(e.target.result);
+                docRef.set(data).then(() => {
+                    showToast('📥 Datos importados', 'success');
+                    location.reload();
+                });
+            } catch(err) {
+                showToast('❌ Archivo inválido', 'error');
+            }
+        };
+        reader.readAsText(file);
+        event.target.value = '';
+    }
+
+    function showStats() {
+        const sueldo = parseFloat(document.getElementById('sueldoBase').value) || 0;
+        const gastos = Array.from(document.querySelectorAll('#listaDeudas .inp-mon'))
+            .reduce((s, i) => s + (parseFloat(i.value)||0), 0);
+        const ahorros = Array.from(document.querySelectorAll('#listaAhorros .inp-mon'))
+            .reduce((s, i) => s + (parseFloat(i.value)||0), 0);
+        
+        showModal('📊 Estadísticas', 
+            `💵 Ingreso: $${sueldo.toLocaleString()}\n💸 Gastos: $${gastos.toLocaleString()}\n🎯 Ahorros: $${ahorros.toLocaleString()}\n💎 Disponible: $${(sueldo-gastos-ahorros).toLocaleString()}`,
+            null
+        );
+        toggleMenu();
+    }
+
+    function showAbout() {
+        showModal('ℹ️ Acerca de', 
+            '💰 Calculadora Hernán v2.0\n\n✨ Características:\n• Sincronización en tiempo real\n• Modo oscuro\n• Exportar/Importar datos\n• Diseño responsive\n\n🔐 Tus datos se guardan de forma segura en Firebase',
+            null
+        );
+        toggleMenu();
+    }
+
+    function confirmReset() {
+        showModal('🗑️ ¿Borrar todo?', 
+            'Esta acción eliminará permanentemente todos tus datos de la nube y no se podrá deshacer. ¿Continuar?',
+            resetApp
+        );
+        toggleMenu();
+    }
+
+    function resetApp() {
+        docRef.delete().then(() => {
+            showToast('🗑️ Datos borrados', 'success');
+            setTimeout(() => location.reload(), 1000);
+        }).catch(err => {
+            showToast('❌ Error al borrar', 'error');
+            console.error(err);
+        });
+    }
+
+    function forceSync() {
+        updateSyncStatus('🔄 Sincronizando...', 'warning');
+        onUserInput();
+        showToast('🔄 Sincronización forzada', 'success');
+        toggleMenu();
+    }
+
+    // ===== INIT =====
+    window.addEventListener('DOMContentLoaded', () => {
+        // Check for saved dark mode preference
+        const savedTheme = localStorage.getItem('theme');
+        if(savedTheme === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            document.getElementById('darkModeToggle').classList.add('active');
+        }
+        showToast('✨ ¡Bienvenido!', 'success');
+    });
+
+    // Close sidebar on escape key
+    document.addEventListener('keydown', (e) => {
+        if(e.key === 'Escape') {
+            document.getElementById('sidebar').classList.remove('active');
+            document.getElementById('overlay').classList.remove('active');
+        }
+    });
 </script>
 </body>
 </html>
