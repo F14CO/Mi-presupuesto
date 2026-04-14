@@ -4,12 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Presupuesto Nu Sincronizado</title>
-    <!-- Cargamos Firebase -->
+    <!-- CORRECCIÓN: Cargamos las librerías completas de Firebase -->
     <script src="https://gstatic.com"></script>
     <script src="https://gstatic.com"></script>
     
     <style>
-        /* (Mantengo tus estilos modernos de la versión anterior) */
         :root { --nu-purple: #820ad1; --nu-dark: #44066b; --bg-color: #f4f4f9; --danger: #ff4d4d; --success: #28a745; }
         body { font-family: 'Inter', sans-serif; background-color: var(--bg-color); margin: 0; padding: 20px; padding-bottom: 100px; }
         .container { max-width: 1100px; margin: 0 auto; }
@@ -17,11 +16,13 @@
         .header-income input { font-size: 2rem; width: 80%; max-width: 400px; text-align: center; border: 2px solid #eee; border-radius: 15px; color: var(--nu-purple); font-weight: 800; }
         .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         @media (max-width: 768px) { .dashboard { grid-template-columns: 1fr; } }
-        .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); min-height: 200px; }
         .item-row { display: flex; gap: 8px; margin-bottom: 10px; padding: 8px; border-radius: 10px; background: #fafafa; border-left: 6px solid #ccc; }
+        .item-row input { padding: 8px; border: 1px solid #ddd; border-radius: 8px; }
         .footer-status { position: fixed; bottom: 0; left: 0; right: 0; background: var(--nu-dark); color: white; padding: 15px; display: flex; justify-content: space-around; z-index: 1000; }
         .disponible-val { color: #00ff88; font-size: 1.5rem !important; }
-        .btn-add { background: var(--nu-purple); color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; }
+        .btn-add { background: var(--nu-purple); color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .btn-del { background: none; border: none; color: var(--danger); cursor: pointer; font-weight: bold; font-size: 1.2rem; }
     </style>
 </head>
 <body>
@@ -29,50 +30,67 @@
 <div class="container">
     <div class="header-income">
         <label>💰 MI SUELDO SINCRONIZADO</label>
-        <input type="number" id="sueldoBase" placeholder="Cargando..." oninput="updateAll()">
+        <input type="number" id="sueldoBase" placeholder="Ingresa tu sueldo" oninput="updateAll()">
     </div>
 
     <div class="dashboard">
         <div class="card">
-            <strong>📉 Gastos</strong> <button class="btn-add" onclick="addItem('deudas')">+</button>
+            <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
+                <strong style="color:var(--danger)">📉 Gastos</strong>
+                <button class="btn-add" onclick="addItem('deudas')">+</button>
+            </div>
             <div id="listaDeudas"></div>
         </div>
         <div class="card">
-            <strong>💎 Ahorros</strong> <button class="btn-add" onclick="addItem('ahorros')">+</button>
+            <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
+                <strong style="color:var(--success)">💎 Ahorros</strong>
+                <button class="btn-add" onclick="addItem('ahorros')">+</button>
+            </div>
             <div id="listaAhorros"></div>
         </div>
     </div>
 </div>
 
 <div class="footer-status">
-    <div style="text-align:center"><span>Disponible</span><br><strong id="resDisponible" class="disponible-val">$ 0</strong></div>
+    <div style="text-align:center">
+        <span style="font-size: 0.8rem; opacity: 0.8;">DINERO DISPONIBLE</span><br>
+        <strong id="resDisponible" class="disponible-val">$ 0</strong>
+    </div>
 </div>
 
 <script>
-    // --- CONFIGURACIÓN DE FIREBASE ---
+    // --- CONFIGURACIÓN REAL DE HERNÁN ---
     const firebaseConfig = {
-  apiKey: "AIzaSyCLb7LaJypnUHQ0TKZ2aTRNK4yAa6SUiZE",
-  authDomain: "calculadoramensualsueldo.firebaseapp.com",
-  projectId: "calculadoramensualsueldo",
-  storageBucket: "calculadoramensualsueldo.firebasestorage.app",
-  messagingSenderId: "619721076451",
-  appId: "1:619721076451:web:56925f6251a3ba53ad5fd6"
-};
+        apiKey: "AIzaSyCLb7LaJypnUHQ0TKZ2aTRNK4yAa6SUiZE",
+        authDomain: "calculadoramensualsueldo.firebaseapp.com",
+        projectId: "calculadoramensualsueldo",
+        storageBucket: "calculadoramensualsueldo.firebasestorage.app",
+        messagingSenderId: "619721076451",
+        appId: "1:619721076451:web:56925f6251a3ba53ad5fd6"
+    };
     
+    // Inicializar Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-    const docRef = db.collection("usuarios").doc("mi_unico_presupuesto");
+    const docRef = db.collection("usuarios").doc("presupuesto_hernan");
 
-    // CARGAR DESDE LA NUBE
+    // CARGAR AL INICIAR
     window.onload = async () => {
-        const doc = await docRef.get();
-        if (doc.exists) {
-            const data = doc.data();
-            document.getElementById('sueldoBase').value = data.sueldo;
-            data.deudas.forEach(d => addItem('deudas', d.nombre, d.monto, d.color));
-            data.ahorros.forEach(a => addItem('ahorros', a.nombre, a.monto, a.color));
+        try {
+            const doc = await docRef.get();
+            if (doc.exists) {
+                const data = doc.data();
+                document.getElementById('sueldoBase').value = data.sueldo || "";
+                if(data.deudas) data.deudas.forEach(d => addItem('deudas', d.nombre, d.monto, d.color));
+                if(data.ahorros) data.ahorros.forEach(a => addItem('ahorros', a.nombre, a.monto, a.color));
+            } else {
+                // Si es la primera vez, agregamos campos vacíos
+                addItem('deudas', 'Ejemplo Gasto', 0, '#ff4d4d');
+            }
+            updateAll();
+        } catch (error) {
+            console.error("Error cargando datos:", error);
         }
-        updateAll();
     };
 
     function addItem(type, nombre = '', monto = '', color = '#820ad1') {
@@ -81,10 +99,10 @@
         div.className = 'item-row';
         div.style.borderLeftColor = color;
         div.innerHTML = `
-            <input type="text" class="input-name" value="${nombre}" oninput="updateAll()" style="flex:2">
-            <input type="number" class="input-amount" value="${monto}" oninput="updateAll()" style="flex:1">
-            <input type="color" value="${color}" oninput="this.parentElement.style.borderLeftColor = this.value; updateAll()">
-            <button onclick="this.parentElement.remove(); updateAll()">✕</button>
+            <input type="text" class="input-name" placeholder="Nombre" value="${nombre}" oninput="updateAll()" style="flex:2">
+            <input type="number" class="input-amount" placeholder="$" value="${monto}" oninput="updateAll()" style="flex:1">
+            <input type="color" value="${color}" oninput="this.parentElement.style.borderLeftColor = this.value; updateAll()" style="width:40px; border:none; background:none;">
+            <button class="btn-del" onclick="this.parentElement.remove(); updateAll()">✕</button>
         `;
         container.appendChild(div);
     }
@@ -98,8 +116,9 @@
         
         const disp = sueldo - gastos - ahorros;
         document.getElementById('resDisponible').innerText = `$ ${disp.toLocaleString('es-CO')}`;
+        document.getElementById('resDisponible').style.color = disp < 0 ? "#ff4d4d" : "#00ff88";
 
-        // GUARDAR EN LA NUBE (Debounce para no saturar la base de datos)
+        // GUARDADO AUTOMÁTICO EN LA NUBE
         clearTimeout(window.saveTimer);
         window.saveTimer = setTimeout(() => {
             docRef.set({
@@ -114,7 +133,7 @@
                     monto: r.querySelector('.input-amount').value,
                     color: r.querySelector('input[type="color"]').value
                 }))
-            });
+            }).then(() => console.log("Guardado en nube")).catch(e => console.error("Error:", e));
         }, 1000);
     }
 </script>
