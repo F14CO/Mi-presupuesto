@@ -11,7 +11,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
     <style>
-        /* ===== ESTILOS (sin cambios) ===== */
         :root {
             --primary: #6366f1;
             --primary-dark: #4f46e5;
@@ -57,6 +56,8 @@
             -webkit-font-smoothing: antialiased;
             transition: background 0.3s ease;
             overflow-x: hidden;
+            padding-left: env(safe-area-inset-left);
+            padding-right: env(safe-area-inset-right);
         }
 
         /* ===== SIDEBAR ===== */
@@ -274,10 +275,13 @@
             font-size: 2.5rem;
             font-weight: 800;
             text-align: center;
-            width: 380px;
+            max-width: 380px;
+            width: 100%;
             padding: 14px 24px;
             outline: none;
             transition: var(--transition);
+            margin: 0 auto;
+            display: block;
         }
         .header-income input::placeholder { color: rgba(255,255,255,0.3); }
         .header-income input:focus {
@@ -288,6 +292,7 @@
         /* ===== CIRCULAR PROGRESS STATS ===== */
         .stats-section {
             max-width: 1100px;
+            width: 100%;
             margin: -30px auto 0;
             padding: 0 30px;
             position: relative;
@@ -399,7 +404,8 @@
 
         /* ===== CONTAINER ===== */
         .container { 
-            max-width: 1100px; 
+            max-width: 1100px;
+            width: 100%;
             margin: 0 auto; 
             padding: 0 30px 40px; 
         }
@@ -472,7 +478,6 @@
         }
         @keyframes itemSlide { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
         
-        /* Selector de color (paleta) a la izquierda */
         .item-color-picker {
             width: 42px;
             min-height: 52px;
@@ -502,7 +507,6 @@
             box-shadow: 0 0 12px rgba(255,255,255,0.15);
         }
         
-        /* Línea de color a la izquierda de la paleta */
         .item-color-line {
             width: 5px;
             min-height: 52px;
@@ -814,7 +818,7 @@
             .stat-content { flex: 1; }
             .stat-value { font-size: 1.2rem; }
             .dashboard { grid-template-columns: 1fr; gap: 16px; }
-            .header-income input { font-size: 2rem; width: 90%; }
+            .header-income input { font-size: 2rem; }
             .top-banner { padding: calc(20px + var(--safe-area-top)) 16px 40px; }
             .menu-btn { left: 16px; }
             .save-indicator { right: 16px; }
@@ -917,7 +921,7 @@
     </div>
 
     <div class="sidebar-footer">
-        <small>💰 Smart Budget v8.0<br>Sincronizado con Firebase<br><span id="lastSync">--:--</span></small>
+        <small>💰 Smart Budget v8.1<br>Sincronizado con Firebase<br><span id="lastSync">--:--</span></small>
     </div>
 </div>
 
@@ -1076,7 +1080,7 @@
 <input type="file" id="importFile" accept=".json" style="display:none" onchange="handleImport(event)">
 
 <script>
-    // Configuración de Firebase (pública, debe ir acompañada de reglas de seguridad)
+    // Configuración de Firebase
     var firebaseConfig = {
         apiKey: "AIzaSyCLb7LaJypnUHQ0TKZ2aTRNK4yAa6SUiZE",
         authDomain: "calculadoramensualsueldo.firebaseapp.com",
@@ -1103,6 +1107,7 @@
 
     const CIRCUMFERENCE = 2 * Math.PI * 54; // 339.292
 
+    // Sincronización en tiempo real con Firestore
     docRef.onSnapshot((doc) => {
         if (doc.exists) {
             isUpdatingFromDB = true;
@@ -1129,14 +1134,18 @@
             document.getElementById('listaDeudas').innerHTML = '';
             document.getElementById('listaAhorros').innerHTML = '';
             
-            if(data.deudas && data.deudas.length) {
-                data.deudas.forEach(d => addItem('deudas', d.nombre, d.monto, d.color || '#ef4444', d.category || 'general', true));
+            // Filtrar ítems vacíos (sin nombre y monto 0)
+            const deudasValidas = (data.deudas || []).filter(d => d.nombre && d.nombre.trim() !== '' && d.monto > 0);
+            const ahorrosValidos = (data.ahorros || []).filter(a => a.nombre && a.nombre.trim() !== '' && a.monto > 0);
+            
+            if(deudasValidas.length) {
+                deudasValidas.forEach(d => addItem('deudas', d.nombre, d.monto, d.color || '#ef4444', d.category || 'general', true));
             } else {
                 showEmptyState('listaDeudas', '📭', 'Sin deudas', 'Agrega tu primer gasto');
             }
             
-            if(data.ahorros && data.ahorros.length) {
-                data.ahorros.forEach(a => addItem('ahorros', a.nombre, a.monto, a.color || '#22c55e', a.category || 'general', true));
+            if(ahorrosValidos.length) {
+                ahorrosValidos.forEach(a => addItem('ahorros', a.nombre, a.monto, a.color || '#22c55e', a.category || 'general', true));
             } else {
                 showEmptyState('listaAhorros', '🏦', 'Sin metas', '¡Empieza a ahorrar!');
             }
@@ -1252,9 +1261,7 @@
         circle.style.strokeDashoffset = offset;
     }
 
-    // ========== CORRECCIÓN PRINCIPAL: manejo correcto del ingreso 0 ==========
     function calculateTotals() {
-        // Obtener sueldo base (si no es válido o negativo, se considera 0)
         let sueldo = parseFloat(document.getElementById('sueldoBase').value);
         if (isNaN(sueldo) || sueldo < 0) sueldo = 0;
         
@@ -1266,39 +1273,34 @@
         const disponible = Math.max(0, sueldo - gastos - ahorros);
         const symbol = currencySymbols[currentCurrency];
         
-        // Calcular porcentajes (evitar división por cero)
         const gastosPercent = sueldo === 0 ? 0 : Math.min(100, Math.round((gastos / sueldo) * 100));
         const ahorrosPercent = sueldo === 0 ? 0 : Math.min(100, Math.round((ahorros / sueldo) * 100));
         const disponiblePercent = sueldo === 0 ? 0 : Math.min(100, Math.round((disponible / sueldo) * 100));
         
-        // Actualizar valores en stats superiores
         document.getElementById('statGastos').textContent = `${symbol} ${gastos.toLocaleString()}`;
         document.getElementById('statAhorros').textContent = `${symbol} ${ahorros.toLocaleString()}`;
         document.getElementById('statDisponible').textContent = `${symbol} ${disponible.toLocaleString()}`;
         
-        // Actualizar círculos superiores
         updateCircularProgress('gastosProgress', gastosPercent);
         updateCircularProgress('ahorrosProgress', ahorrosPercent);
         updateCircularProgress('disponibleProgress', disponiblePercent);
         
-        // Actualizar textos de porcentaje en círculos
-        document.getElementById('gastosPercent').textContent = sueldo === 0 ? 'N/A' : `${gastosPercent}%`;
-        document.getElementById('ahorrosPercent').textContent = sueldo === 0 ? 'N/A' : `${ahorrosPercent}%`;
-        document.getElementById('disponiblePercent').textContent = sueldo === 0 ? 'N/A' : `${disponiblePercent}%`;
+        // Mostrar 0% en lugar de N/A cuando sueldo es 0
+        document.getElementById('gastosPercent').textContent = `${gastosPercent}%`;
+        document.getElementById('ahorrosPercent').textContent = `${ahorrosPercent}%`;
+        document.getElementById('disponiblePercent').textContent = `${disponiblePercent}%`;
         
-        // Actualizar footer
         document.getElementById('resGasto').textContent = `${symbol} ${gastos.toLocaleString()}`;
         document.getElementById('resAhorro').textContent = `${symbol} ${ahorros.toLocaleString()}`;
         document.getElementById('resDisponible').textContent = `${symbol} ${disponible.toLocaleString()}`;
         
-        document.getElementById('gastosFooterPercent').textContent = sueldo === 0 ? 'N/A' : `${gastosPercent}%`;
-        document.getElementById('ahorrosFooterPercent').textContent = sueldo === 0 ? 'N/A' : `${ahorrosPercent}%`;
-        document.getElementById('disponibleFooterPercent').textContent = sueldo === 0 ? 'N/A' : `${disponiblePercent}%`;
+        document.getElementById('gastosFooterPercent').textContent = `${gastosPercent}%`;
+        document.getElementById('ahorrosFooterPercent').textContent = `${ahorrosPercent}%`;
+        document.getElementById('disponibleFooterPercent').textContent = `${disponiblePercent}%`;
         
-        // Barras de progreso en cards
-        document.getElementById('deudaProgressText').textContent = sueldo === 0 ? 'N/A' : `${gastosPercent}%`;
+        document.getElementById('deudaProgressText').textContent = `${gastosPercent}%`;
         document.getElementById('deudaBar').style.width = `${gastosPercent}%`;
-        document.getElementById('ahorroProgressText').textContent = sueldo === 0 ? 'N/A' : `${ahorrosPercent}%`;
+        document.getElementById('ahorroProgressText').textContent = `${ahorrosPercent}%`;
         document.getElementById('ahorroBar').style.width = `${ahorrosPercent}%`;
     }
 
@@ -1398,13 +1400,17 @@
             const theme = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim();
             const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
             
+            // Guardar solo ítems válidos (con nombre y monto > 0)
+            const deudas = getItemsArray('deudas').filter(d => d.nombre.trim() !== '' && d.monto > 0);
+            const ahorros = getItemsArray('ahorros').filter(a => a.nombre.trim() !== '' && a.monto > 0);
+            
             docRef.set({
                 sueldo: parseFloat(document.getElementById('sueldoBase').value) || 0,
                 temaColor: theme,
                 darkMode: isDark,
                 currency: currentCurrency,
-                deudas: getItemsArray('deudas'),
-                ahorros: getItemsArray('ahorros'),
+                deudas: deudas,
+                ahorros: ahorros,
                 ultimaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
             }).then(() => {
                 updateSyncStatus('Sincronizado', 'success');
