@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calculadora Sincronizada Hernán</title>
     
-    <!-- ✅ Firebase SDK v8 (Compat) - Carga correcta -->
+    <!-- Firebase SDK v8 -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     
@@ -93,9 +93,11 @@
     // --- ESTADO GLOBAL ---
     var isUpdatingFromDB = false;
     var saveTimeout;
-    var docRef = db.collection("usuarios").doc("datos"); // ⚠️ Ver nota de seguridad abajo
+    
+    // 🔐 NOMBRE SECRETO DEL DOCUMENTO (cámbialo por uno único)
+    var docRef = db.collection("usuarios").doc("x9k2mP7qLz4wN1vB8cR5Hernan2026");
 
-    // ✅ LISTENER EN TIEMPO REAL (Sincroniza PC ↔ Celular al instante)
+    // ✅ LISTENER EN TIEMPO REAL (Sincroniza PC ↔ Celular)
     docRef.onSnapshot((doc) => {
         if (doc.exists) {
             isUpdatingFromDB = true;
@@ -107,7 +109,6 @@
                 document.getElementById('themePicker').value = data.temaColor;
             }
             
-            // Limpiar y reconstruir listas sin activar eventos de escritura
             document.getElementById('listaDeudas').innerHTML = '';
             document.getElementById('listaAhorros').innerHTML = '';
             
@@ -118,7 +119,7 @@
             isUpdatingFromDB = false;
             document.getElementById('saveIcon').innerText = "✅ Sincronizado";
         } else {
-            document.getElementById('saveIcon').innerText = "📡 Esperando datos...";
+            document.getElementById('saveIcon').innerText = "📡 Listo para guardar";
         }
     }, (error) => {
         console.error("Error de sincronización:", error);
@@ -135,7 +136,6 @@
         const div = document.createElement('div');
         div.className = 'item-row';
         div.style.borderLeftColor = color;
-        // ✅ Solo llama a onUserInput() si NO viene de la BD (evita bucles)
         const inputEvent = fromDB ? '' : 'oninput="onUserInput()"';
         div.innerHTML = `
             <span class="dot" style="color: ${color}; font-size: 20px;">■</span>
@@ -148,7 +148,7 @@
     }
 
     function onUserInput() {
-        if (isUpdatingFromDB) return; // Bloquea escrituras durante sincronización entrante
+        if (isUpdatingFromDB) return;
         calculateTotals();
         
         document.getElementById('saveIcon').innerText = "☁️ Guardando...";
@@ -166,7 +166,7 @@
                 document.getElementById('saveIcon').innerText = "❌ Error al guardar";
                 console.error(err);
             });
-        }, 800); // Debounce de 800ms
+        }, 800);
     }
 
     function calculateTotals() {
