@@ -3,137 +3,233 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Presupuesto Nu Sincronizado</title>
-    <!-- CORRECCIÓN: Cargamos las librerías completas de Firebase -->
+    <title>Nu Budget Elite</title>
     <script src="https://gstatic.com"></script>
     <script src="https://gstatic.com"></script>
+    <script src="https://cloudflare.com"></script>
     
     <style>
-        :root { --nu-purple: #820ad1; --nu-dark: #44066b; --bg-color: #f4f4f9; --danger: #ff4d4d; --success: #28a745; }
-        body { font-family: 'Inter', sans-serif; background-color: var(--bg-color); margin: 0; padding: 20px; padding-bottom: 100px; }
-        .container { max-width: 1100px; margin: 0 auto; }
-        .header-income { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); margin-bottom: 25px; text-align: center; border-top: 6px solid var(--nu-purple); }
-        .header-income input { font-size: 2rem; width: 80%; max-width: 400px; text-align: center; border: 2px solid #eee; border-radius: 15px; color: var(--nu-purple); font-weight: 800; }
+        :root {
+            --nu-purple: #820ad1;
+            --nu-dark: #44066b;
+            --nu-light: #f5f5fa;
+            --white: #ffffff;
+            --danger: #e53935;
+            --success: #00c853;
+            --text: #333;
+        }
+
+        [data-theme="dark"] {
+            --nu-light: #121212;
+            --white: #1e1e1e;
+            --text: #ffffff;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--nu-light);
+            margin: 0; padding: 0; color: var(--text);
+            transition: all 0.3s ease;
+        }
+
+        /* MENU LATERAL */
+        .sidebar {
+            position: fixed; left: -280px; top: 0; width: 280px; height: 100%;
+            background: var(--white); z-index: 2000; transition: 0.3s;
+            box-shadow: 10px 0 30px rgba(0,0,0,0.1); padding: 20px;
+        }
+        .sidebar.active { left: 0; }
+        .sidebar-header { border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 20px; color: var(--nu-purple); font-weight: 800; }
+        .menu-item { padding: 15px; border-radius: 10px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 10px; }
+        .menu-item:hover { background: var(--nu-light); }
+        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1500; display: none; }
+        .overlay.active { display: block; }
+
+        /* HEADER */
+        .top-banner {
+            background: linear-gradient(135deg, var(--nu-purple) 0%, var(--nu-dark) 100%);
+            padding: 50px 20px; color: white; text-align: center;
+            border-bottom-left-radius: 40px; border-bottom-right-radius: 40px; position: relative;
+        }
+
+        .menu-btn {
+            position: absolute; left: 20px; top: 20px; font-size: 24px; cursor: pointer; color: white;
+        }
+
+        .header-income input {
+            background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 20px; color: white; font-size: 2.5rem; font-weight: 800;
+            text-align: center; width: 90%; max-width: 400px; padding: 10px; outline: none;
+        }
+
+        .container { max-width: 1000px; margin: -30px auto 120px; padding: 0 15px; }
         .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         @media (max-width: 768px) { .dashboard { grid-template-columns: 1fr; } }
-        .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); min-height: 200px; }
-        .item-row { display: flex; gap: 8px; margin-bottom: 10px; padding: 8px; border-radius: 10px; background: #fafafa; border-left: 6px solid #ccc; }
-        .item-row input { padding: 8px; border: 1px solid #ddd; border-radius: 8px; }
-        .footer-status { position: fixed; bottom: 0; left: 0; right: 0; background: var(--nu-dark); color: white; padding: 15px; display: flex; justify-content: space-around; z-index: 1000; }
-        .disponible-val { color: #00ff88; font-size: 1.5rem !important; }
-        .btn-add { background: var(--nu-purple); color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; }
-        .btn-del { background: none; border: none; color: var(--danger); cursor: pointer; font-weight: bold; font-size: 1.2rem; }
+
+        .card {
+            background: var(--white); padding: 25px; border-radius: 28px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+        }
+
+        .item-row {
+            display: flex; gap: 12px; background: var(--nu-light);
+            padding: 15px; border-radius: 18px; margin-bottom: 12px; align-items: center;
+        }
+
+        .item-row input { background: transparent; border: none; color: var(--text); font-weight: 600; outline: none; }
+
+        /* FOOTER GLASSMORPISM */
+        .footer-nav {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            width: 90%; max-width: 600px; background: rgba(255,255,255,0.8);
+            backdrop-filter: blur(15px); height: 85px; border-radius: 30px;
+            display: flex; justify-content: space-around; align-items: center;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.3); z-index: 1000;
+        }
+
+        .btn-round { background: var(--nu-purple); color: white; border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 20px; }
     </style>
 </head>
-<body>
+<body id="app-body">
 
-<div class="container">
-    <div class="header-income">
-        <label>💰 MI SUELDO SINCRONIZADO</label>
-        <input type="number" id="sueldoBase" placeholder="Ingresa tu sueldo" oninput="updateAll()">
+<div class="overlay" onclick="toggleMenu()"></div>
+
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-header">CONFIGURACIÓN</div>
+    <div class="menu-item" onclick="toggleDarkMode()">🌓 Cambiar Tema</div>
+    <div class="menu-item" onclick="exportPDF()">📄 Exportar Reporte PDF</div>
+    <div class="menu-item" onclick="resetApp()" style="color: var(--danger)">🗑️ Reiniciar Datos</div>
+    <div id="health-status" style="margin-top: 40px; font-size: 0.9rem; padding: 15px; background: var(--nu-light); border-radius: 15px;">
+        Analizando finanzas...
     </div>
+</div>
 
+<div class="top-banner">
+    <div class="menu-btn" onclick="toggleMenu()">☰</div>
+    <div class="header-income">
+        <label>MI SUELDO NETO</label><br>
+        <input type="number" id="sueldoBase" placeholder="0" oninput="updateAll()">
+    </div>
+</div>
+
+<div class="container" id="content-to-pdf">
     <div class="dashboard">
         <div class="card">
-            <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
-                <strong style="color:var(--danger)">📉 Gastos</strong>
-                <button class="btn-add" onclick="addItem('deudas')">+</button>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <strong style="color:var(--danger)">DEUDAS</strong>
+                <button class="btn-round" onclick="addItem('deudas')">+</button>
             </div>
             <div id="listaDeudas"></div>
         </div>
         <div class="card">
-            <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
-                <strong style="color:var(--success)">💎 Ahorros</strong>
-                <button class="btn-add" onclick="addItem('ahorros')">+</button>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <strong style="color:var(--success)">AHORROS</strong>
+                <button class="btn-round" onclick="addItem('ahorros')">+</button>
             </div>
             <div id="listaAhorros"></div>
         </div>
     </div>
 </div>
 
-<div class="footer-status">
-    <div style="text-align:center">
-        <span style="font-size: 0.8rem; opacity: 0.8;">DINERO DISPONIBLE</span><br>
-        <strong id="resDisponible" class="disponible-val">$ 0</strong>
-    </div>
+<div class="footer-nav">
+    <div style="text-align:center"><span>GASTOS</span><br><strong id="resGasto" style="color:var(--danger)">$ 0</strong></div>
+    <div style="text-align:center"><span>NETO</span><br><strong id="resDisponible" style="font-size: 1.4rem; color: var(--success);">$ 0</strong></div>
+    <div style="text-align:center"><span>AHORROS</span><br><strong id="resAhorro" style="color:var(--nu-purple)">$ 0</strong></div>
 </div>
 
 <script>
-    // --- CONFIGURACIÓN REAL DE HERNÁN ---
+    // PEGA AQUÍ TU CONFIGURACIÓN DE FIREBASE
     const firebaseConfig = {
         apiKey: "AIzaSyCLb7LaJypnUHQ0TKZ2aTRNK4yAa6SUiZE",
-        authDomain: "calculadoramensualsueldo.firebaseapp.com",
+        authDomain: "://firebaseapp.com",
         projectId: "calculadoramensualsueldo",
         storageBucket: "calculadoramensualsueldo.firebasestorage.app",
         messagingSenderId: "619721076451",
         appId: "1:619721076451:web:56925f6251a3ba53ad5fd6"
     };
     
-    // Inicializar Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const docRef = db.collection("usuarios").doc("presupuesto_hernan");
 
-    // CARGAR AL INICIAR
-    window.onload = async () => {
-        try {
-            const doc = await docRef.get();
-            if (doc.exists) {
-                const data = doc.data();
-                document.getElementById('sueldoBase').value = data.sueldo || "";
-                if(data.deudas) data.deudas.forEach(d => addItem('deudas', d.nombre, d.monto, d.color));
-                if(data.ahorros) data.ahorros.forEach(a => addItem('ahorros', a.nombre, a.monto, a.color));
-            } else {
-                // Si es la primera vez, agregamos campos vacíos
-                addItem('deudas', 'Ejemplo Gasto', 0, '#ff4d4d');
-            }
-            updateAll();
-        } catch (error) {
-            console.error("Error cargando datos:", error);
+    function toggleMenu() {
+        document.getElementById('sidebar').classList.toggle('active');
+        document.querySelector('.overlay').classList.toggle('active');
+    }
+
+    function toggleDarkMode() {
+        const body = document.body;
+        const theme = body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        body.setAttribute('data-theme', theme);
+        localStorage.setItem('theme', theme);
+    }
+
+    async function exportPDF() {
+        const element = document.getElementById('content-to-pdf');
+        const opt = { margin: 1, filename: 'Presupuesto_Hernan.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } };
+        html2pdf().set(opt).from(element).save();
+    }
+
+    function resetApp() {
+        if(confirm("¿Seguro que quieres borrar todos los datos de la nube?")) {
+            docRef.set({ sueldo: 0, deudas: [], ahorros: [] }).then(() => location.reload());
         }
+    }
+
+    window.onload = async () => {
+        if(localStorage.getItem('theme') === 'dark') document.body.setAttribute('data-theme', 'dark');
+        const doc = await docRef.get();
+        if (doc.exists) {
+            const data = doc.data();
+            document.getElementById('sueldoBase').value = data.sueldo || "";
+            if(data.deudas) data.deudas.forEach(d => addItem('deudas', d.nombre, d.monto, d.color));
+            if(data.ahorros) data.ahorros.forEach(a => addItem('ahorros', a.nombre, a.monto, a.color));
+        }
+        updateAll();
     };
 
     function addItem(type, nombre = '', monto = '', color = '#820ad1') {
         const container = document.getElementById(type === 'deudas' ? 'listaDeudas' : 'listaAhorros');
         const div = document.createElement('div');
         div.className = 'item-row';
-        div.style.borderLeftColor = color;
         div.innerHTML = `
-            <input type="text" class="input-name" placeholder="Nombre" value="${nombre}" oninput="updateAll()" style="flex:2">
-            <input type="number" class="input-amount" placeholder="$" value="${monto}" oninput="updateAll()" style="flex:1">
-            <input type="color" value="${color}" oninput="this.parentElement.style.borderLeftColor = this.value; updateAll()" style="width:40px; border:none; background:none;">
-            <button class="btn-del" onclick="this.parentElement.remove(); updateAll()">✕</button>
+            <input type="color" value="${color}" oninput="updateAll()" style="width:20px; height:20px; border:none; background:none; cursor:pointer;">
+            <input type="text" class="input-name" placeholder="Concepto" value="${nombre}" oninput="updateAll()" style="flex:2">
+            <input type="number" class="input-amount" placeholder="0" value="${monto}" oninput="updateAll()" style="flex:1">
+            <button onclick="this.parentElement.remove(); updateAll()" style="background:none; border:none; color:#aaa; cursor:pointer">✕</button>
         `;
         container.appendChild(div);
     }
 
     function updateAll() {
         const sueldo = parseFloat(document.getElementById('sueldoBase').value) || 0;
-        let gastos = 0, ahorros = 0;
+        let g = 0, a = 0;
+        document.querySelectorAll('#listaDeudas .input-amount').forEach(i => g += parseFloat(i.value) || 0);
+        document.querySelectorAll('#listaAhorros .input-amount').forEach(i => a += parseFloat(i.value) || 0);
         
-        document.querySelectorAll('#listaDeudas .input-amount').forEach(i => gastos += parseFloat(i.value) || 0);
-        document.querySelectorAll('#listaAhorros .input-amount').forEach(i => ahorros += parseFloat(i.value) || 0);
-        
-        const disp = sueldo - gastos - ahorros;
-        document.getElementById('resDisponible').innerText = `$ ${disp.toLocaleString('es-CO')}`;
-        document.getElementById('resDisponible').style.color = disp < 0 ? "#ff4d4d" : "#00ff88";
+        const disp = sueldo - g - a;
+        document.getElementById('resGasto').innerText = `$ ${g.toLocaleString()}`;
+        document.getElementById('resAhorro').innerText = `$ ${a.toLocaleString()}`;
+        document.getElementById('resDisponible').innerText = `$ ${disp.toLocaleString()}`;
+        document.getElementById('resDisponible').style.color = disp < 0 ? "#e53935" : "#00c853";
 
-        // GUARDADO AUTOMÁTICO EN LA NUBE
-        clearTimeout(window.saveTimer);
-        window.saveTimer = setTimeout(() => {
+        // Análisis de salud financiera
+        const health = document.getElementById('health-status');
+        if(disp > (sueldo * 0.3)) health.innerHTML = "✅ <strong>¡Excelente!</strong> Tienes más del 30% de tu sueldo libre.";
+        else if(disp > 0) health.innerHTML = "⚠️ <strong>Cuidado:</strong> Tu margen disponible es pequeño. Evita deudas nuevas.";
+        else health.innerHTML = "🚨 <strong>Alerta:</strong> Estás gastando más de lo que ganas. Revisa tus deudas.";
+
+        clearTimeout(window.sT);
+        window.sT = setTimeout(() => {
             docRef.set({
                 sueldo,
                 deudas: Array.from(document.querySelectorAll('#listaDeudas .item-row')).map(r => ({
-                    nombre: r.querySelector('.input-name').value,
-                    monto: r.querySelector('.input-amount').value,
-                    color: r.querySelector('input[type="color"]').value
+                    nombre: r.querySelector('.input-name').value, monto: r.querySelector('.input-amount').value, color: r.querySelector('input[type="color"]').value
                 })),
                 ahorros: Array.from(document.querySelectorAll('#listaAhorros .item-row')).map(r => ({
-                    nombre: r.querySelector('.input-name').value,
-                    monto: r.querySelector('.input-amount').value,
-                    color: r.querySelector('input[type="color"]').value
+                    nombre: r.querySelector('.input-name').value, monto: r.querySelector('.input-amount').value, color: r.querySelector('input[type="color"]').value
                 }))
-            }).then(() => console.log("Guardado en nube")).catch(e => console.error("Error:", e));
+            });
         }, 1000);
     }
 </script>
