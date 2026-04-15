@@ -147,7 +147,7 @@
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .top-banner {
             background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(139,92,246,0.15));
-            padding: calc(32px + var(--safe-t)) 24px 48px; color: white; text-align: center;
+            padding: calc(32px + var(--safe-t)) 24px 80px; color: white; text-align: center;
             position: relative; overflow: hidden; border-bottom-left-radius: 36px; border-bottom-right-radius: 36px; box-shadow: var(--shadow-glow);
         }
         .top-banner::before { content: ''; position: absolute; top: -40%; left: -40%; width: 180%; height: 180%; background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 65%); animation: float 15s ease-in-out infinite; }
@@ -161,18 +161,50 @@
         .menu-btn:hover { background: rgba(255,255,255,0.25); transform: scale(1.05); }
         .sync-badge {
             position: absolute; right: 24px; top: calc(20px + var(--safe-t));
-            font-size: 0.72rem; font-weight: 700; padding: 8px 16px;
-            border-radius: 24px; display: flex; align-items: center; gap: 8px;
-            backdrop-filter: blur(12px); z-index: 10; animation: slideIn 0.4s ease; border: 1px solid; transition: var(--transition);
+            font-size: 0.72rem; font-weight: 700; padding: 10px 18px;
+            border-radius: 28px; display: flex; flex-direction: column; align-items: center; gap: 6px;
+            backdrop-filter: blur(16px); z-index: 10; animation: slideIn 0.4s ease; 
+            border: 1px solid; transition: var(--transition);
+            background: rgba(34,197,94,0.15);
+            border-color: rgba(34,197,94,0.3);
         }
         @keyframes slideIn { from { opacity: 0; transform: translateX(25px); } to { opacity: 1; transform: translateX(0); } }
-        .sync-badge.synced { background: rgba(34,197,94,0.2); color: #86efac; border-color: rgba(34,197,94,0.4); }
-        .sync-badge.connecting { background: rgba(245,158,11,0.2); color: #fcd34d; border-color: rgba(245,158,11,0.4); animation: badgePulse 1.5s ease-in-out infinite; }
+        .sync-badge.synced { background: rgba(34,197,94,0.15); color: #86efac; border-color: rgba(34,197,94,0.3); }
+        .sync-badge.connecting { background: rgba(245,158,11,0.15); color: #fcd34d; border-color: rgba(245,158,11,0.3); animation: badgePulse 1.5s ease-in-out infinite; }
         @keyframes badgePulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(245,158,11,0.3); } 50% { box-shadow: 0 0 0 8px rgba(245,158,11,0); } }
-        .sync-badge.offline { background: rgba(244,63,94,0.2); color: #fca5a5; border-color: rgba(244,63,94,0.4); animation: badgeShake 0.5s ease-in-out; }
+        .sync-badge.offline { background: rgba(244,63,94,0.15); color: #fca5a5; border-color: rgba(244,63,94,0.3); animation: badgeShake 0.5s ease-in-out; }
         @keyframes badgeShake { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(3px); } }
-        .sync-badge-icon { font-size: 1rem; line-height: 1; }
-        .income-section { position: relative; z-index: 5; margin-top: 24px; }
+        .sync-badge-icon { font-size: 1.3rem; line-height: 1; }
+        .sync-badge-text { font-weight: 700; font-size: 0.75rem; }
+        
+        /* BOTÓN DE SYNC ESTÉTICO Y BONITO */
+        .sync-action-btn {
+            background: linear-gradient(135deg, rgba(99,102,241,0.9), rgba(139,92,246,0.9));
+            border: none;
+            color: white; 
+            padding: 8px 18px; 
+            border-radius: 20px;
+            font-size: 0.75rem; 
+            font-weight: 700; 
+            cursor: pointer;
+            transition: var(--transition); 
+            display: flex; 
+            align-items: center; 
+            gap: 6px;
+            backdrop-filter: blur(12px); 
+            box-shadow: 0 4px 20px rgba(99,102,241,0.4);
+            margin-top: 4px;
+        }
+        .sync-action-btn:hover { 
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 6px 25px rgba(99,102,241,0.5);
+            background: linear-gradient(135deg, rgba(99,102,241,1), rgba(139,92,246,1));
+        }
+        .sync-action-btn:active { transform: translateY(0) scale(0.98); }
+        .sync-action-btn.syncing { animation: btnPulse 1s ease-in-out infinite; }
+        @keyframes btnPulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.85; transform: scale(0.98); } }
+        
+        .income-section { position: relative; z-index: 5; margin-top: 20px; }
         .income-label { display: block; font-size: 0.72rem; font-weight: 800; opacity: 0.92; margin-bottom: 10px; letter-spacing: 0.14em; text-transform: uppercase; }
         .income-input {
             background: rgba(255,255,255,0.12); border: 2px solid rgba(255,255,255,0.2);
@@ -197,9 +229,9 @@
         .ring-fill.gastos { stroke: var(--danger); }
         .ring-fill.disponible { stroke: var(--success); }
         .ring-fill.ahorros { stroke: #16a34a; }
-        .ring-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
-        .ring-percent { font-size: 1.35rem; font-weight: 800; line-height: 1; }
-        .ring-label { font-size: 0.55rem; color: var(--text-dim); font-weight: 700; text-transform: uppercase; margin-top: 3px; }
+        .ring-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .ring-percent { font-size: 1.4rem; font-weight: 800; line-height: 1; white-space: nowrap; }
+        .ring-label { font-size: 0.55rem; color: var(--text-dim); font-weight: 700; text-transform: uppercase; margin-top: 2px; letter-spacing: 0.05em; }
         .stat-value { font-size: 1.6rem; font-weight: 800; margin: 6px 0 3px; }
         .stat-label { font-size: 0.68rem; color: var(--text-dim); font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; }
         .stat-card-gastos .stat-value { color: var(--danger); }
@@ -217,15 +249,28 @@
         .card-title { font-size: 1.12rem; font-weight: 800; display: flex; align-items: center; gap: 7px; }
         .btn-add { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; border: none; width: 38px; height: 38px; border-radius: 12px; cursor: pointer; font-size: 1.45rem; display: flex; align-items: center; justify-content: center; transition: var(--transition); box-shadow: 0 8px 28px var(--primary-glow); flex-shrink: 0; }
         .btn-add:hover { transform: scale(1.12) rotate(90deg); box-shadow: 0 12px 40px var(--primary-glow); }
-        .search-box { padding: 0 2px 10px; flex-shrink: 0; }
+        .search-box { padding: 0 2px 10px; flex-shrink: 0; position: relative; }
         .search-input {
-            width: 100%; background: rgba(255,255,255,0.06); border: 1.5px solid var(--border-glass);
-            border-radius: 14px; padding: 10px 14px 10px 38px; font-family: inherit;
-            font-size: 0.88rem; color: var(--text); outline: none; transition: var(--transition);
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'%3E%3C/circle%3E%3Cpath d='m21 21-4.3-4.3'%3E%3C/path%3E%3C/svg%3E");
-            background-repeat: no-repeat; background-position: 12px center; background-size: 15px;
+            width: 100%; 
+            background: rgba(255,255,255,0.06); 
+            border: 1.5px solid var(--border-glass);
+            border-radius: 14px; 
+            padding: 10px 14px 10px 42px; 
+            font-family: inherit;
+            font-size: 0.88rem; 
+            color: var(--text); 
+            outline: none; 
+            transition: var(--transition);
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'%3E%3C/circle%3E%3Cpath d='m21 21-4.3-4.3'%3E%3C/path%3E%3C/svg%3E");
+            background-repeat: no-repeat; 
+            background-position: 12px center; 
+            background-size: 18px;
         }
-        .search-input:focus { border-color: var(--primary); background-color: rgba(255,255,255,0.1); box-shadow: 0 0 0 3px rgba(99,102,241,0.2); }
+        .search-input:focus { 
+            border-color: var(--primary); 
+            background-color: rgba(255,255,255,0.1); 
+            box-shadow: 0 0 0 3px rgba(99,102,241,0.2); 
+        }
         .search-input::placeholder { color: var(--text-dim); opacity: 0.8; }
         .search-input.no-results { border-color: var(--warning); box-shadow: 0 0 0 3px rgba(245,158,11,0.15); }
         .items-list { display: flex; flex-direction: column; gap: 0; max-height: 380px; min-height: 120px; overflow-y: auto; overflow-x: hidden; scroll-behavior: smooth; overscroll-behavior: contain; padding: 2px; flex: 1; }
@@ -274,8 +319,8 @@
         .cat-picker-header { padding: 20px 22px 14px; border-bottom: 1px solid var(--border-glass); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
         .cat-picker-title { font-size: 1.1rem; font-weight: 800; display: flex; align-items: center; gap: 8px; }
         .cat-picker-subtitle { font-size: 0.72rem; color: var(--text-dim); margin-top: 2px; }
-        .cat-picker-close { width: 36px; height: 36px; border-radius: 10px; background: rgba(255,255,255,0.08); border: none; color: var(--text-muted); font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: var(--transition); }
-        .cat-picker-close:hover { background: rgba(244,63,94,0.2); color: var(--danger); }
+        .cat-picker-close { width: 40px; height: 40px; border-radius: 12px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: var(--text-muted); font-size: 1.4rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: var(--transition); }
+        .cat-picker-close:hover { background: rgba(244,63,94,0.2); color: var(--danger); border-color: rgba(244,63,94,0.3); transform: rotate(90deg); }
         .cat-picker-color-section { padding: 16px 22px; border-bottom: 1px solid var(--border-glass); flex-shrink: 0; }
         .cat-picker-color-label { font-size: 0.68rem; font-weight: 800; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
         .cat-color-preset { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-bottom: 14px; }
@@ -355,6 +400,28 @@
         .empty-search-icon { font-size: 2.4rem; margin-bottom: 10px; opacity: 0.5; }
         .empty-search-txt { font-size: 0.88rem; line-height: 1.6; }
         .empty-search-txt strong { color: var(--text); display: block; margin-bottom: 5px; font-size: 0.95rem; }
+        
+        .about-modal .modal-body {
+            max-height: 60vh;
+            overflow-y: auto;
+            padding-right: 8px;
+            scrollbar-width: thin;
+            scrollbar-color: var(--primary) transparent;
+        }
+        .about-modal .modal-body::-webkit-scrollbar { width: 6px; }
+        .about-modal .modal-body::-webkit-scrollbar-track { background: rgba(255,255,255,0.03); border-radius: 8px; }
+        .about-modal .modal-body::-webkit-scrollbar-thumb { background: linear-gradient(180deg, var(--primary), var(--secondary)); border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); }
+        .about-modal .modal-body::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, var(--secondary), var(--accent)); }
+        .about-modal .feature-list { list-style: none; padding: 0; margin: 12px 0; }
+        .about-modal .feature-list li { padding: 8px 0; display: flex; align-items: flex-start; gap: 10px; font-size: 0.9rem; line-height: 1.5; }
+        .about-modal .feature-list li::before { content: '✓'; color: var(--success); font-weight: 800; flex-shrink: 0; }
+        .about-modal .version-header { text-align: center; margin-bottom: 24px; padding: 20px; background: rgba(99,102,241,0.1); border-radius: 16px; border: 1px solid rgba(99,102,241,0.2); }
+        .about-modal .version-icon { font-size: 3rem; margin-bottom: 12px; }
+        .about-modal .version-title { font-size: 1.5rem; font-weight: 800; background: linear-gradient(135deg, var(--primary), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 6px; }
+        .about-modal .version-subtitle { color: var(--text-dim); font-size: 0.9rem; }
+        .about-modal .section-title { font-size: 1.1rem; font-weight: 700; color: var(--text); margin: 16px 0 10px; display: flex; align-items: center; gap: 8px; }
+        .about-modal .section-title::before { content: ''; width: 4px; height: 20px; background: linear-gradient(180deg, var(--primary), var(--secondary)); border-radius: 2px; }
+        
         @media (max-width: 768px) {
             .stats-grid { grid-template-columns: 1fr; gap: 16px; }
             .stat-card { display: flex; align-items: center; text-align: left; padding: 16px 18px; gap: 18px; }
@@ -371,7 +438,7 @@
         @media (max-width: 480px) {
             .sidebar { width: 320px; }
             :root { --sidebar-w: 320px; }
-            .search-input { padding: 9px 12px 9px 36px; font-size: 0.85rem; }
+            .search-input { padding: 9px 12px 9px 40px; font-size: 0.85rem; }
             .items-list { max-height: 260px; }
             .item { padding: 10px 12px; gap: 10px; }
             .item-icon-btn { width: 38px; height: 38px; font-size: 1.15rem; }
@@ -385,6 +452,7 @@
             .cat-color-preset { grid-template-columns: repeat(4, 1fr); gap: 8px; }
             .cat-color-custom { flex-direction: column; align-items: stretch; gap: 8px; }
             .cat-color-custom-input { height: 44px; }
+            .ring-percent { font-size: 1rem; }
         }
         @media (max-width: 360px) {
             .cat-picker-grid { grid-template-columns: repeat(2, 1fr); }
@@ -403,7 +471,7 @@
             <div class="sidebar-title">Smart Budget Pro</div>
             <div style="font-size:0.7rem;color:var(--text-dim);margin-top:2px">Tu finanzas, simplificadas</div>
         </div>
-        <span class="version-badge">v3.3.0</span>
+        <span class="version-badge">v3.5.0</span>
         <button class="sidebar-close" onclick="toggleMenu()">✕</button>
     </div>
     <div class="sidebar-section">
@@ -478,7 +546,7 @@
     <div style="margin-top:auto;padding-top:20px;border-top:1px solid var(--border-glass);text-align:center">
         <small style="color:var(--text-dim);display:block;line-height:1.9">
             <strong style="color:var(--primary)">Smart Budget Pro</strong><br>
-            Versión <span style="color:var(--accent);font-weight:700">3.3.0</span><br>
+            Versión <span style="color:var(--accent);font-weight:700">3.5.0</span><br>
             <span id="appStatus">🟢 Sistema operativo</span><br>
             <span style="opacity:0.7">© 2026 · Todos los derechos reservados</span>
         </small>
@@ -488,7 +556,12 @@
 <div class="top-banner">
     <button class="menu-btn" onclick="toggleMenu()">☰</button>
     <div class="sync-badge synced" id="syncBadge">
-        <span class="sync-badge-icon">☁️</span> <span id="syncText">Sincronizado</span>
+        <div class="sync-badge-icon">☁️</div>
+        <div class="sync-badge-text">Sincronizado</div>
+        <button class="sync-action-btn" id="syncActionBtn" onclick="forceSync()">
+            <span>🔄</span>
+            <span>Sincronizar</span>
+        </button>
     </div>
     <div class="income-section">
         <label class="income-label">💵 INGRESO MENSUAL</label>
@@ -602,31 +675,35 @@
     </div>
 </div>
 
-<div class="modal" id="aboutModal">
+<div class="modal about-modal" id="aboutModal">
     <div class="modal-box">
-        <h4 class="modal-head">💰 Acerca de Smart Budget Pro</h4>
-        <div style="text-align:center;margin-bottom:20px">
-            <div style="font-size:3rem;margin-bottom:10px">💰</div>
-            <h3 style="font-size:1.3rem;font-weight:800;background:linear-gradient(135deg,var(--primary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:4px">Smart Budget Pro v3.3</h3>
-            <p style="color:var(--text-dim);font-size:0.85rem">Tu finanzas personales, simplificadas</p>
+        <div class="version-header">
+            <div class="version-icon">💰</div>
+            <div class="version-title">Smart Budget Pro v3.5</div>
+            <div class="version-subtitle">Tu finanzas personales, simplificadas</div>
         </div>
-        <div style="max-height:40vh;overflow-y:auto;padding-right:6px;color:var(--text-muted);font-size:0.9rem;line-height:1.7">
-            <p><strong style="color:var(--text)">¿Qué es Smart Budget Pro?</strong></p>
-            <p style="margin-bottom:12px">Es una aplicación web moderna para gestionar tu presupuesto personal. Controla gastos, establece metas de ahorro y visualiza tu salud financiera en tiempo real.</p>
-            <p><strong style="color:var(--text)">Características:</strong></p>
-            <ul style="margin:8px 0 12px 20px">
-                <li>📊 Dashboard con anillos de progreso</li>
-                <li>💸 Control de gastos con 27+ categorías</li>
-                <li>🎯 Metas de ahorro con seguimiento</li>
-                <li>🎨 Personalización total</li>
-                <li>☁️ Sync automático cada minuto</li>
-                <li>📤 Exportación JSON/CSV</li>
-                <li>👁️ Modo privado</li>
-                <li>🌙 Modo oscuro/claro</li>
-                <li>💱 Múltiples monedas</li>
-                <li>📱 Diseño responsive</li>
+        <div class="modal-body">
+            <div class="section-title">¿Qué es Smart Budget Pro?</div>
+            <p>Es una aplicación web moderna para gestionar tu presupuesto personal. Controla gastos, establece metas de ahorro y visualiza tu salud financiera en tiempo real.</p>
+            
+            <div class="section-title">Características Principales</div>
+            <ul class="feature-list">
+                <li>Dashboard interactivo con anillos de progreso visuales</li>
+                <li>Control de gastos con 27+ categorías personalizables</li>
+                <li>Metas de ahorro con seguimiento de progreso</li>
+                <li>Personalización total de colores y temas</li>
+                <li>Sincronización automática en la nube cada minuto</li>
+                <li>Exportación de datos en JSON y CSV</li>
+                <li>Modo privado para ocultar montos sensibles</li>
+                <li>Modo oscuro y claro con transiciones suaves</li>
+                <li>Soporte para múltiples monedas (USD, EUR, MXN, COP)</li>
+                <li>Diseño responsive para móviles y desktop</li>
             </ul>
-            <p style="color:var(--text-dim);font-size:0.82rem">Desarrollado con ❤️ · Firebase Firestore · 2026</p>
+            
+            <div class="section-title">¿Cómo Funciona?</div>
+            <p>Ingresa tu ingreso mensual y la app calcula automáticamente cuánto puedes gastar, cuánto ahorrar y cuánto te queda disponible. Cada gasto y meta de ahorro se sincroniza con la nube para que no pierdas tu información.</p>
+            
+            <p style="color:var(--text-dim);font-size:0.85rem;margin-top:20px;text-align:center">Desarrollado con ❤️ · Firebase Firestore · 2026</p>
         </div>
         <div class="modal-foot" style="margin-top:18px"><button class="btn btn-primary" onclick="closeAbout()">¡Genial!</button></div>
     </div>
@@ -636,7 +713,7 @@
     <div class="cat-picker" id="catPicker">
         <div class="cat-picker-header">
             <div><div class="cat-picker-title">🎨 Personalizar</div><div class="cat-picker-subtitle">Elige categoría y color</div></div>
-            <button class="cat-picker-close" onclick="closeCatPicker()">✕</button>
+            <button class="cat-picker-close" id="catPickerClose" onclick="closeCatPicker()">✕</button>
         </div>
         <div class="cat-picker-color-section">
             <div class="cat-picker-color-label">🎨 Colores rápidos</div>
@@ -726,7 +803,7 @@
         setupFirestoreListener();
         loadPrefs();
         startAutoSync();
-        toast('✨ Smart Budget Pro v3.3 listo','success');
+        toast('✨ Smart Budget Pro v3.5 listo','success');
     }
 
     function setupFirestoreListener(){
@@ -774,6 +851,7 @@
     function updateSyncState(state){
         var card=$('#syncCard'),orb=$('#syncOrb'),status=$('#syncStatus'),particles=$('#syncParticles');
         var btnSync=$('#btnSyncModern'),badge=$('#syncBadge'),badgeText=$('#syncText');
+        var btnAction=$('#syncActionBtn');
         if(card)card.className='sync-card '+state;
         if(orb)orb.className='sync-orb '+state;
         if(particles)particles.className='sync-particles '+(state==='synced'?'active':'');
@@ -782,6 +860,7 @@
         if(status)status.textContent=labels[state].text;
         if(badgeText)badgeText.textContent=labels[state].badge;
         if(btnSync){if(state==='connecting')btnSync.classList.add('syncing');else btnSync.classList.remove('syncing');}
+        if(btnAction){if(state==='connecting')btnAction.classList.add('syncing');else btnAction.classList.remove('syncing');}
     }
 
     function startAutoSync(){
@@ -862,7 +941,12 @@
         }
         var overlay=$('#catPickerOverlay');if(overlay)overlay.classList.add('active');
     }
-    function closeCatPicker(){var overlay=$('#catPickerOverlay');if(overlay)overlay.classList.remove('active');curPickerItem=null;curPickerType=null;}
+    function closeCatPicker(){
+        var overlay=$('#catPickerOverlay');
+        if(overlay)overlay.classList.remove('active');
+        curPickerItem=null;
+        curPickerType=null;
+    }
     function markChange(){hasPendingChanges=true;if(!isUpdatingFromDB)safeCall(calc);}
 
     function renderLists(gastos,ahorros){
@@ -1028,27 +1112,27 @@
         if(chartInst){chartInst.destroy();chartInst=null;}
         if(typeof Chart==='undefined'){toast('📊 Cargando gráfica...','warning');var sc=document.createElement('script');sc.src='https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js';sc.onload=function(){showChart();};sc.onerror=function(){toast('❌ Error al cargar','error');};document.head.appendChild(sc);toggleMenu();return;}
         chartInst=new Chart(ctx,{
-            type:'doughnut',
-            data: {
-                labels:labels,
-                datasets:[{
-                    data:data,
-                    borderColor:colors.slice(0,data.length),
-                    backgroundColor:colors.slice(0,data.length).map(function(c){return c+'99';}),
-                    borderWidth:2
-                }]
-            },
-            options:{
-                responsive:true,
-                maintainAspectRatio:false,
-                cutout:'68%',
-                plugins:{
-                    legend:{display:false},
-                    tooltip:{callbacks:{label:function(ctx){return ctx.label+': '+sym[currency]+ctx.parsed.toFixed(2)+' ('+((ctx.parsed/total)*100).toFixed(1)+'%)';}}}
-                },
-                animation:{animateScale:true,animateRotate:true}
-            }
-        });
+    type:'doughnut',
+    data: {  // ✅ AGREGADO "data:" - ESTO ES LO QUE FALTABA
+        labels:labels,
+        datasets:[{
+            data,
+            borderColor:colors.slice(0,data.length),
+            backgroundColor:colors.slice(0,data.length).map(function(c){return c+'99';}),
+            borderWidth:2
+        }]
+    },
+    options:{
+        responsive:true,
+        maintainAspectRatio:false,
+        cutout:'68%',
+        plugins:{
+            legend:{display:false},
+            tooltip:{callbacks:{label:function(ctx){return ctx.label+': '+sym[currency]+ctx.parsed.toFixed(2)+' ('+((ctx.parsed/total)*100).toFixed(1)+'%)';}}}
+        },
+        animation:{animateScale:true,animateRotate:true}
+    }
+});
         $('#chartModal').classList.add('active');toggleMenu();
     }
     
@@ -1062,7 +1146,7 @@
         toggleMenu();
     }
     function confirmReset(){modal('🗑️ ¿Borrar todo?','⚠️ Esta acción es irreversible. ¿Continuar?',function(){docRef.delete().then(function(){toast('🗑️ Datos borrados','success');setTimeout(function(){location.reload();},1000);});});toggleMenu();}
-    function forceSync(){updateSyncState('connecting');hasPendingChanges=true;syncCountdown=60;updateCountdownDisplay();saveToFirebase(false);toast('✅ Sincronizado','success');toggleMenu();}
+    function forceSync(){updateSyncState('connecting');hasPendingChanges=true;syncCountdown=60;updateCountdownDisplay();saveToFirebase(false);toast('✅ Sincronizado','success');}
     function getItemsArray(type){var cid=type==='g'?'#listG':'#listA',items=[];$$(cid+' .item').forEach(function(row){var n=row.querySelector('.item-name'),v=row.querySelector('.item-val');if(n&&v){items.push({nombre:n.value,monto:+v.value||0,color:row.style.getPropertyValue('--item-color').trim()||(type==='g'?'#f43f5e':'#22c55e'),category:row.getAttribute('data-cat')||'general',completed:row.classList.contains('completed')});}});return items;}
     function modal(title,text,onConfirm){var mt=$('#mTitle'),mb=$('#mText'),mc=$('#mConfirm'),me=$('#modal');if(mt)mt.textContent=title;if(mb)mb.textContent=text;if(mc){mc.onclick=function(){closeModal();if(onConfirm)onConfirm();};mc.textContent=onConfirm?'Confirmar':'Cerrar';}if(me)me.classList.add('active');}
     function closeModal(){$('#modal').classList.remove('active');}
@@ -1073,11 +1157,23 @@
 
     if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
     
-    window.toggleMenu=toggleMenu;window.toggleTheme=toggleTheme;window.togglePrivate=togglePrivate;
-    window.setCurrency=setCurrency;window.exportData=exportData;window.exportCSV=exportCSV;
-    window.importData=importData;window.showChart=showChart;window.closeChart=closeChart;
-    window.showStats=showStats;window.confirmReset=confirmReset;window.forceSync=forceSync;
-    window.closeModal=closeModal;window.closeManual=closeManual;window.showAbout=showAbout;window.closeAbout=closeAbout;
+    window.toggleMenu=toggleMenu;
+    window.toggleTheme=toggleTheme;
+    window.togglePrivate=togglePrivate;
+    window.setCurrency=setCurrency;
+    window.exportData=exportData;
+    window.exportCSV=exportCSV;
+    window.importData=importData;
+    window.showChart=showChart;
+    window.closeChart=closeChart;
+    window.showStats=showStats;
+    window.confirmReset=confirmReset;
+    window.forceSync=forceSync;
+    window.closeModal=closeModal;
+    window.closeManual=closeManual;
+    window.showAbout=showAbout;
+    window.closeAbout=closeAbout;
+    window.closeCatPicker=closeCatPicker;
     
 })();
 </script>
