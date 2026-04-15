@@ -159,50 +159,130 @@
             color: white; font-size: 1.4rem; cursor: pointer; z-index: 10; backdrop-filter: blur(12px);
         }
         .menu-btn:hover { background: rgba(255,255,255,0.25); transform: scale(1.05); }
-        .sync-badge {
-            position: absolute; right: 24px; top: calc(20px + var(--safe-t));
-            font-size: 0.72rem; font-weight: 700; padding: 10px 18px;
-            border-radius: 28px; display: flex; flex-direction: column; align-items: center; gap: 6px;
-            backdrop-filter: blur(16px); z-index: 10; animation: slideIn 0.4s ease; 
-            border: 1px solid; transition: var(--transition);
-            background: rgba(34,197,94,0.15);
-            border-color: rgba(34,197,94,0.3);
-        }
-        @keyframes slideIn { from { opacity: 0; transform: translateX(25px); } to { opacity: 1; transform: translateX(0); } }
-        .sync-badge.synced { background: rgba(34,197,94,0.15); color: #86efac; border-color: rgba(34,197,94,0.3); }
-        .sync-badge.connecting { background: rgba(245,158,11,0.15); color: #fcd34d; border-color: rgba(245,158,11,0.3); animation: badgePulse 1.5s ease-in-out infinite; }
-        @keyframes badgePulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(245,158,11,0.3); } 50% { box-shadow: 0 0 0 8px rgba(245,158,11,0); } }
-        .sync-badge.offline { background: rgba(244,63,94,0.15); color: #fca5a5; border-color: rgba(244,63,94,0.3); animation: badgeShake 0.5s ease-in-out; }
-        @keyframes badgeShake { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(3px); } }
-        .sync-badge-icon { font-size: 1.3rem; line-height: 1; }
-        .sync-badge-text { font-weight: 700; font-size: 0.75rem; }
         
-        /* BOTÓN DE SYNC ESTÉTICO Y BONITO */
+        /* === SYNC BADGE MODERNIZADO - TOP BANNER === */
+        .sync-badge {
+            position: absolute; 
+            right: 24px; 
+            top: calc(20px + var(--safe-t));
+            font-size: 0.72rem; 
+            font-weight: 700; 
+            padding: 12px 20px;
+            border-radius: 28px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            gap: 8px;
+            backdrop-filter: blur(20px); 
+            -webkit-backdrop-filter: blur(20px);
+            z-index: 10; 
+            animation: slideIn 0.4s ease; 
+            border: 1px solid; 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: linear-gradient(135deg, rgba(34,197,94,0.22), rgba(22,163,74,0.15));
+            border-color: rgba(34,197,94,0.45);
+            box-shadow: 0 8px 32px rgba(34,197,94,0.25), 0 0 0 1px rgba(255,255,255,0.1) inset;
+        }
+
+        .sync-badge:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(34,197,94,0.35), 0 0 0 1px rgba(255,255,255,0.15) inset;
+        }
+
+        .sync-badge.synced { 
+            animation: syncedPulse 3s ease-in-out infinite;
+        }
+
+        @keyframes syncedPulse {
+            0%, 100% { box-shadow: 0 8px 32px rgba(34,197,94,0.25), 0 0 0 1px rgba(255,255,255,0.1) inset; }
+            50% { box-shadow: 0 8px 32px rgba(34,197,94,0.45), 0 0 0 1px rgba(255,255,255,0.2) inset; }
+        }
+
+        .sync-badge.connecting { 
+            background: linear-gradient(135deg, rgba(245,158,11,0.22), rgba(217,119,6,0.15));
+            border-color: rgba(245,158,11,0.45);
+            animation: connectingPulse 1.2s ease-in-out infinite;
+        }
+
+        @keyframes connectingPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(245,158,11,0.3); }
+            50% { box-shadow: 0 0 0 12px rgba(245,158,11,0); }
+        }
+
+        .sync-badge.offline { 
+            background: linear-gradient(135deg, rgba(244,63,94,0.22), rgba(225,29,72,0.15));
+            border-color: rgba(244,63,94,0.45);
+        }
+
+        .sync-badge-icon { 
+            font-size: 1.4rem; 
+            line-height: 1; 
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+        }
+
+        .sync-badge-text { 
+            font-weight: 700; 
+            font-size: 0.78rem;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+
+        /* === BOTÓN DE SYNC ESTÉTICO MEJORADO === */
         .sync-action-btn {
-            background: linear-gradient(135deg, rgba(99,102,241,0.9), rgba(139,92,246,0.9));
+            background: linear-gradient(135deg, rgba(99,102,241,0.95), rgba(139,92,246,0.95));
             border: none;
             color: white; 
-            padding: 8px 18px; 
-            border-radius: 20px;
-            font-size: 0.75rem; 
+            padding: 10px 22px; 
+            border-radius: 24px;
+            font-size: 0.78rem; 
             font-weight: 700; 
             cursor: pointer;
-            transition: var(--transition); 
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); 
             display: flex; 
             align-items: center; 
-            gap: 6px;
-            backdrop-filter: blur(12px); 
-            box-shadow: 0 4px 20px rgba(99,102,241,0.4);
-            margin-top: 4px;
+            gap: 7px;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            box-shadow: 0 6px 24px rgba(99,102,241,0.45), 0 0 0 1px rgba(255,255,255,0.2) inset;
+            margin-top: 6px;
+            position: relative;
+            overflow: hidden;
         }
+
+        .sync-action-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.2), transparent);
+            opacity: 0;
+            transition: opacity 0.25s;
+        }
+
         .sync-action-btn:hover { 
-            transform: translateY(-2px) scale(1.05);
-            box-shadow: 0 6px 25px rgba(99,102,241,0.5);
-            background: linear-gradient(135deg, rgba(99,102,241,1), rgba(139,92,246,1));
+            transform: translateY(-2px) scale(1.03);
+            box-shadow: 0 10px 35px rgba(99,102,241,0.6), 0 0 0 1px rgba(255,255,255,0.3) inset;
         }
+
+        .sync-action-btn:hover::before { opacity: 1; }
         .sync-action-btn:active { transform: translateY(0) scale(0.98); }
-        .sync-action-btn.syncing { animation: btnPulse 1s ease-in-out infinite; }
-        @keyframes btnPulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.85; transform: scale(0.98); } }
+
+        .sync-action-btn.syncing { animation: btnSyncPulse 1s ease-in-out infinite; }
+
+        @keyframes btnSyncPulse { 
+            0%, 100% { opacity: 1; transform: scale(1); } 
+            50% { opacity: 0.9; transform: scale(0.98); } 
+        }
+
+        .sync-action-btn .sync-icon {
+            font-size: 1.1rem;
+            transition: transform 0.3s ease;
+        }
+
+        .sync-action-btn.syncing .sync-icon { animation: syncSpin 1s linear infinite; }
+
+        @keyframes syncSpin { 
+            from { transform: rotate(0deg); } 
+            to { transform: rotate(360deg); } 
+        }
         
         .income-section { position: relative; z-index: 5; margin-top: 20px; }
         .income-label { display: block; font-size: 0.72rem; font-weight: 800; opacity: 0.92; margin-bottom: 10px; letter-spacing: 0.14em; text-transform: uppercase; }
@@ -421,6 +501,303 @@
         .about-modal .version-subtitle { color: var(--text-dim); font-size: 0.9rem; }
         .about-modal .section-title { font-size: 1.1rem; font-weight: 700; color: var(--text); margin: 16px 0 10px; display: flex; align-items: center; gap: 8px; }
         .about-modal .section-title::before { content: ''; width: 4px; height: 20px; background: linear-gradient(180deg, var(--primary), var(--secondary)); border-radius: 2px; }
+        
+        /* === MODAL "CÓMO USAR" - COMPLETAMENTE FUNCIONAL === */
+        #manualModal .modal-box {
+            max-width: 650px;
+            background: linear-gradient(145deg, var(--bg-card), rgba(30,30,60,0.95));
+            border: 1px solid rgba(99,102,241,0.25);
+            box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+            animation: modalUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        #manualModal .modal-head {
+            font-size: 1.5rem;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid var(--border-glass);
+        }
+
+        #manualModal .modal-body {
+            max-height: 65vh;
+            overflow-y: auto;
+            padding-right: 8px;
+            scrollbar-width: thin;
+            scrollbar-color: var(--primary) transparent;
+        }
+
+        #manualModal .modal-body::-webkit-scrollbar { 
+            width: 6px; 
+        }
+
+        #manualModal .modal-body::-webkit-scrollbar-track { 
+            background: transparent; 
+        }
+
+        #manualModal .modal-body::-webkit-scrollbar-thumb { 
+            background: linear-gradient(180deg, var(--primary), var(--secondary)); 
+            border-radius: 6px; 
+        }
+
+        #manualModal .step {
+            background: linear-gradient(135deg, rgba(99,102,241,0.12), rgba(139,92,246,0.08));
+            border: 1px solid rgba(99,102,241,0.3);
+            border-left: 5px solid var(--primary);
+            border-radius: 16px;
+            padding: 18px 20px;
+            margin-bottom: 16px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            gap: 16px;
+            align-items: flex-start;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        #manualModal .step:hover {
+            background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(139,92,246,0.15));
+            border-color: rgba(99,102,241,0.5);
+            transform: translateX(6px) scale(1.01);
+            box-shadow: 0 8px 30px rgba(99,102,241,0.25);
+        }
+
+        #manualModal .step:last-child {
+            margin-bottom: 8px;
+        }
+
+        #manualModal .step-num {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+            box-shadow: 0 4px 15px rgba(99,102,241,0.5);
+            margin-top: 2px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        #manualModal .step-txt {
+            flex: 1;
+        }
+
+        #manualModal .step-txt strong {
+            color: var(--text);
+            display: block;
+            margin-bottom: 6px;
+            font-size: 1.05rem;
+            font-weight: 700;
+            line-height: 1.3;
+        }
+
+        #manualModal .step-txt {
+            color: var(--text-muted);
+            line-height: 1.7;
+            font-size: 0.95rem;
+        }
+
+        #manualModal .modal-foot {
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-glass);
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        #manualModal .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            padding: 12px 32px;
+            font-weight: 700;
+            box-shadow: 0 6px 25px rgba(99,102,241,0.4);
+        }
+
+        #manualModal .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 35px rgba(99,102,241,0.5);
+        }
+        
+        /* === MODAL "ACERCA DE" - DISEÑO PREMIUM === */
+        .about-modal .modal-box {
+            max-width: 620px;
+            background: linear-gradient(145deg, var(--bg-card), rgba(30,30,60,0.95));
+            border: 1px solid rgba(99,102,241,0.25);
+            box-shadow: 0 30px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05) inset;
+            animation: modalUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .about-modal .version-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 28px 24px;
+            background: linear-gradient(135deg, rgba(99,102,241,0.18), rgba(139,92,246,0.12));
+            border-radius: 22px;
+            border: 1px solid rgba(99,102,241,0.35);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .about-modal .version-header::before {
+            content: '';
+            position: absolute;
+            top: -60%;
+            left: -60%;
+            width: 220%;
+            height: 220%;
+            background: radial-gradient(circle, rgba(255,255,255,0.12) 0%, transparent 65%);
+            animation: float 22s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0,0) rotate(0deg); }
+            50% { transform: translate(3%,3%) rotate(180deg); }
+        }
+
+        .about-modal .version-icon {
+            font-size: 4rem;
+            margin-bottom: 16px;
+            position: relative;
+            z-index: 1;
+            animation: iconFloat 3.5s ease-in-out infinite;
+            filter: drop-shadow(0 8px 20px rgba(99,102,241,0.4));
+        }
+
+        @keyframes iconFloat {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-10px) scale(1.05); }
+        }
+
+        .about-modal .version-title {
+            font-size: 1.7rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--accent), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .about-modal .version-subtitle {
+            color: var(--text-muted);
+            font-size: 1rem;
+            position: relative;
+            z-index: 1;
+            font-weight: 500;
+        }
+
+        .about-modal .section-title {
+            font-size: 1.18rem;
+            font-weight: 700;
+            color: var(--text);
+            margin: 24px 0 14px;
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            padding-bottom: 10px;
+            border-bottom: 1px dashed var(--border-glass);
+        }
+
+        .about-modal .section-title::before {
+            content: '';
+            width: 5px;
+            height: 24px;
+            background: linear-gradient(180deg, var(--primary), var(--secondary));
+            border-radius: 3px;
+            box-shadow: 0 0 12px rgba(99,102,241,0.6);
+        }
+
+        .about-modal .feature-list {
+            list-style: none;
+            padding: 0;
+            margin: 16px 0;
+            display: grid;
+            gap: 9px;
+        }
+
+        .about-modal .feature-list li {
+            padding: 11px 16px;
+            display: flex;
+            align-items: flex-start;
+            gap: 13px;
+            font-size: 0.93rem;
+            line-height: 1.55;
+            background: rgba(255,255,255,0.04);
+            border-radius: 13px;
+            border: 1px solid var(--border-glass);
+            transition: all 0.22s ease;
+        }
+
+        .about-modal .feature-list li:hover {
+            background: rgba(255,255,255,0.08);
+            border-color: rgba(99,102,241,0.35);
+            transform: translateX(5px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+
+        .about-modal .feature-list li::before {
+            content: '✓';
+            color: white;
+            font-weight: 800;
+            flex-shrink: 0;
+            background: linear-gradient(135deg, var(--success), #4ade80);
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            box-shadow: 0 3px 10px rgba(34,197,94,0.35);
+            margin-top: 2px;
+        }
+
+        .about-modal .modal-body {
+            max-height: 66vh;
+            overflow-y: auto;
+            padding-right: 10px;
+            scrollbar-width: thin;
+            scrollbar-color: var(--primary) transparent;
+        }
+
+        .about-modal .modal-body::-webkit-scrollbar { width: 5px; }
+        .about-modal .modal-body::-webkit-scrollbar-track { background: rgba(255,255,255,0.03); border-radius: 8px; }
+        .about-modal .modal-body::-webkit-scrollbar-thumb { 
+            background: linear-gradient(180deg, var(--primary), var(--secondary)); 
+            border-radius: 8px; 
+            border: 1px solid rgba(255,255,255,0.12);
+        }
+        .about-modal .modal-body::-webkit-scrollbar-thumb:hover { 
+            background: linear-gradient(180deg, var(--secondary), var(--accent)); 
+        }
+
+        .about-modal .modal-body p {
+            margin-bottom: 16px;
+            line-height: 1.75;
+            color: var(--text-muted);
+        }
+
+        .about-modal .modal-body p:last-child { margin-bottom: 0; }
+
+        .about-modal .modal-foot {
+            margin-top: 22px;
+            padding-top: 18px;
+            border-top: 1px solid var(--border-glass);
+        }
         
         @media (max-width: 768px) {
             .stats-grid { grid-template-columns: 1fr; gap: 16px; }
@@ -662,16 +1039,60 @@
 <div class="modal" id="manualModal">
     <div class="modal-box">
         <h4 class="modal-head">📖 Cómo Usar Smart Budget Pro</h4>
-        <div style="max-height:62vh;overflow-y:auto;padding-right:6px">
-            <div class="step"><div class="step-num">1</div><div class="step-txt"><strong>💵 Configura tu ingreso</strong>Ingresa tu sueldo mensual arriba. La app calculará tus porcentajes automáticamente.</div></div>
-            <div class="step"><div class="step-num">2</div><div class="step-txt"><strong>➕ Agrega gastos y metas</strong>Usa el botón + en cada sección. Toca el ícono para elegir categoría y color.</div></div>
-            <div class="step"><div class="step-num">3</div><div class="step-txt"><strong>✅ Marca completado</strong>Toca el check para marcar gastos pagados o metas alcanzadas.</div></div>
-            <div class="step"><div class="step-num">4</div><div class="step-txt"><strong>🎨 Personaliza</strong>Cambia tema, color y moneda desde el menú.</div></div>
-            <div class="step"><div class="step-num">5</div><div class="step-txt"><strong>📊 Analiza</strong>Gráficas y estadísticas disponibles.</div></div>
-            <div class="step"><div class="step-num">6</div><div class="step-txt"><strong>☁️ Sync automático</strong>Se sincroniza cada minuto con la nube.</div></div>
-            <div class="step"><div class="step-num">7</div><div class="step-txt"><strong>📤 Exporta</strong>JSON o CSV para respaldo.</div></div>
+        <div class="modal-body">
+            <div class="step">
+                <div class="step-num">1</div>
+                <div class="step-txt">
+                    <strong>💵 Configura tu ingreso mensual</strong>
+                    Ingresa tu sueldo o ingreso mensual en el campo principal. La app calculará automáticamente tus porcentajes de gasto, ahorro y disponible.
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num">2</div>
+                <div class="step-txt">
+                    <strong>➕ Agrega gastos y metas de ahorro</strong>
+                    Usa el botón <strong>+</strong> en cada sección. Toca el ícono para elegir entre 27+ categorías y personalizar colores.
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num">3</div>
+                <div class="step-txt">
+                    <strong>✅ Marca como completado</strong>
+                    Toca el botón ✔️ para marcar gastos pagados o metas de ahorro alcanzadas. Se tacharán visualmente.
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num">4</div>
+                <div class="step-txt">
+                    <strong>🎨 Personaliza la app</strong>
+                    Desde el menú lateral cambia: modo oscuro/claro, color principal, moneda (USD/EUR/MXN/COP) y activa el modo privacidad.
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num">5</div>
+                <div class="step-txt">
+                    <strong>📊 Analiza tus finanzas</strong>
+                    Visualiza anillos de progreso, gráficas de distribución de gastos y estadísticas detalladas de tu salud financiera.
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num">6</div>
+                <div class="step-txt">
+                    <strong>☁️ Sincronización automática</strong>
+                    Tus datos se sincronizan cada 60 segundos con la nube. También puedes forzar sync manual con el botón 🔄.
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num">7</div>
+                <div class="step-txt">
+                    <strong>📤 Exporta tus datos</strong>
+                    Descarga tu información en formato JSON o CSV para tener respaldos o analizar en Excel.
+                </div>
+            </div>
         </div>
-        <div class="modal-foot" style="margin-top:18px"><button class="btn btn-primary" onclick="closeManual()">¡Entendido!</button></div>
+        <div class="modal-foot">
+            <button class="btn btn-primary" onclick="closeManual()">¡Entendido! 🚀</button>
+        </div>
     </div>
 </div>
 
@@ -1150,8 +1571,26 @@
     function getItemsArray(type){var cid=type==='g'?'#listG':'#listA',items=[];$$(cid+' .item').forEach(function(row){var n=row.querySelector('.item-name'),v=row.querySelector('.item-val');if(n&&v){items.push({nombre:n.value,monto:+v.value||0,color:row.style.getPropertyValue('--item-color').trim()||(type==='g'?'#f43f5e':'#22c55e'),category:row.getAttribute('data-cat')||'general',completed:row.classList.contains('completed')});}});return items;}
     function modal(title,text,onConfirm){var mt=$('#mTitle'),mb=$('#mText'),mc=$('#mConfirm'),me=$('#modal');if(mt)mt.textContent=title;if(mb)mb.textContent=text;if(mc){mc.onclick=function(){closeModal();if(onConfirm)onConfirm();};mc.textContent=onConfirm?'Confirmar':'Cerrar';}if(me)me.classList.add('active');}
     function closeModal(){$('#modal').classList.remove('active');}
-    function showManual(){$('#manualModal').classList.add('active');}
-    function closeManual(){$('#manualModal').classList.remove('active');}
+    
+    // ✅ FUNCIÓN showManual() CORREGIDA
+    function showManual(){
+        var modal = $('#manualModal');
+        if(modal) {
+            modal.classList.add('active');
+            void modal.offsetWidth;
+            console.log('Modal Cómo Usar abierto');
+        } else {
+            console.error('No se encontró el modal manualModal');
+        }
+    }
+    
+    function closeManual(){
+        var modal = $('#manualModal');
+        if(modal) {
+            modal.classList.remove('active');
+        }
+    }
+    
     function showAbout(){$('#aboutModal').classList.add('active');}
     function closeAbout(){$('#aboutModal').classList.remove('active');}
 
