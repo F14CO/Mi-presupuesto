@@ -3,31 +3,214 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculadora Sincronizada Hernán</title>
-    <!-- Cargamos Firebase Versión 8 (La más estable para este tipo de apps) -->
-    <script src="https://gstatic.com"></script>
-    <script src="https://gstatic.com"></script>
+    <title>💰 Smart Budget Pro</title>
+    
+    <!-- Firebase SDK v8 -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     
     <style>
-        :root { --primary-color: #2c3e50; --bg-color: #f0f2f5; --card-bg: #ffffff; --danger: #e74c3c; --success: #27ae60; }
-        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-color); margin: 0; padding: 0; padding-bottom: 100px; }
-        .sidebar { position: fixed; left: -280px; top: 0; width: 280px; height: 100%; background: white; z-index: 3000; transition: 0.3s; padding: 25px; box-sizing: border-box; box-shadow: 10px 0 30px rgba(0,0,0,0.1); }
+        :root {
+            --primary: #6366f1;
+            --bg-dark: #0a0a1a;
+            --bg-card: rgba(20, 20, 45, 0.85);
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --danger: #f43f5e;
+            --success: #22c55e;
+            --warning: #f59e0b;
+        }
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text);
+            min-height: 100vh;
+            padding-bottom: 100px;
+        }
+        
+        .sidebar {
+            position: fixed;
+            left: -300px;
+            top: 0;
+            width: 300px;
+            height: 100vh;
+            background: var(--bg-card);
+            z-index: 3000;
+            transition: 0.3s;
+            padding: 25px;
+            box-shadow: 10px 0 30px rgba(0,0,0,0.5);
+        }
+        
         .sidebar.active { left: 0; }
-        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 2500; display: none; }
+        
+        .overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 2500;
+            display: none;
+        }
+        
         .overlay.active { display: block; }
-        .top-banner { background: var(--primary-color); padding: 50px 20px; color: white; text-align: center; border-bottom-left-radius: 30px; border-bottom-right-radius: 30px; position: relative; }
-        .menu-btn { position: absolute; left: 20px; top: 20px; font-size: 28px; cursor: pointer; }
-        .save-indicator { position: absolute; right: 20px; top: 25px; font-size: 11px; background: rgba(0,0,0,0.3); padding: 4px 10px; border-radius: 10px; }
-        .header-income input { background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); border-radius: 15px; color: white; font-size: 2rem; font-weight: 800; text-align: center; width: 85%; max-width: 380px; padding: 10px; outline: none; }
-        .container { max-width: 1000px; margin: -25px auto 0; padding: 0 15px; }
-        .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        @media (max-width: 768px) { .dashboard { grid-template-columns: 1fr; } }
-        .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); min-height: 150px; }
-        .item-row { display: flex; gap: 10px; background: #f8f9fa; padding: 12px; border-radius: 12px; margin-bottom: 10px; align-items: center; border-left: 6px solid #ccc; }
-        .item-row input { background: transparent; border: none; font-weight: 600; outline: none; }
-        .btn-add { background: var(--primary-color); color: white; border: none; width: 35px; height: 35px; border-radius: 50%; cursor: pointer; font-size: 20px; }
-        .input-color-box { width: 35px; height: 35px; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; background: white; }
-        .footer-nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 92%; max-width: 500px; background: white; border-radius: 25px; display: flex; justify-content: space-around; align-items: center; height: 85px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); z-index: 2000; }
+        
+        .top-banner {
+            background: linear-gradient(135deg, var(--primary), #8b5cf6);
+            padding: 50px 20px;
+            text-align: center;
+            border-bottom-left-radius: 30px;
+            border-bottom-right-radius: 30px;
+            position: relative;
+        }
+        
+        .menu-btn {
+            position: absolute;
+            left: 20px;
+            top: 20px;
+            font-size: 28px;
+            cursor: pointer;
+            background: rgba(255,255,255,0.2);
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .save-indicator {
+            position: absolute;
+            right: 20px;
+            top: 25px;
+            font-size: 12px;
+            background: rgba(0,0,0,0.3);
+            padding: 6px 12px;
+            border-radius: 15px;
+        }
+        
+        .header-income input {
+            background: rgba(255,255,255,0.2);
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 20px;
+            color: white;
+            font-size: 2.2rem;
+            font-weight: 800;
+            text-align: center;
+            width: 85%;
+            max-width: 350px;
+            padding: 12px;
+            outline: none;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: -30px auto 0;
+            padding: 0 20px;
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard { grid-template-columns: 1fr; }
+        }
+        
+        .card {
+            background: var(--bg-card);
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        
+        .item-row {
+            display: flex;
+            gap: 10px;
+            background: rgba(255,255,255,0.05);
+            padding: 12px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            align-items: center;
+            border-left: 5px solid var(--primary);
+        }
+        
+        .item-row input {
+            background: transparent;
+            border: none;
+            color: var(--text);
+            font-weight: 600;
+            outline: none;
+            flex: 1;
+        }
+        
+        .btn-add {
+            background: var(--primary);
+            color: white;
+            border: none;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 20px;
+        }
+        
+        .btn-remove {
+            background: var(--danger);
+            color: white;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        
+        .footer-nav {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 92%;
+            max-width: 500px;
+            background: var(--bg-card);
+            border-radius: 25px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+            z-index: 2000;
+        }
+        
+        .footer-item {
+            text-align: center;
+        }
+        
+        .footer-item span {
+            display: block;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+        }
+        
+        .footer-item strong {
+            font-size: 1.2rem;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-muted);
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 1.2rem;
+        }
     </style>
 </head>
 <body>
@@ -35,150 +218,317 @@
 <div class="overlay" id="overlay" onclick="toggleMenu()"></div>
 
 <div class="sidebar" id="sidebar">
-    <h3 style="color:var(--primary-color)">AJUSTES</h3>
-    <label>Color de Interfaz:</label><br>
-    <input type="color" id="themePicker" oninput="changeUITheme(this.value)" style="width:100%; height:40px; margin:10px 0; border:none; cursor:pointer;">
-    <button onclick="resetApp()" style="background:var(--danger); color:white; border:none; width:100%; padding:10px; border-radius:8px; cursor:pointer; margin-top:20px;">Borrar Todo</button>
+    <h3 style="margin-bottom: 20px;">⚙️ Configuración</h3>
+    <div style="margin-bottom: 20px;">
+        <label style="display: block; margin-bottom: 8px;">Color del Tema:</label>
+        <input type="color" id="themePicker" onchange="updateTheme(this.value)" style="width: 100%; height: 40px; border: none; cursor: pointer;">
+    </div>
+    <button onclick="resetApp()" style="background: var(--danger); color: white; border: none; width: 100%; padding: 12px; border-radius: 10px; cursor: pointer; font-weight: 600;">
+        🗑️ Borrar Todo
+    </button>
+    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 0.85rem; color: var(--text-muted);">
+        <div><strong>Smart Budget Pro</strong></div>
+        <div style="margin-top: 10px;">v2.1.0</div>
+        <div id="syncStatus" style="margin-top: 10px; font-size: 0.8rem;">🔄 Conectando...</div>
+    </div>
 </div>
 
 <div class="top-banner">
     <div class="menu-btn" onclick="toggleMenu()">☰</div>
-    <div class="save-indicator" id="saveIcon">Conectando...</div>
+    <div class="save-indicator" id="saveIcon">⏳ Cargando...</div>
     <div class="header-income">
-        <label>CALCULADORA DE GASTOS</label><br>
-        <input type="number" id="sueldoBase" placeholder="Sueldo Neto" oninput="updateAll()">
+        <label style="display: block; margin-bottom: 10px; font-size: 0.9rem; opacity: 0.9;">💵 INGRESO MENSUAL</label>
+        <input type="number" id="sueldoBase" placeholder="0" oninput="onUserInput()">
     </div>
 </div>
 
 <div class="container">
     <div class="dashboard">
         <div class="card">
-            <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
-                <strong style="color:var(--danger)">DEUDAS</strong>
-                <button class="btn-add" onclick="addItem('deudas')">+</button>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <strong style="color: var(--danger); font-size: 1.1rem;">💸 GASTOS</strong>
+                <button class="btn-add" onclick="addItem('gastos')">+</button>
             </div>
-            <div id="listaDeudas"></div>
+            <div id="listaGastos">
+                <div class="loading">Cargando...</div>
+            </div>
         </div>
+        
         <div class="card">
-            <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
-                <strong style="color:var(--success)">AHORROS</strong>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <strong style="color: var(--success); font-size: 1.1rem;">🎯 AHORROS</strong>
                 <button class="btn-add" onclick="addItem('ahorros')">+</button>
             </div>
-            <div id="listaAhorros"></div>
+            <div id="listaAhorros">
+                <div class="loading">Cargando...</div>
+            </div>
         </div>
     </div>
 </div>
 
 <div class="footer-nav">
-    <div style="text-align:center"><span>GASTOS</span><br><strong id="resGasto" style="color:var(--danger)">$ 0</strong></div>
-    <div style="text-align:center"><span>NETO</span><br><strong id="resDisponible" style="font-size: 1.4rem;">$ 0</strong></div>
-    <div style="text-align:center"><span>AHORROS</span><br><strong id="resAhorro" style="color:var(--success)">$ 0</strong></div>
+    <div class="footer-item">
+        <span>💸 GASTOS</span>
+        <strong id="resGasto" style="color: var(--danger)">$ 0</strong>
+    </div>
+    <div class="footer-item">
+        <span>💎 DISPONIBLE</span>
+        <strong id="resDisponible" style="font-size: 1.4rem;">$ 0</strong>
+    </div>
+    <div class="footer-item">
+        <span>🎯 AHORROS</span>
+        <strong id="resAhorro" style="color: var(--success)">$ 0</strong>
+    </div>
 </div>
 
 <script>
-    // --- TUS CREDENCIALES ---
+    // ==========================================
+    // 🔥 CONFIGURACIÓN FIREBASE
+    // ==========================================
     var firebaseConfig = {
         apiKey: "AIzaSyCLb7LaJypnUHQ0TKZ2aTRNK4yAa6SUiZE",
-        authDomain: "://firebaseapp.com",
+        authDomain: "calculadoramensualsueldo.firebaseapp.com",
         projectId: "calculadoramensualsueldo",
-        storageBucket: "calculadoramensualsueldo.firebasestorage.app",
+        storageBucket: "calculadoramensualsueldo.appspot.com",
         messagingSenderId: "619721076451",
         appId: "1:619721076451:web:56925f6251a3ba53ad5fd6"
     };
 
-    // Inicialización Versión 8
-    firebase.initializeApp(firebaseConfig);
+    // Inicializar Firebase
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
     var db = firebase.firestore();
+    
+    // Referencia al documento
+    var docRef = db.collection("usuarios").doc("x9k2mP7qLz4wN1vB8cR5Hernan2026");
 
+    // ==========================================
+    // ESTADO GLOBAL
+    // ==========================================
+    var isUpdatingFromDB = false;
+    var saveTimeout;
+
+    // ==========================================
+    // ✅ SINCRONIZACIÓN EN TIEMPO REAL
+    // ==========================================
+    docRef.onSnapshot(function(doc) {
+        console.log('📥 Recibiendo datos...');
+        
+        if (doc.exists) {
+            var data = doc.data();
+            console.log('Datos recibidos:', data);
+            
+            isUpdatingFromDB = true;
+            
+            // Cargar sueldo
+            if (data.sueldo !== undefined) {
+                document.getElementById('sueldoBase').value = data.sueldo;
+            }
+            
+            // Cargar color del tema
+            if (data.temaColor) {
+                document.documentElement.style.setProperty('--primary', data.temaColor);
+                document.getElementById('themePicker').value = data.temaColor;
+            }
+            
+            // Cargar gastos
+            var gastosContainer = document.getElementById('listaGastos');
+            gastosContainer.innerHTML = '';
+            if (data.gastos && data.gastos.length > 0) {
+                data.gastos.forEach(function(item) {
+                    addItem('gastos', item.nombre, item.monto, item.color, true);
+                });
+            } else {
+                gastosContainer.innerHTML = '<div class="empty-state">📭 Sin gastos<br><small>Agrega tu primer gasto</small></div>';
+            }
+            
+            // Cargar ahorros
+            var ahorrosContainer = document.getElementById('listaAhorros');
+            ahorrosContainer.innerHTML = '';
+            if (data.ahorros && data.ahorros.length > 0) {
+                data.ahorros.forEach(function(item) {
+                    addItem('ahorros', item.nombre, item.monto, item.color, true);
+                });
+            } else {
+                ahorrosContainer.innerHTML = '<div class="empty-state">🏦 Sin ahorros<br><small>Agrega tu primera meta</small></div>';
+            }
+            
+            // Calcular totales
+            calculateTotals();
+            
+            isUpdatingFromDB = false;
+            updateSyncStatus('✅ Sincronizado');
+            
+        } else {
+            console.log('📄 Documento no existe, creando...');
+            // Documento no existe, crear estructura inicial
+            docRef.set({
+                sueldo: 0,
+                temaColor: '#6366f1',
+                gastos: [],
+                ahorros: [],
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            }).then(function() {
+                console.log('✅ Documento creado');
+                updateSyncStatus('📝 Nuevo documento');
+            });
+        }
+    }, function(error) {
+        console.error('❌ Error de sincronización:', error);
+        updateSyncStatus('❌ Error de conexión');
+    });
+
+    // ==========================================
+    // FUNCIONES DE UI
+    // ==========================================
     function toggleMenu() {
         document.getElementById('sidebar').classList.toggle('active');
         document.getElementById('overlay').classList.toggle('active');
     }
 
-    function changeUITheme(color) {
-        document.documentElement.style.setProperty('--primary-color', color);
-        updateAll();
+    function updateSyncStatus(text) {
+        document.getElementById('saveIcon').textContent = text;
+        document.getElementById('syncStatus').textContent = text;
     }
 
-    function addItem(type, nombre = '', monto = '', color = '#820ad1') {
-        const container = document.getElementById(type === 'deudas' ? 'listaDeudas' : 'listaAhorros');
-        const div = document.createElement('div');
+    function addItem(type, nombre = '', monto = '', color = '#6366f1', fromDB = false) {
+        var container = document.getElementById(type === 'gastos' ? 'listaGastos' : 'listaAhorros');
+        
+        // Remover empty state si existe
+        var emptyState = container.querySelector('.empty-state');
+        if (emptyState) {
+            emptyState.remove();
+        }
+        
+        var div = document.createElement('div');
         div.className = 'item-row';
         div.style.borderLeftColor = color;
+        
+        var inputEvent = fromDB ? '' : 'oninput="onUserInput()"';
+        
         div.innerHTML = `
-            <span class="dot" style="color: ${color}; font-size: 20px;">■</span>
-            <input type="text" class="inp-nom" placeholder="Nombre" value="${nombre}" oninput="updateAll()" style="flex:2">
-            <input type="number" class="inp-mon" placeholder="0" value="${monto}" oninput="updateAll()" style="flex:1; text-align: right;">
-            <input type="color" class="inp-col input-color-box" value="${color}" oninput="updateColorRow(this)">
-            <button onclick="this.parentElement.remove(); updateAll()" style="background:none; border:none; color:#ccc; cursor:pointer;">✕</button>
+            <span style="font-size: 20px;">${type === 'gastos' ? '💸' : '🎯'}</span>
+            <input type="text" class="inp-nom" placeholder="Nombre" value="${nombre}" ${inputEvent} style="flex: 2;">
+            <input type="number" class="inp-mon" placeholder="0" value="${monto}" ${inputEvent} style="flex: 1; text-align: right;">
+            <input type="color" class="inp-col" value="${color}" ${inputEvent} style="width: 35px; height: 35px; border: none; border-radius: 8px; cursor: pointer;">
+            <button class="btn-remove" onclick="removeItem(this)">✕</button>
         `;
+        
         container.appendChild(div);
+        
+        if (!fromDB) {
+            onUserInput();
+        }
     }
 
-    function updateColorRow(el) {
-        el.parentElement.style.borderLeftColor = el.value;
-        el.parentElement.querySelector('.dot').style.color = el.value;
-        updateAll();
+    function removeItem(btn) {
+        btn.closest('.item-row').remove();
+        onUserInput();
     }
 
-    function updateAll() {
-        const sueldo = parseFloat(document.getElementById('sueldoBase').value) || 0;
-        let g = 0, a = 0;
-        document.querySelectorAll('#listaDeudas .inp-mon').forEach(i => g += parseFloat(i.value) || 0);
-        document.querySelectorAll('#listaAhorros .inp-mon').forEach(i => a += parseFloat(i.value) || 0);
-        const disp = sueldo - g - a;
-        document.getElementById('resGasto').innerText = `$ ${g.toLocaleString()}`;
-        document.getElementById('resAhorro').innerText = `$ ${a.toLocaleString()}`;
-        document.getElementById('resDisponible').innerText = `$ ${disp.toLocaleString()}`;
-        document.getElementById('resDisponible').style.color = disp < 0 ? "var(--danger)" : "var(--success)";
-
-        document.getElementById('saveIcon').innerText = "☁️ Guardando...";
-        clearTimeout(window.sT);
-        window.sT = setTimeout(() => {
-            const currentTheme = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim();
-            db.collection("usuarios").doc("datos").set({
-                sueldo: sueldo,
-                temaColor: currentTheme,
-                deudas: Array.from(document.querySelectorAll('#listaDeudas .item-row')).map(r => ({
-                    nombre: r.querySelector('.inp-nom').value,
-                    monto: r.querySelector('.inp-mon').value,
-                    color: r.querySelector('.inp-col').value
-                })),
-                ahorros: Array.from(document.querySelectorAll('#listaAhorros .item-row')).map(r => ({
-                    nombre: r.querySelector('.inp-nom').value,
-                    monto: r.querySelector('.inp-mon').value,
-                    color: r.querySelector('.inp-col').value
-                }))
-            }).then(() => {
-                document.getElementById('saveIcon').innerText = "✅ Sincronizado";
-            }).catch(e => {
-                document.getElementById('saveIcon').innerText = "❌ Error Reglas";
-                console.log(e);
-            });
-        }, 1000);
+    function onUserInput() {
+        if (isUpdatingFromDB) return;
+        
+        calculateTotals();
+        updateSyncStatus('⏳ Guardando...');
+        
+        clearTimeout(saveTimeout);
+        saveTimeout = setTimeout(function() {
+            saveToFirestore();
+        }, 800);
     }
 
-    window.onload = function() {
-        db.collection("usuarios").doc("datos").get().then((doc) => {
-            if (doc.exists) {
-                var data = doc.data();
-                document.getElementById('sueldoBase').value = data.sueldo || "";
-                if(data.temaColor) {
-                    document.documentElement.style.setProperty('--primary-color', data.temaColor);
-                    document.getElementById('themePicker').value = data.temaColor;
-                }
-                if(data.deudas) data.deudas.forEach(d => addItem('deudas', d.nombre, d.monto, d.color));
-                if(data.ahorros) data.ahorros.forEach(a => addItem('ahorros', a.nombre, a.monto, a.color));
-            }
-            updateAll();
-        }).catch((error) => {
-            document.getElementById('saveIcon').innerText = "❌ Error de Carga";
+    function calculateTotals() {
+        var sueldo = parseFloat(document.getElementById('sueldoBase').value) || 0;
+        var totalGastos = 0;
+        var totalAhorros = 0;
+        
+        document.querySelectorAll('#listaGastos .inp-mon').forEach(function(input) {
+            totalGastos += parseFloat(input.value) || 0;
         });
-    };
+        
+        document.querySelectorAll('#listaAhorros .inp-mon').forEach(function(input) {
+            totalAhorros += parseFloat(input.value) || 0;
+        });
+        
+        var disponible = sueldo - totalGastos - totalAhorros;
+        
+        document.getElementById('resGasto').textContent = '$ ' + totalGastos.toLocaleString();
+        document.getElementById('resAhorro').textContent = '$ ' + totalAhorros.toLocaleString();
+        document.getElementById('resDisponible').textContent = '$ ' + disponible.toLocaleString();
+        
+        if (disponible < 0) {
+            document.getElementById('resDisponible').style.color = 'var(--danger)';
+        } else {
+            document.getElementById('resDisponible').style.color = 'var(--success)';
+        }
+    }
+
+    function getItemsArray(type) {
+        var containerId = type === 'gastos' ? 'listaGastos' : 'listaAhorros';
+        var items = [];
+        
+        document.querySelectorAll('#' + containerId + ' .item-row').forEach(function(row) {
+            items.push({
+                nombre: row.querySelector('.inp-nom').value,
+                monto: parseFloat(row.querySelector('.inp-mon').value) || 0,
+                color: row.querySelector('.inp-col').value
+            });
+        });
+        
+        return items;
+    }
+
+    function saveToFirestore() {
+        var sueldo = parseFloat(document.getElementById('sueldoBase').value) || 0;
+        var theme = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim();
+        
+        var data = {
+            sueldo: sueldo,
+            temaColor: theme,
+            gastos: getItemsArray('gastos'),
+            ahorros: getItemsArray('ahorros'),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        
+        docRef.set(data, { merge: true })
+            .then(function() {
+                console.log('✅ Datos guardados');
+                updateSyncStatus('✅ Guardado');
+                setTimeout(function() {
+                    updateSyncStatus('✅ Sincronizado');
+                }, 1000);
+            })
+            .catch(function(error) {
+                console.error('❌ Error al guardar:', error);
+                updateSyncStatus('❌ Error al guardar');
+            });
+    }
+
+    function updateTheme(color) {
+        document.documentElement.style.setProperty('--primary', color);
+        onUserInput();
+    }
 
     function resetApp() {
-        if(confirm("¿Borrar todo?")) db.collection("usuarios").doc("datos").delete().then(()=>location.reload());
+        if (confirm('¿Estás seguro de borrar todos los datos? Esta acción no se puede deshacer.')) {
+            docRef.delete()
+                .then(function() {
+                    console.log('✅ Datos borrados');
+                    location.reload();
+                })
+                .catch(function(error) {
+                    console.error('❌ Error al borrar:', error);
+                    alert('Error al borrar los datos');
+                });
+        }
     }
+
+    // Inicializar
+    console.log('🚀 Smart Budget Pro iniciado');
+    updateSyncStatus('🔄 Conectando...');
 </script>
+
 </body>
 </html>
