@@ -2,637 +2,252 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>Finanzas Sync · Hernán</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Hernán Finance · Pro Suite</title>
     
-    <!-- Firebase SDK v8 (SIN MODIFICAR) -->
+    <!-- Firebase SDK v8 (BLOQUE INTOCABLE) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     
-    <!-- Chart.js para gráficos modernos -->
+    <!-- Librerías de Lujo -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    
-    <!-- Fuente Moderna -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     
     <style>
-        /* ===== RESET & VARIABLES ===== */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Inter', sans-serif;
-        }
-
+        /* ========== RESET Y VARIABLES DE OTRO PLANETA ========== */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        
         :root {
-            --primary: #4361ee;
-            --primary-light: #4895ef;
-            --danger: #f72585;
-            --success: #06d6a0;
-            --warning: #ffb703;
-            --bg-light: #f8f9ff;
-            --card-bg-light: rgba(255, 255, 255, 0.85);
-            --text-light: #1e1e2f;
-            --border-light: rgba(0, 0, 0, 0.05);
-            --shadow: 0 20px 35px -8px rgba(0, 0, 0, 0.07), 0 10px 10px -5px rgba(0, 0, 0, 0.03);
-            
-            --sidebar-width: 300px;
-            --transition: all 0.25s cubic-bezier(0.2, 0, 0, 1);
+            --primary: #6c5ce7;
+            --primary-glow: #a29bfe;
+            --danger: #ff7675;
+            --success: #55efc4;
+            --bg-gradient: linear-gradient(145deg, #f5f6fa 0%, #dcdde1 100%);
+            --card-bg: rgba(255, 255, 255, 0.45);
+            --glass-border: 1px solid rgba(255, 255, 255, 0.6);
+            --text-main: #2d3436;
+            --shadow-sm: 0 10px 30px -10px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            --blur-amount: 20px;
+            --transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
         }
 
         body.dark {
-            --bg-light: #0f172a;
-            --card-bg-light: rgba(30, 41, 59, 0.9);
-            --text-light: #f1f5f9;
-            --border-light: rgba(255, 255, 255, 0.08);
-            --shadow: 0 20px 35px -8px rgba(0, 0, 0, 0.4);
+            --bg-gradient: linear-gradient(145deg, #1e1e2f 0%, #0f0f1a 100%);
+            --card-bg: rgba(20, 20, 40, 0.65);
+            --glass-border: 1px solid rgba(255, 255, 255, 0.1);
+            --text-main: #f1f2f6;
+            --shadow-sm: 0 10px 30px -10px #00000080;
+            --shadow-lg: 0 25px 50px -12px #000000;
         }
 
         body {
-            background: var(--bg-light);
-            color: var(--text-light);
+            background: var(--bg-gradient);
+            color: var(--text-main);
             min-height: 100vh;
-            padding-bottom: 100px;
-            transition: background 0.3s, color 0.2s;
-            backdrop-filter: blur(2px);
-        }
-
-        /* ===== SIDEBAR (AJUSTES) ===== */
-        .sidebar {
-            position: fixed;
-            left: -100%;
-            top: 0;
-            width: var(--sidebar-width);
-            height: 100%;
-            background: var(--card-bg-light);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            z-index: 3000;
+            padding: 20px 16px 110px;
             transition: var(--transition);
-            padding: 28px 24px;
-            box-shadow: 10px 0 40px rgba(0, 0, 0, 0.1);
-            border-right: 1px solid var(--border-light);
-            overflow-y: auto;
-        }
-
-        .sidebar.active {
-            left: 0;
-        }
-
-        .sidebar h3 {
-            font-weight: 700;
-            font-size: 1.8rem;
-            letter-spacing: -0.02em;
-            margin-bottom: 28px;
-            color: var(--primary);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .sidebar h3 i {
-            font-size: 1.8rem;
-        }
-
-        .setting-group {
-            margin-bottom: 28px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid var(--border-light);
-        }
-
-        .setting-label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 12px;
-            font-size: 1rem;
-            opacity: 0.8;
-        }
-
-        .theme-picker-wrapper {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        #themePicker {
-            width: 60px;
-            height: 45px;
-            border: 2px solid var(--border-light);
-            border-radius: 14px;
-            cursor: pointer;
-            background: transparent;
-            padding: 2px;
-        }
-
-        .dark-toggle {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-top: 8px;
-        }
-
-        .toggle-switch {
+            backdrop-filter: blur(4px);
             position: relative;
-            width: 52px;
-            height: 28px;
-            background: var(--border-light);
-            border-radius: 30px;
-            cursor: pointer;
-            transition: background 0.2s;
-            border: 1px solid rgba(0,0,0,0.1);
+            overflow-x: hidden;
         }
 
-        .toggle-switch.active {
-            background: var(--primary);
+        /* Fondo Animado (partículas sutiles) */
+        .bg-animation {
+            position: fixed; inset: 0; z-index: -2; opacity: 0.4;
+            background: radial-gradient(circle at 20% 30%, var(--primary-glow) 0%, transparent 40%),
+                        radial-gradient(circle at 80% 70%, var(--success) 0%, transparent 40%);
+            filter: blur(60px);
+            animation: floatBg 20s infinite alternate;
         }
+        @keyframes floatBg { 0% { transform: scale(1) rotate(0deg); } 100% { transform: scale(1.2) rotate(5deg); } }
 
-        .toggle-switch::after {
-            content: '';
-            position: absolute;
-            width: 24px;
-            height: 24px;
-            background: white;
-            border-radius: 50%;
-            top: 2px;
-            left: 2px;
-            transition: transform 0.2s;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        /* ========== SIDEBAR (PANEL DE CONTROL AVANZADO) ========== */
+        .sidebar {
+            position: fixed; left: -380px; top: 0; width: 340px; height: 100%;
+            background: var(--card-bg); backdrop-filter: blur(var(--blur-amount));
+            -webkit-backdrop-filter: blur(var(--blur-amount));
+            z-index: 3000; transition: var(--transition); padding: 30px 24px;
+            box-shadow: var(--shadow-lg); border-right: var(--glass-border);
+            overflow-y: auto; border-radius: 0 40px 40px 0;
         }
+        .sidebar.active { left: 0; }
+        .overlay { position: fixed; inset: 0; background: #00000060; backdrop-filter: blur(10px); z-index: 2500; opacity: 0; visibility: hidden; transition: 0.3s; }
+        .overlay.active { opacity: 1; visibility: visible; }
 
-        .toggle-switch.active::after {
-            transform: translateX(24px);
-        }
-
-        .reset-btn {
-            background: rgba(247, 37, 133, 0.15);
-            color: var(--danger);
-            border: 1.5px solid var(--danger);
-            width: 100%;
-            padding: 14px;
-            border-radius: 18px;
-            font-weight: 700;
-            font-size: 1rem;
-            cursor: pointer;
-            backdrop-filter: blur(5px);
-            transition: 0.2s;
-            margin-top: 20px;
-        }
-
-        .reset-btn:hover {
-            background: var(--danger);
-            color: white;
-        }
-
-        .overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.3);
-            backdrop-filter: blur(6px);
-            z-index: 2500;
-            opacity: 0;
-            visibility: hidden;
-            transition: 0.25s;
-        }
-
-        .overlay.active {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        /* ===== HEADER ===== */
+        /* ========== HEADER (EFECTO CRISTAL LÍQUIDO) ========== */
         .top-banner {
-            background: linear-gradient(145deg, var(--primary), var(--primary-light));
-            padding: 45px 24px 60px;
-            color: white;
-            border-bottom-left-radius: 40px;
-            border-bottom-right-radius: 40px;
-            position: relative;
-            box-shadow: 0 10px 30px -5px rgba(67, 97, 238, 0.2);
-            margin-bottom: 20px;
+            background: rgba(108, 92, 231, 0.2); backdrop-filter: blur(30px);
+            border-radius: 60px; padding: 30px 24px 40px; margin-bottom: 30px;
+            border: var(--glass-border); box-shadow: var(--shadow-lg);
+            position: relative; overflow: hidden;
         }
-
-        .menu-btn {
-            position: absolute;
-            left: 20px;
-            top: 20px;
-            font-size: 30px;
-            cursor: pointer;
-            background: rgba(255,255,255,0.2);
-            width: 48px;
-            height: 48px;
-            border-radius: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            backdrop-filter: blur(5px);
-            transition: 0.2s;
-            border: 1px solid rgba(255,255,255,0.2);
-        }
-
-        .menu-btn:hover {
-            background: rgba(255,255,255,0.3);
-        }
-
-        .save-indicator {
-            position: absolute;
-            right: 20px;
-            top: 25px;
-            background: rgba(0, 0, 0, 0.25);
-            backdrop-filter: blur(8px);
-            padding: 8px 18px;
-            border-radius: 40px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            letter-spacing: 0.3px;
-            border: 1px solid rgba(255,255,255,0.2);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            transition: 0.2s;
-        }
-
-        .header-income {
-            text-align: center;
-        }
-
-        .header-income label {
-            font-weight: 500;
-            letter-spacing: 3px;
-            font-size: 0.9rem;
-            opacity: 0.9;
-            text-transform: uppercase;
-        }
+        .menu-btn { font-size: 28px; background: var(--card-bg); width: 56px; height: 56px; border-radius: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; border: var(--glass-border); backdrop-filter: blur(10px); }
+        .save-indicator { background: var(--card-bg); backdrop-filter: blur(10px); padding: 8px 20px; border-radius: 40px; font-weight: 600; border: var(--glass-border); }
 
         .header-income input {
-            background: rgba(255, 255, 255, 0.15);
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 60px;
-            color: white;
-            font-size: 3.2rem;
-            font-weight: 800;
-            text-align: center;
-            width: 90%;
-            max-width: 450px;
-            padding: 16px 10px;
-            margin-top: 12px;
-            outline: none;
-            backdrop-filter: blur(5px);
-            transition: 0.2s;
+            background: transparent; border: none; border-bottom: 4px solid var(--primary);
+            font-size: 4rem; font-weight: 800; text-align: center; width: 100%; outline: none;
+            color: var(--text-main); padding: 10px 0;
         }
 
-        .header-income input:focus {
-            border-color: white;
-            background: rgba(255,255,255,0.25);
-        }
-
-        .header-income input::placeholder {
-            color: rgba(255,255,255,0.5);
-            font-size: 1.4rem;
-        }
-
-        /* ===== CONTENEDOR PRINCIPAL ===== */
-        .container {
-            max-width: 1100px;
-            margin: -30px auto 0;
-            padding: 0 20px;
-        }
-
-        .dashboard {
-            display: grid;
-            grid-template-columns: 1.2fr 0.9fr;
-            gap: 24px;
-        }
-
-        @media (max-width: 768px) {
-            .dashboard {
-                grid-template-columns: 1fr;
-                gap: 20px;
-            }
-        }
-
+        /* ========== TARJETAS Y BOTONES ========== */
         .card {
-            background: var(--card-bg-light);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            padding: 24px 20px;
-            border-radius: 32px;
-            box-shadow: var(--shadow);
-            border: 1px solid var(--border-light);
-            transition: var(--transition);
+            background: var(--card-bg); backdrop-filter: blur(var(--blur-amount));
+            border-radius: 48px; padding: 28px; border: var(--glass-border);
+            box-shadow: var(--shadow-sm); transition: var(--transition);
         }
-
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 22px;
-        }
-
-        .card-header strong {
-            font-size: 1.4rem;
-            font-weight: 700;
-            letter-spacing: -0.02em;
-        }
-
         .btn-add {
-            background: var(--primary);
-            color: white;
-            border: none;
-            width: 44px;
-            height: 44px;
-            border-radius: 16px;
-            font-size: 26px;
-            font-weight: 400;
-            cursor: pointer;
-            box-shadow: 0 6px 12px rgba(67, 97, 238, 0.25);
-            transition: 0.15s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            background: var(--primary); color: white; border: none; width: 54px; height: 54px;
+            border-radius: 30px; font-size: 28px; box-shadow: 0 10px 20px -5px var(--primary);
+            cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center;
         }
-
-        .btn-add:hover {
-            transform: scale(1.02);
-            background: var(--primary-light);
-        }
-
-        /* Items */
-        .items-container {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            max-height: 400px;
-            overflow-y: auto;
-            padding-right: 4px;
-        }
+        .btn-add:hover { transform: scale(0.95); box-shadow: 0 5px 15px var(--primary); }
 
         .item-row {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            background: rgba(128, 128, 128, 0.03);
-            padding: 12px 16px;
-            border-radius: 20px;
-            border: 1px solid var(--border-light);
-            backdrop-filter: blur(4px);
-            transition: all 0.2s;
-            animation: fadeSlide 0.2s ease;
+            display: flex; align-items: center; gap: 12px; background: rgba(128,128,128,0.03);
+            padding: 14px 20px; border-radius: 30px; margin-bottom: 12px;
+            border: 1px solid var(--glass-border); backdrop-filter: blur(5px);
+            animation: slideIn 0.3s ease;
         }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
 
-        @keyframes fadeSlide {
-            from { opacity: 0; transform: translateX(-8px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
+        /* Gráfico y extras */
+        .chart-container { height: 220px; margin: 20px 0; }
+        .health-meter { width: 100%; height: 8px; background: #ddd; border-radius: 10px; margin: 15px 0; }
+        .health-fill { height: 100%; border-radius: 10px; background: var(--primary); width: 0%; transition: width 0.6s; }
 
-        .item-row:hover {
-            background: rgba(128, 128, 128, 0.08);
-            border-color: var(--primary-light);
-        }
-
-        .color-indicator {
-            width: 12px;
-            height: 12px;
-            border-radius: 4px;
-            margin-right: 2px;
-        }
-
-        .item-row input[type="text"] {
-            background: transparent;
-            border: none;
-            font-weight: 600;
-            font-size: 1rem;
-            padding: 6px 0;
-            outline: none;
-            color: var(--text-light);
-            flex: 2;
-        }
-
-        .item-row input[type="number"] {
-            background: transparent;
-            border: none;
-            font-weight: 600;
-            font-size: 1rem;
-            text-align: right;
-            padding: 6px 0;
-            outline: none;
-            color: var(--text-light);
-            flex: 1;
-            min-width: 70px;
-        }
-
-        .item-row input[type="color"] {
-            width: 36px;
-            height: 36px;
-            border: 2px solid var(--border-light);
-            border-radius: 12px;
-            cursor: pointer;
-            background: transparent;
-            padding: 2px;
-        }
-
-        .delete-btn {
-            background: none;
-            border: none;
-            color: #94a3b8;
-            font-size: 20px;
-            cursor: pointer;
-            width: 32px;
-            height: 32px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: 0.15s;
-        }
-
-        .delete-btn:hover {
-            background: rgba(247, 37, 133, 0.1);
-            color: var(--danger);
-        }
-
-        /* Gráfico */
-        .chart-container {
-            margin-top: 24px;
-            padding: 16px 8px 8px;
-            height: 220px;
-            position: relative;
-        }
-
-        canvas {
-            display: block;
-            margin: 0 auto;
-            max-width: 100%;
-        }
-
-        /* Footer */
+        /* Footer Futurista */
         .footer-nav {
-            position: fixed;
-            bottom: 24px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 94%;
-            max-width: 600px;
-            background: var(--card-bg-light);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-radius: 40px;
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            padding: 8px 12px;
-            height: 90px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-            border: 1px solid var(--border-light);
-            z-index: 2000;
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            width: 95%; max-width: 700px; background: var(--card-bg); backdrop-filter: blur(30px);
+            border-radius: 60px; padding: 16px 24px; display: flex; justify-content: space-around;
+            border: var(--glass-border); box-shadow: var(--shadow-lg); z-index: 2000;
         }
 
-        .footer-item {
-            text-align: center;
-            padding: 10px 12px;
-            border-radius: 24px;
-            transition: 0.15s;
-            flex: 1;
+        /* Barra de búsqueda */
+        .search-bar {
+            background: var(--card-bg); border-radius: 40px; padding: 12px 24px;
+            margin-bottom: 24px; display: flex; align-items: center; gap: 12px;
+            border: var(--glass-border); backdrop-filter: blur(10px);
         }
+        .search-bar input { background: transparent; border: none; width: 100%; font-size: 1.1rem; outline: none; color: var(--text-main); }
 
-        .footer-item span {
-            font-size: 0.8rem;
-            font-weight: 500;
-            opacity: 0.7;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .footer-item strong {
-            display: block;
-            font-size: 1.7rem;
-            font-weight: 800;
-            letter-spacing: -0.02em;
-            margin-top: 2px;
-        }
-
-        #resDisponible {
-            font-size: 2rem;
-        }
-
-        /* Scrollbar */
-        .items-container::-webkit-scrollbar {
-            width: 4px;
-        }
-        .items-container::-webkit-scrollbar-thumb {
-            background: var(--primary);
-            border-radius: 10px;
-        }
+        /* Atajos de teclado flotantes */
+        .shortcut-hint { position: fixed; bottom: 120px; right: 20px; background: var(--card-bg); padding: 8px 16px; border-radius: 30px; font-size: 0.8rem; backdrop-filter: blur(10px); border: var(--glass-border); opacity: 0.7; }
     </style>
 </head>
 <body class="light">
 
-<!-- Overlay y Sidebar -->
+<div class="bg-animation"></div>
 <div class="overlay" id="overlay" onclick="toggleMenu()"></div>
 
+<!-- SIDEBAR ENRIQUECIDO -->
 <div class="sidebar" id="sidebar">
-    <h3>
-        <span>⚙️ Ajustes</span>
-    </h3>
+    <h2 style="font-weight: 800; margin-bottom: 30px; display: flex; gap: 10px;"><i class="fas fa-sliders-h"></i> CENTRO DE CONTROL</h2>
     
-    <div class="setting-group">
-        <label class="setting-label">🎨 Color principal</label>
-        <div class="theme-picker-wrapper">
-            <input type="color" id="themePicker" oninput="onUserInput()" value="#4361ee">
-            <span style="font-size:0.9rem;">Toque para cambiar</span>
+    <div style="margin-bottom: 30px;">
+        <label style="font-weight: 600;">🎨 Tema Principal</label>
+        <input type="color" id="themePicker" oninput="onUserInput()" style="width:100%; height:50px; border-radius:20px; border:none; margin:10px 0; background:transparent;">
+    </div>
+    
+    <div style="margin-bottom: 30px; display: flex; justify-content: space-between;">
+        <span>🌙 Modo Oscuro</span>
+        <div class="toggle-switch" id="darkModeToggle" onclick="toggleDarkMode()" style="width:52px; height:28px; background:#ccc; border-radius:30px; position:relative; cursor:pointer;">
+            <div style="width:24px; height:24px; background:white; border-radius:50%; position:absolute; top:2px; left:2px; transition:0.2s;"></div>
         </div>
     </div>
+
+    <button onclick="exportToCSV()" style="background:var(--primary); border:none; width:100%; padding:16px; border-radius:30px; color:white; font-weight:bold; margin-bottom:15px; cursor:pointer;"><i class="fas fa-download"></i> Exportar a CSV</button>
     
-    <div class="setting-group">
-        <label class="setting-label">🌓 Apariencia</label>
-        <div class="dark-toggle">
-            <span>Modo oscuro</span>
-            <div class="toggle-switch" id="darkModeToggle" onclick="toggleDarkMode()"></div>
-        </div>
-    </div>
+    <button onclick="resetApp()" style="background:transparent; border:2px solid var(--danger); width:100%; padding:16px; border-radius:30px; color:var(--danger); font-weight:bold; cursor:pointer;"><i class="fas fa-trash-alt"></i> Borrar Todo (Nube)</button>
     
-    <div class="setting-group">
-        <label class="setting-label">🧹 Datos</label>
-        <button class="reset-btn" onclick="resetApp()">
-            ⚡ Borrar todo y reiniciar
-        </button>
-        <p style="font-size:0.75rem; margin-top: 12px; opacity:0.6;">Esta acción elimina los datos en la nube.</p>
-    </div>
-    
-    <div style="margin-top: 30px; font-size:0.8rem; opacity:0.5; text-align:center;">
-        v2.0 · Sync Hernán
+    <div style="margin-top: 40px;">
+        <h4>📋 Actividad Reciente</h4>
+        <div id="activityLog" style="font-size:0.8rem; opacity:0.7; max-height:150px; overflow-y:auto;"></div>
     </div>
 </div>
 
-<!-- Banner principal -->
+<!-- HEADER -->
 <div class="top-banner">
-    <div class="menu-btn" onclick="toggleMenu()">☰</div>
-    <div class="save-indicator" id="saveIcon">
-        <span id="syncText">🔄 Conectando...</span>
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div class="menu-btn" onclick="toggleMenu()"><i class="fas fa-bars"></i></div>
+        <div class="save-indicator" id="saveIcon"><span id="syncText">🔄 Conectando...</span></div>
     </div>
     <div class="header-income">
-        <label>💰 CALCULADORA INTELIGENTE</label><br>
-        <input type="number" id="sueldoBase" placeholder="Ingresa tu sueldo neto" oninput="onUserInput()" value="0">
+        <label style="text-transform: uppercase; letter-spacing: 4px; font-weight: 600;">💰 Ingreso Mensual</label>
+        <input type="number" id="sueldoBase" placeholder="0" oninput="onUserInput()" value="0">
+    </div>
+    
+    <!-- Widget de Salud Financiera -->
+    <div style="margin-top: 30px;">
+        <div style="display: flex; justify-content: space-between;">
+            <span><i class="fas fa-heartbeat"></i> Salud Financiera</span>
+            <span id="healthScoreText">--</span>
+        </div>
+        <div class="health-meter"><div class="health-fill" id="healthBar" style="width:0%"></div></div>
     </div>
 </div>
 
-<!-- Contenido -->
-<div class="container">
-    <div class="dashboard">
-        <!-- Columna izquierda: Deudas + Gráfico -->
-        <div class="card">
-            <div class="card-header">
-                <strong style="color: var(--danger);">📉 DEUDAS</strong>
-                <button class="btn-add" onclick="addItem('deudas')">+</button>
-            </div>
-            <div id="listaDeudas" class="items-container"></div>
-            
-            <!-- Gráfico de distribución -->
-            <div class="chart-container">
-                <canvas id="distributionChart"></canvas>
-            </div>
+<!-- BUSCADOR MÁGICO -->
+<div class="search-bar">
+    <i class="fas fa-search"></i>
+    <input type="text" id="searchInput" placeholder="Buscar gasto o ahorro... (Ctrl+F)" oninput="filterItems()">
+    <i class="fas fa-times" style="cursor:pointer;" onclick="clearSearch()"></i>
+</div>
+
+<!-- CONTENEDOR PRINCIPAL -->
+<div class="dashboard" style="display: grid; grid-template-columns: 1.2fr 0.9fr; gap: 24px;">
+    <!-- Columna Deudas + Gráfico -->
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+            <strong style="color: var(--danger); font-size: 1.6rem;"><i class="fas fa-credit-card"></i> DEUDAS</strong>
+            <button class="btn-add" onclick="addItem('deudas')"><i class="fas fa-plus"></i></button>
         </div>
-        
-        <!-- Columna derecha: Ahorros -->
-        <div class="card">
-            <div class="card-header">
-                <strong style="color: var(--success);">📈 AHORROS</strong>
-                <button class="btn-add" onclick="addItem('ahorros')">+</button>
-            </div>
-            <div id="listaAhorros" class="items-container"></div>
-            
-            <!-- Pequeño resumen visual -->
-            <div style="margin-top: 20px; padding: 12px; background: rgba(128,128,128,0.03); border-radius: 20px;">
-                <div style="display:flex; justify-content:space-between; font-size:0.9rem;">
-                    <span>Total ahorros:</span>
-                    <strong id="miniAhorro" style="color:var(--success);">$0</strong>
-                </div>
-                <div style="display:flex; justify-content:space-between; margin-top:8px;">
-                    <span>Total deudas:</span>
-                    <strong id="miniDeuda" style="color:var(--danger);">$0</strong>
-                </div>
-            </div>
+        <div id="listaDeudas" class="items-container" style="max-height: 350px; overflow-y: auto;"></div>
+        <div class="chart-container"><canvas id="distributionChart"></canvas></div>
+    </div>
+    
+    <!-- Columna Ahorros + Resumen -->
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+            <strong style="color: var(--success); font-size: 1.6rem;"><i class="fas fa-piggy-bank"></i> AHORROS</strong>
+            <button class="btn-add" onclick="addItem('ahorros')"><i class="fas fa-plus"></i></button>
+        </div>
+        <div id="listaAhorros" class="items-container" style="max-height: 350px; overflow-y: auto;"></div>
+        <div style="margin-top: 20px; background: rgba(0,0,0,0.03); border-radius: 30px; padding: 20px;">
+            <div style="display: flex; justify-content: space-between;"><span>Total Ahorros:</span> <strong id="miniAhorro" style="color:var(--success);">$0</strong></div>
+            <div style="display: flex; justify-content: space-between;"><span>Total Deudas:</span> <strong id="miniDeuda" style="color:var(--danger);">$0</strong></div>
+            <hr style="margin: 15px 0; border-color: var(--glass-border);">
+            <div style="display: flex; justify-content: space-between;"><span>Disponible Final:</span> <strong id="miniDisponible">$0</strong></div>
         </div>
     </div>
 </div>
 
-<!-- Footer con totales -->
+<!-- FOOTER ÉPICO -->
 <div class="footer-nav">
-    <div class="footer-item">
-        <span>💸 GASTOS</span>
-        <strong id="resGasto" style="color: var(--danger);">$ 0</strong>
+    <div class="footer-item" style="text-align:center;">
+        <span><i class="fas fa-file-invoice-dollar"></i> GASTOS</span>
+        <strong id="resGasto" style="color: var(--danger); font-size: 1.8rem;">$0</strong>
     </div>
-    <div class="footer-item">
-        <span>✨ NETO</span>
-        <strong id="resDisponible" style="color: var(--success);">$ 0</strong>
+    <div class="footer-item" style="text-align:center;">
+        <span><i class="fas fa-wallet"></i> NETO</span>
+        <strong id="resDisponible" style="font-size: 2.2rem;">$0</strong>
     </div>
-    <div class="footer-item">
-        <span>🐷 AHORROS</span>
-        <strong id="resAhorro" style="color: var(--success);">$ 0</strong>
+    <div class="footer-item" style="text-align:center;">
+        <span><i class="fas fa-piggy-bank"></i> AHORROS</span>
+        <strong id="resAhorro" style="color: var(--success); font-size: 1.8rem;">$0</strong>
     </div>
+</div>
+
+<!-- HINT DE ATAJOS -->
+<div class="shortcut-hint" id="shortcutHint">
+    <i class="fas fa-keyboard"></i> Ctrl+B Menú · Ctrl+D Deuda · Ctrl+A Ahorro · F Enfoque
 </div>
 
 <script>
-    // ================== CONFIGURACIÓN FIREBASE (NO TOCAR) ==================
+    // ================== BLOQUE FIREBASE INTOCABLE ==================
     var firebaseConfig = {
         apiKey: "AIzaSyCLb7LaJypnUHQ0TKZ2aTRNK4yAa6SUiZE",
         authDomain: "calculadoramensualsueldo.firebaseapp.com",
@@ -641,127 +256,62 @@
         messagingSenderId: "619721076451",
         appId: "1:619721076451:web:56925f6251a3ba53ad5fd6"
     };
-
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     var db = firebase.firestore();
-
-    // --- ESTADO GLOBAL ---
-    var isUpdatingFromDB = false;
-    var saveTimeout;
-    
-    // 🔐 NOMBRE SECRETO DEL DOCUMENTO (cámbialo por uno único si deseas)
+    var isUpdatingFromDB = false, saveTimeout;
     var docRef = db.collection("usuarios").doc("x9k2mP7qLz4wN1vB8cR5Hernan2026");
 
-    // ================== GRÁFICO ==================
-    let chartInstance = null;
-    const ctx = document.getElementById('distributionChart').getContext('2d');
+    // ================== ESTADO GLOBAL MEJORADO ==================
+    let chartInstance, activityLog = [];
     
-    function initChart() {
-        if (chartInstance) chartInstance.destroy();
-        chartInstance = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Deudas', 'Ahorros', 'Disponible'],
-                datasets: [{
-                    data: [0, 0, 0],
-                    backgroundColor: ['#f72585', '#06d6a0', '#4361ee'],
-                    borderWidth: 0,
-                    borderRadius: 8,
-                    spacing: 2,
-                }]
-            },
-            options: {
-                cutout: '65%',
-                responsive: true,
-                maintainAspectRatio: true,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: { 
-                        callbacks: {
-                            label: (ctx) => ` $${ctx.raw.toLocaleString()}`
-                        }
-                    }
-                }
-            }
-        });
-    }
-    initChart();
-
-    // ================== SINCRONIZACIÓN EN TIEMPO REAL (NO TOCAR LÓGICA) ==================
+    // Listener Firebase (INTACTO)
     docRef.onSnapshot((doc) => {
         if (doc.exists) {
             isUpdatingFromDB = true;
             var data = doc.data();
-            
             document.getElementById('sueldoBase').value = data.sueldo ?? 0;
             if(data.temaColor) {
                 document.documentElement.style.setProperty('--primary', data.temaColor);
-                document.documentElement.style.setProperty('--primary-light', adjustColor(data.temaColor, 20));
                 document.getElementById('themePicker').value = data.temaColor;
             }
-            
             document.getElementById('listaDeudas').innerHTML = '';
             document.getElementById('listaAhorros').innerHTML = '';
-            
             if(data.deudas) data.deudas.forEach(d => addItem('deudas', d.nombre, d.monto, d.color, true));
             if(data.ahorros) data.ahorros.forEach(a => addItem('ahorros', a.nombre, a.monto, a.color, true));
-            
             calculateTotals();
             isUpdatingFromDB = false;
-            updateSyncStatus('✅ Sincronizado', '#06d6a0');
+            updateSyncStatus('✅ Sincronizado', '#55efc4');
         } else {
-            updateSyncStatus('📡 Listo para guardar', '#ffb703');
+            updateSyncStatus('📡 Esperando datos...', '#ffb703');
         }
-    }, (error) => {
-        console.error("Error de sincronización:", error);
-        updateSyncStatus('❌ Sin conexión', '#f72585');
-    });
+    }, (err) => updateSyncStatus('❌ Offline', '#ff7675'));
 
-    function updateSyncStatus(text, color) {
-        const el = document.getElementById('syncText');
-        el.innerHTML = text;
-        document.getElementById('saveIcon').style.backgroundColor = color + '30';
-    }
+    function updateSyncStatus(txt, col) { document.getElementById('syncText').innerHTML = txt; document.getElementById('saveIcon').style.background = col + '30'; }
 
-    // Utilidad para aclarar color
-    function adjustColor(hex, percent) {
-        // simplificado
-        return hex;
-    }
-
-    // ================== FUNCIONES UI (NO TOCAR LÓGICA DE SINCRONIZACIÓN) ==================
-    function toggleMenu() {
-        document.getElementById('sidebar').classList.toggle('active');
-        document.getElementById('overlay').classList.toggle('active');
-    }
-
-    function addItem(type, nombre = '', monto = '', color = '#f72585', fromDB = false) {
+    // ================== FUNCIONES MEJORADAS ==================
+    function toggleMenu() { document.getElementById('sidebar').classList.toggle('active'); document.getElementById('overlay').classList.toggle('active'); }
+    
+    function addItem(type, nombre = '', monto = '', color = null, fromDB = false) {
         const container = document.getElementById(type === 'deudas' ? 'listaDeudas' : 'listaAhorros');
-        const div = document.createElement('div');
-        div.className = 'item-row';
-        
-        const defaultColor = type === 'deudas' ? '#f72585' : '#06d6a0';
+        const defaultColor = type === 'deudas' ? '#ff7675' : '#55efc4';
         const usedColor = color || defaultColor;
-        
+        const div = document.createElement('div'); div.className = 'item-row';
         div.innerHTML = `
-            <div class="color-indicator" style="background: ${usedColor};"></div>
-            <input type="text" class="inp-nom" placeholder="Nombre" value="${nombre}" oninput="onUserInput()" style="flex:2">
-            <input type="number" class="inp-mon" placeholder="0" value="${monto}" oninput="onUserInput()" style="flex:1; text-align: right;">
+            <div style="width:12px; height:12px; border-radius:4px; background:${usedColor};"></div>
+            <input type="text" class="inp-nom" placeholder="Nombre" value="${nombre}" oninput="onUserInput()" style="flex:2; background:transparent; border:none; font-weight:600; color:var(--text-main);">
+            <input type="number" class="inp-mon" placeholder="0" value="${monto}" oninput="onUserInput()" style="flex:1; background:transparent; border:none; text-align:right; font-weight:600; color:var(--text-main);">
             <input type="color" class="inp-col" value="${usedColor}" oninput="onUserInput()" style="width:36px;">
-            <button class="delete-btn" onclick="this.parentElement.remove(); onUserInput();">✕</button>
+            <button onclick="this.parentElement.remove(); onUserInput();" style="background:none; border:none; font-size:20px; cursor:pointer;">✕</button>
         `;
         container.appendChild(div);
-        if (!fromDB) onUserInput();
+        if(!fromDB) { onUserInput(); logActivity(`➕ Nuevo ${type === 'deudas' ? 'gasto' : 'ahorro'}`); }
     }
 
     function onUserInput() {
         if (isUpdatingFromDB) return;
         calculateTotals();
-        
-        document.getElementById('saveIcon').style.backgroundColor = '#ffb70330';
         document.getElementById('syncText').innerHTML = '☁️ Guardando...';
         clearTimeout(saveTimeout);
-        
         saveTimeout = setTimeout(() => {
             const theme = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim();
             docRef.set({
@@ -770,82 +320,98 @@
                 deudas: getItemsArray('deudas'),
                 ahorros: getItemsArray('ahorros'),
                 ultimaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
-            }).then(() => {
-                updateSyncStatus('✅ Sincronizado', '#06d6a0');
-            }).catch(err => {
-                updateSyncStatus('❌ Error', '#f72585');
-                console.error(err);
-            });
-        }, 800);
+            }).then(() => { updateSyncStatus('✅ Sincronizado', '#55efc4'); logActivity('💾 Datos guardados en la nube'); })
+              .catch(err => { updateSyncStatus('❌ Error', '#ff7675'); });
+        }, 700);
     }
 
     function calculateTotals() {
         const sueldo = parseFloat(document.getElementById('sueldoBase').value) || 0;
-        let deudasTotal = 0, ahorrosTotal = 0;
+        let deudas = 0, ahorros = 0;
+        document.querySelectorAll('#listaDeudas .inp-mon').forEach(i => deudas += parseFloat(i.value) || 0);
+        document.querySelectorAll('#listaAhorros .inp-mon').forEach(i => ahorros += parseFloat(i.value) || 0);
+        const disp = sueldo - deudas - ahorros;
         
-        document.querySelectorAll('#listaDeudas .inp-mon').forEach(i => deudasTotal += parseFloat(i.value) || 0);
-        document.querySelectorAll('#listaAhorros .inp-mon').forEach(i => ahorrosTotal += parseFloat(i.value) || 0);
+        document.getElementById('resGasto').innerText = `$${deudas.toLocaleString()}`;
+        document.getElementById('resAhorro').innerText = `$${ahorros.toLocaleString()}`;
+        const dispEl = document.getElementById('resDisponible');
+        dispEl.innerText = `$${disp.toLocaleString()}`;
+        dispEl.style.color = disp < 0 ? 'var(--danger)' : 'var(--success)';
+        document.getElementById('miniDeuda').innerText = `$${deudas.toLocaleString()}`;
+        document.getElementById('miniAhorro').innerText = `$${ahorros.toLocaleString()}`;
+        document.getElementById('miniDisponible').innerText = `$${disp.toLocaleString()}`;
         
-        const disponible = sueldo - deudasTotal - ahorrosTotal;
+        // Salud Financiera
+        const ratio = sueldo > 0 ? (ahorros / sueldo) * 100 : 0;
+        const healthBar = document.getElementById('healthBar');
+        healthBar.style.width = Math.min(ratio * 1.5, 100) + '%';
+        healthBar.style.background = ratio > 20 ? 'var(--success)' : ratio > 5 ? '#fdcb6e' : 'var(--danger)';
+        document.getElementById('healthScoreText').innerText = ratio > 20 ? '🌟 Excelente' : ratio > 5 ? '⚠️ Regular' : '🆘 Crítico';
         
-        document.getElementById('resGasto').innerText = `$ ${deudasTotal.toLocaleString()}`;
-        document.getElementById('resAhorro').innerText = `$ ${ahorrosTotal.toLocaleString()}`;
-        document.getElementById('resDisponible').innerText = `$ ${disponible.toLocaleString()}`;
-        document.getElementById('resDisponible').style.color = disponible < 0 ? 'var(--danger)' : 'var(--success)';
-        
-        document.getElementById('miniDeuda').innerText = `$${deudasTotal.toLocaleString()}`;
-        document.getElementById('miniAhorro').innerText = `$${ahorrosTotal.toLocaleString()}`;
-        
-        // Actualizar gráfico
-        if (chartInstance) {
-            chartInstance.data.datasets[0].data = [deudasTotal, ahorrosTotal, Math.max(disponible, 0)];
-            chartInstance.update();
-        }
+        if (chartInstance) { chartInstance.data.datasets[0].data = [deudas, ahorros, Math.max(disp, 0)]; chartInstance.update(); }
     }
 
-    function getItemsArray(type) {
+    function getItemsArray(type) { /* igual que antes */ 
         const listId = type === 'deudas' ? 'listaDeudas' : 'listaAhorros';
         return Array.from(document.querySelectorAll(`#${listId} .item-row`)).map(r => ({
-            nombre: r.querySelector('.inp-nom').value,
-            monto: parseFloat(r.querySelector('.inp-mon').value) || 0,
-            color: r.querySelector('.inp-col').value
+            nombre: r.querySelector('.inp-nom').value, monto: parseFloat(r.querySelector('.inp-mon').value) || 0, color: r.querySelector('.inp-col').value
         }));
     }
 
-    function resetApp() {
-        if(confirm("⚠️ ¿Eliminar todos los datos de la nube? Esta acción es irreversible.")) {
-            docRef.delete().then(() => {
-                location.reload();
-            }).catch(err => alert("Error: " + err.message));
-        }
-    }
+    function resetApp() { if(confirm("⚠️ Eliminar todo de la nube?")) docRef.delete().then(() => location.reload()); }
 
-    // ================== MODO OSCURO (LOCAL) ==================
+    // ================== NUEVAS FUNCIONALIDADES ==================
     function toggleDarkMode() {
         document.body.classList.toggle('dark');
         const isDark = document.body.classList.contains('dark');
-        document.getElementById('darkModeToggle').classList.toggle('active', isDark);
+        document.querySelector('.toggle-switch div').style.transform = isDark ? 'translateX(24px)' : 'translateX(2px)';
         localStorage.setItem('darkMode', isDark ? 'enabled' : 'disabled');
     }
+    
+    function filterItems() {
+        const term = document.getElementById('searchInput').value.toLowerCase();
+        document.querySelectorAll('.item-row').forEach(row => {
+            const nombre = row.querySelector('.inp-nom')?.value.toLowerCase() || '';
+            row.style.display = nombre.includes(term) ? 'flex' : 'none';
+        });
+    }
+    function clearSearch() { document.getElementById('searchInput').value = ''; filterItems(); }
 
-    // Cargar preferencia
-    (function loadDarkMode() {
-        if (localStorage.getItem('darkMode') === 'enabled') {
-            document.body.classList.add('dark');
-            document.getElementById('darkModeToggle').classList.add('active');
-        }
-    })();
+    function exportToCSV() {
+        let csv = "Tipo,Nombre,Monto,Color\n";
+        getItemsArray('deudas').forEach(d => csv += `Deuda,${d.nombre},${d.monto},${d.color}\n`);
+        getItemsArray('ahorros').forEach(a => csv += `Ahorro,${a.nombre},${a.monto},${a.color}\n`);
+        const blob = new Blob([csv], {type: 'text/csv'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'finanzas_hernan.csv'; a.click();
+        logActivity('📤 CSV exportado');
+    }
 
-    // Sincronizar color picker con variable primaria
-    document.getElementById('themePicker').addEventListener('input', (e) => {
-        document.documentElement.style.setProperty('--primary', e.target.value);
-        onUserInput();
+    function logActivity(msg) {
+        activityLog.unshift(`[${new Date().toLocaleTimeString()}] ${msg}`);
+        if(activityLog.length > 5) activityLog.pop();
+        document.getElementById('activityLog').innerHTML = activityLog.map(m => `<div>${m}</div>`).join('');
+    }
+
+    // Gráfico inicial
+    function initChart() {
+        const ctx = document.getElementById('distributionChart').getContext('2d');
+        chartInstance = new Chart(ctx, { type: 'doughnut', data: { labels: ['Deudas', 'Ahorros', 'Disponible'], datasets: [{ data: [0,0,0], backgroundColor: ['#ff7675','#55efc4','#6c5ce7'], borderWidth: 0 }] }, options: { cutout:'70%', plugins: { legend: {display: false} } } });
+    }
+    
+    // Atajos de teclado
+    document.addEventListener('keydown', (e) => {
+        if (e.ctrlKey && e.key === 'b') { e.preventDefault(); toggleMenu(); }
+        if (e.ctrlKey && e.key === 'd') { e.preventDefault(); addItem('deudas'); }
+        if (e.ctrlKey && e.key === 'a') { e.preventDefault(); addItem('ahorros'); }
+        if (e.key === 'f' || e.key === 'F') { e.preventDefault(); document.getElementById('searchInput').focus(); }
     });
 
-    // Ajuste inicial
-    window.addEventListener('load', () => {
-        calculateTotals();
-    });
+    // Inicializar
+    window.onload = () => {
+        initChart();
+        if(localStorage.getItem('darkMode') === 'enabled') { document.body.classList.add('dark'); document.querySelector('.toggle-switch div').style.transform = 'translateX(24px)'; }
+        document.getElementById('themePicker').addEventListener('input', (e) => document.documentElement.style.setProperty('--primary', e.target.value));
+        logActivity('✨ App lista');
+    };
 </script>
 </body>
 </html>
