@@ -2,638 +2,286 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <meta name="theme-color" content="#0f0f23">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>💰 Smart Budget Pro</title>
     
     <!-- Firebase SDK v8 -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
     <style>
-        /* ... [TODO EL CSS DEL CÓDIGO 2 - SIN CAMBIOS] ... */
-        :root {
-            --primary: #6366f1; --primary-glow: rgba(99, 102, 241, 0.4);
-            --secondary: #8b5cf6; --accent: #a78bfa;
-            --bg-dark: #0a0a1a; --bg-card: rgba(20, 20, 45, 0.85);
-            --bg-glass: rgba(30, 30, 60, 0.6); --border-glass: rgba(255,255,255,0.12);
-            --text: #f1f5f9; --text-muted: #94a3b8; --text-dim: #64748b;
-            --danger: #f43f5e; --success: #22c55e; --warning: #f59e0b; --info: #38bdf8;
-            --radius: 24px; --radius-sm: 16px; --radius-xs: 10px;
-            --shadow: 0 20px 60px rgba(0,0,0,0.4); --shadow-glow: 0 0 40px var(--primary-glow);
-            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            --sidebar-w: 360px; --safe-t: env(safe-area-inset-top); --safe-b: env(safe-area-inset-bottom);
-        }
-        [data-theme="light"] {
-            --bg-dark: #f8fafc; --bg-card: rgba(255,255,255,0.9);
-            --bg-glass: rgba(255,255,255,0.7); --border-glass: rgba(0,0,0,0.08);
-            --text: #0f172a; --text-muted: #475569; --text-dim: #64748b;
-            --shadow: 0 20px 60px rgba(0,0,0,0.12);
-        }
-        [data-private="true"] .amount { 
-            filter: blur(8px); cursor: default; transition: filter 0.25s; 
-            user-select: none;
-        }
-        [data-private="true"] .amount:hover { filter: blur(0); }
-        
-        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-        html { font-size: 16px; scroll-behavior: smooth; }
-        @media (max-width: 400px) { html { font-size: 14px; } }
-        
-        body {
-            font-family: 'Inter', -apple-system, sans-serif;
-            background: var(--bg-dark);
-            background-image: 
-                radial-gradient(ellipse at 20% 10%, rgba(99,102,241,0.15) 0%, transparent 50%),
-                radial-gradient(ellipse at 80% 90%, rgba(139,92,246,0.12) 0%, transparent 50%),
-                linear-gradient(180deg, var(--bg-dark) 0%, var(--bg-dark) 100%);
-            color: var(--text);
-            min-height: 100vh; min-height: 100dvh;
-            line-height: 1.5; -webkit-font-smoothing: antialiased;
-            transition: var(--transition);
-            overflow-x: hidden;
-            padding-bottom: calc(100px + var(--safe-b));
-        }
-        
-        /* [TODO EL CSS RESTANTE DEL CÓDIGO 2 - SIN CAMBIOS] */
-        /* ... [CSS COMPLETO SIN MODIFICACIONES] ... */
-        
-        .empty { text-align: center; padding: 36px 18px; color: var(--text-dim); }
-        .empty-icon { font-size: 2.9rem; margin-bottom: 11px; opacity: 0.5; }
-        .empty-txt { font-size: 0.92rem; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+        body { background: #0a0a1a; color: #f1f5f9; min-height: 100vh; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .card { background: rgba(20,20,45,0.9); padding: 20px; border-radius: 16px; margin-bottom: 20px; }
+        input { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 10px; border-radius: 8px; width: 100%; margin: 5px 0; }
+        button { background: #6366f1; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; margin: 5px; }
+        button:hover { background: #4f46e5; }
+        .item { background: rgba(255,255,255,0.05); padding: 12px; margin: 8px 0; border-radius: 8px; display: flex; gap: 10px; align-items: center; }
+        .status { padding: 10px; border-radius: 8px; margin: 10px 0; text-align: center; }
+        .status.success { background: rgba(34,197,94,0.2); color: #86efac; }
+        .status.error { background: rgba(244,63,94,0.2); color: #fca5a5; }
+        .status.warning { background: rgba(245,158,11,0.2); color: #fcd34d; }
     </style>
 </head>
 <body>
 
-<!-- [TODO EL HTML DEL CÓDIGO 2 - SIN CAMBIOS] -->
-<!-- ... [HTML COMPLETO SIN MODIFICACIONES] ... -->
-
-<input type="file" id="importFile" accept=".json" style="display:none">
+<div class="container">
+    <h1 style="text-align:center; margin-bottom:20px;">💰 Smart Budget Pro</h1>
+    
+    <div id="syncStatus" class="status warning">🔄 Conectando...</div>
+    
+    <div class="card">
+        <h3>💵 Ingreso Mensual</h3>
+        <input type="number" id="sueldoBase" placeholder="0" min="0">
+    </div>
+    
+    <div class="card">
+        <h3>💸 Gastos</h3>
+        <div id="listaGastos"></div>
+        <button onclick="addItem('gastos')">+ Agregar Gasto</button>
+    </div>
+    
+    <div class="card">
+        <h3>🎯 Ahorros</h3>
+        <div id="listaAhorros"></div>
+        <button onclick="addItem('ahorros')">+ Agregar Ahorro</button>
+    </div>
+    
+    <div class="card" style="text-align:center;">
+        <h2>💎 Disponible: <span id="resDisponible">$0</span></h2>
+    </div>
+</div>
 
 <script>
-(function(){
-    "use strict";
+// ==========================================
+// 🔥 CONFIGURACIÓN FIREBASE
+// ==========================================
+var firebaseConfig = {
+    apiKey: "AIzaSyCLb7LaJypnUHQ0TKZ2aTRNK4yAa6SUiZE",
+    authDomain: "calculadoramensualsueldo.firebaseapp.com",
+    projectId: "calculadoramensualsueldo",
+    storageBucket: "calculadoramensualsueldo.appspot.com",
+    messagingSenderId: "619721076451",
+    appId: "1:619721076451:web:56925f6251a3ba53ad5fd6"
+};
 
-    // ==========================================
-    // 🔥 CONFIGURACIÓN FIREBASE - CÓDIGO 1 (EXACTA)
-    // ==========================================
-    var firebaseConfig = {
-        apiKey: "AIzaSyCLb7LaJypnUHQ0TKZ2aTRNK4yAa6SUiZE",
-        authDomain: "calculadoramensualsueldo.firebaseapp.com",
-        projectId: "calculadoramensualsueldo",
-        storageBucket: "calculadoramensualsueldo.appspot.com",
-        messagingSenderId: "619721076451",
-        appId: "1:619721076451:web:56925f6251a3ba53ad5fd6"
-    };
+// Inicializar Firebase
+if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+}
+var db = firebase.firestore();
+var docRef = db.collection("usuarios").doc("x9k2mP7qLz4wN1vB8cR5Hernan2026");
 
-    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-    var db = firebase.firestore();
+// Estado global
+var isUpdatingFromDB = false;
+var saveTimeout;
 
-    // --- ESTADO GLOBAL - CÓDIGO 1 ---
-    var isUpdatingFromDB = false;
-    var saveTimeout;
+// ==========================================
+// ✅ SINCRONIZACIÓN - MÉTODO SIMPLE
+// ==========================================
+function setupSync() {
+    updateStatus('🔄 Conectando...', 'warning');
     
-    // 🔐 REFERENCIA AL DOCUMENTO - CÓDIGO 1
-    var docRef = db.collection("usuarios").doc("x9k2mP7qLz4wN1vB8cR5Hernan2026");
-
-    // ==========================================
-    // ✅ SINCRONIZACIÓN - CÓDIGO 1 (ADAPTADA PARA CÓDIGO 2)
-    // ==========================================
-    docRef.onSnapshot((doc) => {
+    docRef.onSnapshot(function(doc) {
+        console.log('📥 Recibiendo datos...');
+        
         if (doc.exists) {
-            isUpdatingFromDB = true;
             var data = doc.data();
+            isUpdatingFromDB = true;
             
             // Cargar sueldo
-            if (data.sueldo !== undefined) {
-                document.getElementById('sueldoBase').value = data.sueldo;
+            var sueldoInput = document.getElementById('sueldoBase');
+            if (sueldoInput && data.sueldo !== undefined) {
+                sueldoInput.value = data.sueldo;
             }
             
-            // Cargar color del tema
-            if(data.temaColor) {
-                document.documentElement.style.setProperty('--primary', data.temaColor);
-                // Actualizar preset de color activo
-                document.querySelectorAll('.color-dot').forEach(function(p){ 
-                    p.classList.toggle('active', p.dataset.c === data.temaColor); 
-                });
-            }
-            
-            // Cargar modo oscuro/claro
-            if (data.darkMode !== undefined) {
-                var isDark = data.darkMode;
-                if(isDark) {
-                    document.documentElement.removeAttribute('data-theme');
-                } else {
-                    document.documentElement.setAttribute('data-theme', 'light');
-                }
-                if(document.getElementById('themeToggle')) {
-                    document.getElementById('themeToggle').classList.toggle('active', !isDark);
+            // Cargar listas
+            if (data.gastos) {
+                var gastosContainer = document.getElementById('listaGastos');
+                if (gastosContainer) {
+                    gastosContainer.innerHTML = '';
+                    data.gastos.forEach(function(item) {
+                        createItemElement('gastos', item, true);
+                    });
                 }
             }
             
-            // Cargar moneda
-            if (data.currency) { 
-                currency = data.currency; 
-                if(typeof updateCurrencyUI === 'function') updateCurrencyUI(); 
-            }
-            
-            // Cargar modo privado
-            if (data.privateMode !== undefined) { 
-                privateMode = data.privateMode; 
-                document.documentElement.setAttribute('data-private', privateMode);
-                if(document.getElementById('privateToggle')) {
-                    document.getElementById('privateToggle').classList.toggle('active', privateMode);
+            if (data.ahorros) {
+                var ahorrosContainer = document.getElementById('listaAhorros');
+                if (ahorrosContainer) {
+                    ahorrosContainer.innerHTML = '';
+                    data.ahorros.forEach(function(item) {
+                        createItemElement('ahorros', item, true);
+                    });
                 }
             }
             
-            // Cargar listas (ADAPTADO: gastos/ahorros para Código 2)
-            renderLists(data.gastos || [], data.ahorros || []);
-            
-            // Calcular totales y actualizar badges
-            if(typeof calc === 'function') calc();
-            if(typeof updateBadges === 'function') updateBadges();
-            
+            calculateTotals();
             isUpdatingFromDB = false;
-            updateSync('✅ Sincronizado','success');
-            if(document.getElementById('lastSync')) {
-                document.getElementById('lastSync').textContent = new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
-            }
+            updateStatus('✅ Sincronizado', 'success');
             
         } else {
-            // Documento no existe
-            if(typeof updateSync === 'function') updateSync('📡 Listo para guardar','warning');
+            console.log('📄 Documento no existe');
+            updateStatus('📝 Nuevo documento - Comienza a agregar', 'warning');
         }
-    }, (error) => {
-        console.error("Error de sincronización:", error);
-        if(typeof updateSync === 'function') updateSync('❌ Sin conexión','error');
-        if(typeof toast === 'function') toast('Error de sincronización', 'error');
+    }, function(error) {
+        console.error('❌ Error de sincronización:', error);
+        updateStatus('❌ Error de conexión: ' + error.message, 'error');
     });
+}
 
-    // ✅ FUNCIÓN DE GUARDADO - CÓDIGO 1 (ADAPTADA PARA CÓDIGO 2)
-    function userChange(){ 
-        if(isUpdatingFromDB) return; 
-        if(typeof calc === 'function') calc(); 
-        if(typeof updateSync === 'function') updateSync('📡 Guardando...','warning'); 
-        clearTimeout(saveTimeout); 
-        
-        saveTimeout = setTimeout(() => {
-            var sueldo = parseFloat(document.getElementById('sueldoBase').value) || 0;
-            var theme = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim();
-            
-            docRef.set({
-                sueldo: sueldo,
-                temaColor: theme,
-                darkMode: !document.documentElement.hasAttribute('data-theme'),
-                currency: currency,
-                privateMode: privateMode,
-                gastos: getItemsArray('g'),
-                ahorros: getItemsArray('a'),
-                ultimaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
-            }).catch(err => {
-                if(typeof updateSync === 'function') updateSync('❌ Error al guardar','error');
-                console.error(err);
+// ==========================================
+// FUNCIONES DE UI
+// ==========================================
+function updateStatus(text, type) {
+    var statusEl = document.getElementById('syncStatus');
+    if (statusEl) {
+        statusEl.textContent = text;
+        statusEl.className = 'status ' + type;
+    }
+}
+
+function addItem(type) {
+    var container = document.getElementById(type === 'gastos' ? 'listaGastos' : 'listaAhorros');
+    if (!container) return;
+    
+    // Remover mensaje de vacío si existe
+    if (container.querySelector('.empty')) {
+        container.innerHTML = '';
+    }
+    
+    var div = document.createElement('div');
+    div.className = 'item';
+    div.innerHTML = 
+        '<span>' + (type === 'gastos' ? '💸' : '🎯') + '</span>' +
+        '<input type="text" class="inp-nom" placeholder="Nombre" style="flex:2">' +
+        '<input type="number" class="inp-mon" placeholder="0" style="flex:1" oninput="onUserInput()">' +
+        '<button onclick="this.parentElement.remove(); onUserInput()" style="background:#ef4444;padding:5px 10px;">✕</button>';
+    
+    // Agregar event listeners
+    var nameInput = div.querySelector('.inp-nom');
+    if (nameInput) {
+        nameInput.addEventListener('input', onUserInput);
+    }
+    
+    container.appendChild(div);
+    onUserInput();
+}
+
+function createItemElement(type, data, fromDB) {
+    var container = document.getElementById(type === 'gastos' ? 'listaGastos' : 'listaAhorros');
+    if (!container) return;
+    
+    var div = document.createElement('div');
+    div.className = 'item';
+    div.innerHTML = 
+        '<span>' + (type === 'gastos' ? '💸' : '🎯') + '</span>' +
+        '<input type="text" class="inp-nom" value="' + (data.nombre || '') + '" style="flex:2"' + (fromDB ? '' : ' oninput="onUserInput()"') + '>' +
+        '<input type="number" class="inp-mon" value="' + (data.monto || '') + '" style="flex:1"' + (fromDB ? '' : ' oninput="onUserInput()"') + '>' +
+        '<button onclick="this.parentElement.remove(); onUserInput()" style="background:#ef4444;padding:5px 10px;">✕</button>';
+    
+    if (!fromDB) {
+        var nameInput = div.querySelector('.inp-nom');
+        if (nameInput) {
+            nameInput.addEventListener('input', onUserInput);
+        }
+    }
+    
+    container.appendChild(div);
+}
+
+function onUserInput() {
+    if (isUpdatingFromDB) return;
+    
+    calculateTotals();
+    updateStatus('⏳ Guardando...', 'warning');
+    
+    clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(saveToFirestore, 800);
+}
+
+function calculateTotals() {
+    var sueldoInput = document.getElementById('sueldoBase');
+    var sueldo = sueldoInput ? parseFloat(sueldoInput.value) || 0 : 0;
+    
+    var totalGastos = 0;
+    var totalAhorros = 0;
+    
+    document.querySelectorAll('#listaGastos .inp-mon').forEach(function(input) {
+        totalGastos += parseFloat(input.value) || 0;
+    });
+    
+    document.querySelectorAll('#listaAhorros .inp-mon').forEach(function(input) {
+        totalAhorros += parseFloat(input.value) || 0;
+    });
+    
+    var disponible = sueldo - totalGastos - totalAhorros;
+    
+    var dispEl = document.getElementById('resDisponible');
+    if (dispEl) {
+        dispEl.textContent = '$ ' + disponible.toLocaleString();
+        dispEl.style.color = disponible < 0 ? '#f43f5e' : '#22c55e';
+    }
+}
+
+function saveToFirestore() {
+    var sueldoInput = document.getElementById('sueldoBase');
+    var sueldo = sueldoInput ? parseFloat(sueldoInput.value) || 0 : 0;
+    
+    var gastos = [];
+    document.querySelectorAll('#listaGastos .item').forEach(function(row) {
+        var nombre = row.querySelector('.inp-nom');
+        var monto = row.querySelector('.inp-mon');
+        if (nombre && monto) {
+            gastos.push({
+                nombre: nombre.value,
+                monto: parseFloat(monto.value) || 0
             });
-        }, 800);
-    }
-
-    // ✅ FUNCIÓN PARA OBTENER ÍTEMS - CÓDIGO 1 (ADAPTADA PARA CÓDIGO 2)
-    function getItemsArray(type) {
-        var containerId = type === 'g' ? '#listG' : '#listA';
-        return Array.from(document.querySelectorAll(containerId + ' .item')).map(r => ({
-            nombre: r.querySelector('.item-name').value,
-            monto: parseFloat(r.querySelector('.item-val').value) || 0,
-            color: r.style.getPropertyValue('--item-color').trim() || (type==='g' ? '#f43f5e' : '#22c55e'),
-            category: r.querySelector('.item-cat') ? r.querySelector('.item-cat').value : 'general',
-            completed: r.classList.contains('completed')
-        }));
-    }
-    // ==========================================
-    // FIN SINCRONIZACIÓN - CÓDIGO 1
-    // ==========================================
-
-    // ==========================================
-    // RESTO DEL CÓDIGO 2 - SIN CAMBIOS
-    // ==========================================
-    
-    // Variables adicionales del Código 2
-    var currency = 'USD';
-    var privateMode = false;
-    var chartInst = null;
-    
-    var sym = {USD:'$', EUR:'€', MXN:'$', COP:'$'};
-    var icons = {general:'📌',vivienda:'🏠',comida:'🍔',transporte:'🚗',servicios:'💡',ocio:'🎮',salud:'🏥',emergencia:'🚨',vacaciones:'✈️',inversion:'📈',compra:'🛒',educacion:'📚'};
-    var CIRC = 2 * Math.PI * 54;
-
-    // Helpers DOM
-    var $ = function(s){ return document.querySelector(s); };
-    var $$ = function(s){ return Array.from(document.querySelectorAll(s)); };
-
-    // Init
-    function init(){
-        renderColors(); setupEvents(); loadPrefs();
-        if(typeof toast === 'function') toast('✨ Smart Budget Pro listo', 'success');
-    }
-
-    // Funciones del Código 2 (MANTENIDAS SIN CAMBIOS)
-    function renderLists(gastos, ahorros){
-        var c1 = $('#listG'), c2 = $('#listA');
-        c1.innerHTML = ''; c2.innerHTML = '';
-        
-        if(gastos.length){
-            gastos.forEach(function(i){ createItem('g',i,true); });
-        } else {
-            empty(c1,'📭','Sin gastos','Agrega tu primer gasto');
         }
-        if(ahorros.length){
-            ahorros.forEach(function(i){ createItem('a',i,true); });
-        } else {
-            empty(c2,'🏦','Sin metas','Define una meta de ahorro');
+    });
+    
+    var ahorros = [];
+    document.querySelectorAll('#listaAhorros .item').forEach(function(row) {
+        var nombre = row.querySelector('.inp-nom');
+        var monto = row.querySelector('.inp-mon');
+        if (nombre && monto) {
+            ahorros.push({
+                nombre: nombre.value,
+                monto: parseFloat(monto.value) || 0
+            });
         }
-    }
-
-    function createItem(type, data, fromDB){
-        if(fromDB === undefined) fromDB = false;
-        var container = $(type==='g' ? '#listG' : '#listA');
-        if(container.querySelector('.empty')) container.innerHTML = '';
-        
-        var row = document.createElement('div');
-        row.className = 'item' + (data.completed ? ' completed' : '');
-        row.style.setProperty('--item-color', data.color || (type==='g' ? '#f43f5e' : '#22c55e'));
-        
-        var cats = (type==='g' 
-            ? ['general','vivienda','comida','transporte','servicios','ocio','salud']
-            : ['general','emergencia','vacaciones','inversion','compra','educacion']
-        ).map(function(c){ return '<option value="'+c+'" '+(c===data.category?'selected':'')+'>'+icons[c]+' '+c+'</option>'; }).join('');
-        
-        row.innerHTML = 
-            '<div class="item-bar"></div>'+
-            '<div class="item-color-wrap"><input type="color" class="item-color" value="'+(data.color||'#f43f5e')+'"></div>'+
-            '<div class="item-body">'+
-                '<span class="item-icon">'+(icons[data.category]||'📌')+'</span>'+
-                '<div class="item-info">'+
-                    '<input type="text" class="item-name" placeholder="'+(type==='g'?'Gasto...':'Meta...')+'" value="'+(data.nombre||'')+'">'+
-                    '<div class="item-row">'+
-                        '<select class="item-cat">'+cats+'</select>'+
-                        '<input type="number" class="item-val amount" placeholder="0" min="0" step="0.01" value="'+(data.monto||'')+'">'+
-                    '</div>'+
-                '</div>'+
-            '</div>'+
-            '<div class="item-actions">'+
-                '<button class="btn-check" title="Completado">✔️</button>'+
-                '<button class="btn-del" title="Eliminar">✕</button>'+
-            '</div>';
-        
-        var name = row.querySelector('.item-name'), amt = row.querySelector('.item-val'), 
-            sel = row.querySelector('.item-cat'), col = row.querySelector('.item-color'),
-            comp = row.querySelector('.btn-check'), rem = row.querySelector('.btn-del');
-        
-        [name, amt].forEach(function(el){ el.addEventListener('input', function(){ if(!isUpdatingFromDB) userChange(); }); });
-        sel.addEventListener('change', function(){ 
-            row.querySelector('.item-icon').textContent = icons[sel.value]||'📌'; 
-            if(!isUpdatingFromDB) userChange(); 
+    });
+    
+    var data = {
+        sueldo: sueldo,
+        gastos: gastos,
+        ahorros: ahorros,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    
+    docRef.set(data, { merge: true })
+        .then(function() {
+            console.log('✅ Datos guardados');
+            updateStatus('✅ Guardado', 'success');
+            setTimeout(function() {
+                updateStatus('✅ Sincronizado', 'success');
+            }, 1000);
+        })
+        .catch(function(error) {
+            console.error('❌ Error al guardar:', error);
+            updateStatus('❌ Error: ' + error.message, 'error');
         });
-        col.addEventListener('input', function(){ 
-            row.style.setProperty('--item-color', col.value); 
-            if(!isUpdatingFromDB) userChange(); 
-        });
-        comp.addEventListener('click', function(){ 
-            row.classList.toggle('completed'); 
-            if(!isUpdatingFromDB) userChange(); 
-        });
-        rem.addEventListener('click', function(){
-            row.style.opacity='0'; row.style.transform='translateX(20px)';
-            setTimeout(function(){ 
-                row.remove(); 
-                if(!container.querySelector('.item')) {
-                    empty(container, type==='g'?'📭':'🏦', 
-                        type==='g'?'Sin gastos':'Sin metas', 
-                        'Agrega uno nuevo');
-                }
-                if(!isUpdatingFromDB) userChange(); 
-            }, 220);
-        });
-        
-        // Swipe to delete (mobile)
-        var touchX = 0;
-        row.addEventListener('touchstart', function(e){ touchX = e.touches[0].clientX; }, {passive:true});
-        row.addEventListener('touchend', function(e){
-            if(touchX - e.changedTouches[0].clientX > 40) rem.click();
-        }, {passive:true});
-        
-        container.appendChild(row);
-        if(!fromDB) userChange();
-    }
+}
 
-    function empty(el, icon, title, sub){ 
-        el.innerHTML = '<div class="empty"><div class="empty-icon">'+icon+'</div><p class="empty-txt"><strong>'+title+'</strong><br><small>'+sub+'</small></p></div>'; 
-    }
-
-    function calc(){
-        var sueldo = +$('#sueldoBase').value || 0, symbol = sym[currency];
-        var gastos=0, ahorros=0;
-        
-        $$('#listG .item-val').forEach(function(i){ gastos += +i.value||0; });
-        $$('#listA .item-val').forEach(function(i){ ahorros += +i.value||0; });
-        
-        var disponible = Math.max(0, sueldo - gastos - ahorros);
-        var exceso = (gastos + ahorros) > sueldo;
-        
-        var gp = sueldo ? Math.min(100, (gastos/sueldo)*100) : 0;
-        var ap = sueldo ? Math.min(100, (ahorros/sueldo)*100) : 0;
-        var dp = sueldo ? Math.max(0, (disponible/sueldo)*100) : 0;
-        
-        animate('statG', gastos, symbol); animate('statA', ahorros, symbol); animate('statD', disponible, symbol);
-        updateRing('gRing', gp); updateRing('aRing', ap); updateRing('dRing', dp);
-        
-        $('#gPct').textContent = sueldo ? Math.round(gp)+'%' : '0%';
-        $('#aPct').textContent = sueldo ? Math.round(ap)+'%' : '0%';
-        $('#dPct').textContent = sueldo ? Math.round(dp)+'%' : '0%';
-        
-        $('#fG').textContent = symbol+' '+fmt(gastos); $('#fA').textContent = symbol+' '+fmt(ahorros); $('#fD').textContent = symbol+' '+fmt(disponible);
-        $('#fGP').textContent = Math.round(gp)+'%'; $('#fAP').textContent = Math.round(ap)+'%'; $('#fDP').textContent = Math.round(dp)+'%';
-        
-        $('#gProgTxt').textContent = Math.round(gp)+'%'; $('#gProg').style.width = gp+'%';
-        $('#aProgTxt').textContent = Math.round(ap)+'%'; $('#aProg').style.width = ap+'%';
-        
-        if($('#alertG')) $('#alertG').style.display = exceso ? 'block' : 'none';
-        updateBadges();
-    }
-
-    function animate(id, val, sym){
-        var el = $(id), cur = +el.textContent.replace(/[^0-9.-]/g,'')||0;
-        var dur=320, steps=16, inc=(val-cur)/steps;
-        var s=0; 
-        var t=setInterval(function(){ 
-            s++; 
-            el.textContent = sym+' '+fmt(Math.round((cur+inc*s)*100)/100); 
-            if(s>=steps){ clearInterval(t); el.textContent = sym+' '+fmt(val); } 
-        }, dur/steps);
-    }
-    
-    function fmt(n){ return n.toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2}); }
-    
-    function updateRing(id, pct){ 
-        var c = $(id); 
-        c.style.strokeDashoffset = CIRC - (pct/100)*CIRC; 
-    }
-
-    function updateBadges(){
-        var s = +$('#sueldoBase').value||0;
-        var g = $$('#listG .item-val').reduce(function(a,i){ return a+(+i.value||0); }, 0);
-        var ah = $$('#listA .item-val').reduce(function(a,i){ return a+(+i.value||0); }, 0);
-        var d = s - g - ah;
-        
-        var gb = $('#gHealth');
-        if(!s){ gb.textContent='Sin ingresos'; gb.className='health-pill warning'; }
-        else { 
-            var p=(g/s)*100; 
-            if(p<50){gb.textContent='Excelente';gb.className='health-pill healthy'} 
-            else if(p<90){gb.textContent='Normal';gb.className='health-pill warning'} 
-            else {gb.textContent='A Mejorar';gb.className='health-pill critical'} 
-        }
-        
-        var db = $('#dHealth');
-        if(!s){ db.textContent='Sin ingresos'; db.className='health-pill warning'; }
-        else { 
-            var p=(d/s)*100; 
-            if(p>40){db.textContent='Saludable';db.className='health-pill healthy'} 
-            else if(p>15){db.textContent='Ajustado';db.className='health-pill warning'} 
-            else {db.textContent='Crítico';db.className='health-pill critical'} 
-        }
-        
-        var ab = $('#aHealth');
-        if(!s){ ab.textContent='Sin ingresos'; ab.className='health-pill warning'; }
-        else { 
-            var p=(ah/s)*100; 
-            if(p>=30){ab.textContent='¡Excelente!';ab.className='health-pill healthy'} 
-            else if(p>=10){ab.textContent='Bien';ab.className='health-pill warning'} 
-            else {ab.textContent='A Mejorar';ab.className='health-pill critical'} 
-        }
-    }
-
-    // Funciones UI del Código 2 (MANTENIDAS SIN CAMBIOS)
-    function toggleMenu(){ 
-        $('#sidebar').classList.toggle('active'); 
-        $('#overlay').classList.toggle('active'); 
-    }
-    
-    function toggleTheme(){ 
-        var h=document.documentElement, isDark=!h.hasAttribute('data-theme');
-        if(isDark) h.setAttribute('data-theme', 'light');
-        else h.removeAttribute('data-theme');
-        if($('#themeToggle')) $('#themeToggle').classList.toggle('active', !isDark); 
-        if(!isUpdatingFromDB) userChange(); 
-        if(typeof toast === 'function') toast(isDark?'☀️ Modo claro':'🌙 Modo oscuro','success'); 
-    }
-    
-    function togglePrivate(){ 
-        privateMode = !privateMode; 
-        document.documentElement.setAttribute('data-private',privateMode); 
-        if($('#privateToggle')) $('#privateToggle').classList.toggle('active',privateMode); 
-        if(!isUpdatingFromDB) userChange(); 
-        if(typeof toast === 'function') toast(privateMode?'👁️ Montos ocultos':'👁️ Montos visibles','success'); 
-    }
-    
-    function setCurrency(c){ 
-        currency=c; updateCurrencyUI(); 
-        if(!isUpdatingFromDB) userChange(); 
-        if(typeof toast === 'function') toast('💱 '+c,'success'); 
-        toggleMenu(); 
-    }
-    
-    function updateCurrencyUI(){ 
-        if($$('.currency-btn')) $$('.currency-btn').forEach(function(b){ b.classList.toggle('active',b.dataset.c===currency); }); 
-        calc(); 
-    }
-    
-    function updateSync(txt, type){
-        var icons={success:'✓',warning:'📡',error:'❌'}, cls={success:'',warning:'warning',error:'error'};
-        if($('#syncBadge') && $('#syncBadge').firstChild) $('#syncBadge').firstChild.textContent = icons[type]; 
-        if($('#syncText')) $('#syncText').textContent = txt.replace(/^[✓📡❌]\s*/,'');
-        if($('#syncStatus')) $('#syncStatus').textContent = txt; 
-        if($('#syncOrb')) $('#syncOrb').className = 'sync-orb '+cls[type];
-        if($('#syncBadge')) $('#syncBadge').className = 'sync-badge '+cls[type];
-    }
-    
-    function toast(msg, type){
-        if(type===undefined) type='success';
-        var t=document.createElement('div'); 
-        t.className='toast '+type; 
-        t.innerHTML='<span>'+(type==='success'?'✅':'❌')+'</span><span>'+msg+'</span>';
-        if($('#toastBox')) $('#toastBox').appendChild(t); 
-        setTimeout(function(){t.style.opacity='0';t.style.transform='translateX(35px)';setTimeout(function(){t.remove();},220)},3200);
-    }
-    
-    function renderColors(){
-        var colors=['#6366f1','#ec4899','#10b981','#f59e0b','#3b82f6','#8b5cf6','#f43f5e','#14b8a6','#a855f7','#22c55e'];
-        var c=$('#colorGrid'); 
-        if(c) c.innerHTML=colors.map(function(col){ return '<div class="color-dot" data-c="'+col+'" style="background:'+col+'"></div>'; }).join('');
-        if($$('.color-dot')) $$('.color-dot').forEach(function(p){ p.onclick=function(){ 
-            $$('.color-dot').forEach(function(x){ x.classList.remove('active'); }); 
-            p.classList.add('active'); 
-            document.documentElement.style.setProperty('--primary',p.dataset.c); 
-            if(!isUpdatingFromDB) userChange(); 
-            if(typeof toast === 'function') toast('🎨 Color actualizado','success'); 
-        }; });
-    }
-    
-    function setupEvents(){
-        if($('#sueldoBase')) $('#sueldoBase').addEventListener('input', userChange);
-        if($('#btnG')) $('#btnG').onclick=function(){ createItem('g',{nombre:'',monto:'',color:'#f43f5e',category:'general'}); };
-        if($('#btnA')) $('#btnA').onclick=function(){ createItem('a',{nombre:'',monto:'',color:'#22c55e',category:'general'}); };
-        if($$('.currency-btn')) $$('.currency-btn').forEach(function(b){ b.onclick=function(){ setCurrency(b.dataset.c); }; });
-        
-        document.addEventListener('keydown',function(e){ 
-            if(e.key==='Escape'){ toggleMenu(); if(typeof closeModal==='function') closeModal(); if(typeof closeChart==='function') closeChart(); if(typeof closeManual==='function') closeManual(); } 
-            if(e.key.toLowerCase()==='m') toggleMenu(); 
-            if(e.key.toLowerCase()==='t') toggleTheme(); 
-            if(e.key.toLowerCase()==='p') togglePrivate(); 
-            if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='s'){ e.preventDefault(); if(typeof forceSync==='function') forceSync(); } 
-        });
-        
-        if($('#overlay')) $('#overlay').onclick=toggleMenu; 
-        if($('#importFile')) $('#importFile').onchange=handleImport;
-    }
-    
-    function loadPrefs(){ 
-        try{ 
-            var t=localStorage.getItem('sbp_theme'); 
-            if(t==='light'){ document.documentElement.setAttribute('data-theme','light'); if($('#themeToggle')) $('#themeToggle').classList.add('active'); } 
-            var c=localStorage.getItem('sbp_curr'); 
-            if(c){ currency=c; updateCurrencyUI(); } 
-            var col=localStorage.getItem('sbp_color'); 
-            if(col){ document.documentElement.style.setProperty('--primary',col); if($$('.color-dot')) $$('.color-dot').forEach(function(p){ p.classList.toggle('active',p.dataset.c===col); }); } 
-            var p=localStorage.getItem('sbp_priv'); 
-            if(p==='true'){ privateMode=true; document.documentElement.setAttribute('data-private',true); if($('#privateToggle')) $('#privateToggle').classList.add('active'); } 
-        }catch(e){} 
-    }
-    
-    function savePrefs(){ 
-        try{ 
-            localStorage.setItem('sbp_theme',document.documentElement.hasAttribute('data-theme')?'light':'dark'); 
-            localStorage.setItem('sbp_curr',currency); 
-            localStorage.setItem('sbp_color',getComputedStyle(document.documentElement).getPropertyValue('--primary').trim()); 
-            localStorage.setItem('sbp_priv',privateMode); 
-        }catch(e){} 
-    }
-    
-    // Export/Import
-    function exportData(){ 
-        docRef.get().then(function(doc){ 
-            if(doc.exists){ 
-                var b=new Blob([JSON.stringify(doc.data(),null,2)],{type:'application/json'}), 
-                a=document.createElement('a'); 
-                a.href=URL.createObjectURL(b); 
-                a.download='budget_'+new Date().toISOString().slice(0,10)+'.json'; 
-                a.click(); 
-                if(typeof toast === 'function') toast('📤 Exportado','success'); 
-            } 
-        }); 
-        if(typeof toggleMenu === 'function') toggleMenu(); 
-    }
-    
-    function exportCSV(){ 
-        var r=[['Tipo','Nombre','Categoría','Monto','Completado']]; 
-        if($$('#listG .item')) $$('#listG .item').forEach(function(row){ r.push(['Gasto',row.querySelector('.item-name').value,row.querySelector('.item-cat').value,row.querySelector('.item-val').value,row.classList.contains('completed')?'Sí':'No']); }); 
-        if($$('#listA .item')) $$('#listA .item').forEach(function(row){ r.push(['Ahorro',row.querySelector('.item-name').value,row.querySelector('.item-cat').value,row.querySelector('.item-val').value,row.classList.contains('completed')?'Sí':'No']); }); 
-        var csv=r.map(function(x){ return x.map(function(c){ return '"'+c+'"'; }).join(','); }).join('\n'), 
-        b=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'}), 
-        a=document.createElement('a'); 
-        a.href=URL.createObjectURL(b); 
-        a.download='budget_'+new Date().toISOString().slice(0,10)+'.csv'; 
-        a.click(); 
-        if(typeof toast === 'function') toast('📊 CSV exportado','success'); 
-        if(typeof toggleMenu === 'function') toggleMenu(); 
-    }
-    
-    function importData(){ if($('#importFile')) $('#importFile').click(); if(typeof toggleMenu === 'function') toggleMenu(); }
-    
-    function handleImport(e){ 
-        var f=e.target.files[0]; if(!f) return; 
-        var rd=new FileReader(); 
-        rd.onload=function(ev){ 
-            try{ 
-                var d=JSON.parse(ev.target.result); 
-                if(d.sueldo!==undefined){ 
-                    docRef.set(d).then(function(){ if(typeof toast === 'function') toast('📥 Importado','success'); setTimeout(function(){location.reload();},1000); }); 
-                } else throw 0; 
-            }catch(err){ if(typeof toast === 'function') toast('❌ Archivo inválido','error'); } 
-        }; 
-        rd.readAsText(f); e.target.value=''; 
-    }
-
-    // Gráficas y modales
-    function showChart(){
-        var ctx=$('#chart').getContext('2d'), cats={}, total=0;
-        if($$('#listG .item')) $$('#listG .item').forEach(function(r){ 
-            var c=r.querySelector('.item-cat').value||'general', m=+r.querySelector('.item-val').value||0; 
-            if(m>0){ cats[c]=(cats[c]||0)+m; total+=m; } 
-        });
-        if(!total){ if(typeof toast === 'function') toast('📊 Agrega gastos primero','warning'); if(typeof toggleMenu === 'function') toggleMenu(); return; }
-        var labels=Object.keys(cats).map(function(c){ return (icons[c]||'📌')+' '+c; }), data=Object.values(cats), colors=['#6366f1','#ec4899','#10b981','#f59e0b','#3b82f6','#8b5cf6','#f43f5e','#14b8a6'];
-        if(chartInst) chartInst.destroy();
-        chartInst=new Chart(ctx,{
-            type:'doughnut',
-            data:{labels:labels,datasets:[{data,borderColor:colors.slice(0,data.length),backgroundColor:colors.slice(0,data.length).map(function(c){return c+'99';}),borderWidth:2}]},
-            options:{
-                responsive:true,maintainAspectRatio:false,cutout:'68%',
-                plugins:{
-                    legend:{display:false},
-                    tooltip:{
-                        callbacks:{
-                            label:function(ctx){ return ctx.label+': '+sym[currency]+ctx.parsed.toFixed(2)+' ('+((ctx.parsed/total)*100).toFixed(1)+'%)'; }
-                        }
-                    }
-                },
-                animation:{animateScale:true,animateRotate:true}
-            }
-        });
-        if($('#chartModal')) $('#chartModal').classList.add('active'); if(typeof toggleMenu === 'function') toggleMenu();
-    }
-    function closeChart(){ if($('#chartModal')) $('#chartModal').classList.remove('active'); }
-
-    function showStats(){ 
-        var s=+$('#sueldoBase').value||0, g=$$('#listG .item-val').reduce(function(a,i){return a+(+i.value||0);},0), ah=$$('#listA .item-val').reduce(function(a,i){return a+(+i.value||0);},0), d=s-g-ah, sy=sym[currency]; 
-        if(typeof modal === 'function') modal('📊 Resumen','💵 Ingreso: '+sy+fmt(s)+'\n💸 Gastos: '+sy+fmt(g)+' ('+(s?((g/s)*100).toFixed(1):0)+'%)\n🎯 Ahorros: '+sy+fmt(ah)+' ('+(s?((ah/s)*100).toFixed(1):0)+'%)\n💎 Disponible: '+sy+fmt(Math.max(0,d))); 
-        if(typeof toggleMenu === 'function') toggleMenu(); 
-    }
-    
-    function confirmReset(){ 
-        if(typeof modal === 'function') modal('🗑️ ¿Borrar todo?','⚠️ Esta acción es irreversible. ¿Continuar?',function(){ 
-            docRef.delete().then(function(){ if(typeof toast === 'function') toast('🗑️ Datos borrados','success'); setTimeout(function(){location.reload();},1000); }); 
-        }); 
-        if(typeof toggleMenu === 'function') toggleMenu(); 
-    }
-    
-    function forceSync(){ 
-        if(typeof updateSync === 'function') updateSync('🔄 Sincronizando...','warning'); 
-        userChange(); 
-        setTimeout(function(){if(typeof toast === 'function') toast('✅ Sincronizado','success');},1000); 
-        if(typeof toggleMenu === 'function') toggleMenu(); 
-    }
-
-    function modal(title, text, onConfirm){ 
-        if($('#mTitle')) $('#mTitle').textContent=title; if($('#mText')) $('#mText').textContent=text; 
-        if($('#mConfirm')) $('#mConfirm').onclick=function(){ closeModal(); if(onConfirm) onConfirm(); }; 
-        if($('#mConfirm')) $('#mConfirm').textContent=onConfirm?'Confirmar':'Cerrar'; 
-        if($('#modal')) $('#modal').classList.add('active'); 
-    }
-    function closeModal(){ if($('#modal')) $('#modal').classList.remove('active'); }
-    function showManual(){ if($('#manualModal')) $('#manualModal').classList.add('active'); if(typeof toggleMenu === 'function') toggleMenu(); }
-    function closeManual(){ if($('#manualModal')) $('#manualModal').classList.remove('active'); }
-
-    // Start
-    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
-    
-    // Expose globals
-    window.toggleMenu=toggleMenu; window.toggleTheme=toggleTheme; window.togglePrivate=togglePrivate; 
-    window.setCurrency=setCurrency; window.exportData=exportData; window.exportCSV=exportCSV; 
-    window.importData=importData; window.showChart=showChart; window.closeChart=closeChart; 
-    window.showStats=showStats; window.confirmReset=confirmReset; window.forceSync=forceSync; 
-    window.closeModal=closeModal; window.closeManual=closeManual; window.userChange=userChange;
-})();
+// ==========================================
+// INICIALIZAR
+// ==========================================
+window.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Smart Budget Pro iniciado');
+    setupSync();
+});
 </script>
+
 </body>
 </html>
