@@ -2,289 +2,637 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>💰 Smart Budget Pro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Finanzas Sync · Hernán</title>
     
-    <!-- Firebase SDK v8 -->
+    <!-- Firebase SDK v8 (SIN MODIFICAR) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     
+    <!-- Chart.js para gráficos modernos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    
+    <!-- Fuente Moderna -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    
     <style>
-        :root {
-            --primary: #6366f1;
-            --bg-dark: #0a0a1a;
-            --bg-card: rgba(20, 20, 45, 0.85);
-            --text: #f1f5f9;
-            --text-muted: #94a3b8;
-            --danger: #f43f5e;
-            --success: #22c55e;
-            --warning: #f59e0b;
+        /* ===== RESET & VARIABLES ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
         }
-        
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        
+
+        :root {
+            --primary: #4361ee;
+            --primary-light: #4895ef;
+            --danger: #f72585;
+            --success: #06d6a0;
+            --warning: #ffb703;
+            --bg-light: #f8f9ff;
+            --card-bg-light: rgba(255, 255, 255, 0.85);
+            --text-light: #1e1e2f;
+            --border-light: rgba(0, 0, 0, 0.05);
+            --shadow: 0 20px 35px -8px rgba(0, 0, 0, 0.07), 0 10px 10px -5px rgba(0, 0, 0, 0.03);
+            
+            --sidebar-width: 300px;
+            --transition: all 0.25s cubic-bezier(0.2, 0, 0, 1);
+        }
+
+        body.dark {
+            --bg-light: #0f172a;
+            --card-bg-light: rgba(30, 41, 59, 0.9);
+            --text-light: #f1f5f9;
+            --border-light: rgba(255, 255, 255, 0.08);
+            --shadow: 0 20px 35px -8px rgba(0, 0, 0, 0.4);
+        }
+
         body {
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            background: var(--bg-dark);
-            color: var(--text);
+            background: var(--bg-light);
+            color: var(--text-light);
             min-height: 100vh;
             padding-bottom: 100px;
+            transition: background 0.3s, color 0.2s;
+            backdrop-filter: blur(2px);
         }
-        
+
+        /* ===== SIDEBAR (AJUSTES) ===== */
         .sidebar {
             position: fixed;
-            left: -300px;
+            left: -100%;
             top: 0;
-            width: 300px;
-            height: 100vh;
-            background: var(--bg-card);
+            width: var(--sidebar-width);
+            height: 100%;
+            background: var(--card-bg-light);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
             z-index: 3000;
-            transition: 0.3s;
-            padding: 25px;
-            box-shadow: 10px 0 30px rgba(0,0,0,0.5);
+            transition: var(--transition);
+            padding: 28px 24px;
+            box-shadow: 10px 0 40px rgba(0, 0, 0, 0.1);
+            border-right: 1px solid var(--border-light);
+            overflow-y: auto;
         }
-        
-        .sidebar.active { left: 0; }
-        
+
+        .sidebar.active {
+            left: 0;
+        }
+
+        .sidebar h3 {
+            font-weight: 700;
+            font-size: 1.8rem;
+            letter-spacing: -0.02em;
+            margin-bottom: 28px;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sidebar h3 i {
+            font-size: 1.8rem;
+        }
+
+        .setting-group {
+            margin-bottom: 28px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .setting-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 12px;
+            font-size: 1rem;
+            opacity: 0.8;
+        }
+
+        .theme-picker-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        #themePicker {
+            width: 60px;
+            height: 45px;
+            border: 2px solid var(--border-light);
+            border-radius: 14px;
+            cursor: pointer;
+            background: transparent;
+            padding: 2px;
+        }
+
+        .dark-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 8px;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 52px;
+            height: 28px;
+            background: var(--border-light);
+            border-radius: 30px;
+            cursor: pointer;
+            transition: background 0.2s;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .toggle-switch.active {
+            background: var(--primary);
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.2s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .toggle-switch.active::after {
+            transform: translateX(24px);
+        }
+
+        .reset-btn {
+            background: rgba(247, 37, 133, 0.15);
+            color: var(--danger);
+            border: 1.5px solid var(--danger);
+            width: 100%;
+            padding: 14px;
+            border-radius: 18px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+            transition: 0.2s;
+            margin-top: 20px;
+        }
+
+        .reset-btn:hover {
+            background: var(--danger);
+            color: white;
+        }
+
         .overlay {
             position: fixed;
             inset: 0;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(6px);
             z-index: 2500;
-            display: none;
+            opacity: 0;
+            visibility: hidden;
+            transition: 0.25s;
         }
-        
-        .overlay.active { display: block; }
-        
+
+        .overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* ===== HEADER ===== */
         .top-banner {
-            background: linear-gradient(135deg, var(--primary), #8b5cf6);
-            padding: 50px 20px;
-            text-align: center;
-            border-bottom-left-radius: 30px;
-            border-bottom-right-radius: 30px;
+            background: linear-gradient(145deg, var(--primary), var(--primary-light));
+            padding: 45px 24px 60px;
+            color: white;
+            border-bottom-left-radius: 40px;
+            border-bottom-right-radius: 40px;
             position: relative;
+            box-shadow: 0 10px 30px -5px rgba(67, 97, 238, 0.2);
+            margin-bottom: 20px;
         }
-        
+
         .menu-btn {
             position: absolute;
             left: 20px;
             top: 20px;
-            font-size: 28px;
+            font-size: 30px;
             cursor: pointer;
             background: rgba(255,255,255,0.2);
-            width: 45px;
-            height: 45px;
-            border-radius: 12px;
+            width: 48px;
+            height: 48px;
+            border-radius: 18px;
             display: flex;
             align-items: center;
             justify-content: center;
+            backdrop-filter: blur(5px);
+            transition: 0.2s;
+            border: 1px solid rgba(255,255,255,0.2);
         }
-        
+
+        .menu-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
         .save-indicator {
             position: absolute;
             right: 20px;
             top: 25px;
-            font-size: 12px;
-            background: rgba(0,0,0,0.3);
-            padding: 6px 12px;
-            border-radius: 15px;
+            background: rgba(0, 0, 0, 0.25);
+            backdrop-filter: blur(8px);
+            padding: 8px 18px;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            border: 1px solid rgba(255,255,255,0.2);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            transition: 0.2s;
         }
-        
+
+        .header-income {
+            text-align: center;
+        }
+
+        .header-income label {
+            font-weight: 500;
+            letter-spacing: 3px;
+            font-size: 0.9rem;
+            opacity: 0.9;
+            text-transform: uppercase;
+        }
+
         .header-income input {
-            background: rgba(255,255,255,0.2);
-            border: 2px solid rgba(255,255,255,0.3);
-            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 60px;
             color: white;
-            font-size: 2.2rem;
+            font-size: 3.2rem;
             font-weight: 800;
             text-align: center;
-            width: 85%;
-            max-width: 350px;
-            padding: 12px;
+            width: 90%;
+            max-width: 450px;
+            padding: 16px 10px;
+            margin-top: 12px;
             outline: none;
+            backdrop-filter: blur(5px);
+            transition: 0.2s;
         }
-        
+
+        .header-income input:focus {
+            border-color: white;
+            background: rgba(255,255,255,0.25);
+        }
+
+        .header-income input::placeholder {
+            color: rgba(255,255,255,0.5);
+            font-size: 1.4rem;
+        }
+
+        /* ===== CONTENEDOR PRINCIPAL ===== */
         .container {
-            max-width: 1000px;
+            max-width: 1100px;
             margin: -30px auto 0;
             padding: 0 20px;
         }
-        
+
         .dashboard {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
+            grid-template-columns: 1.2fr 0.9fr;
+            gap: 24px;
         }
-        
+
         @media (max-width: 768px) {
-            .dashboard { grid-template-columns: 1fr; }
+            .dashboard {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
         }
-        
+
         .card {
-            background: var(--bg-card);
-            padding: 20px;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            background: var(--card-bg-light);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            padding: 24px 20px;
+            border-radius: 32px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-light);
+            transition: var(--transition);
         }
-        
-        .item-row {
+
+        .card-header {
             display: flex;
-            gap: 10px;
-            background: rgba(255,255,255,0.05);
-            padding: 12px;
-            border-radius: 12px;
-            margin-bottom: 10px;
+            justify-content: space-between;
             align-items: center;
-            border-left: 5px solid var(--primary);
+            margin-bottom: 22px;
         }
-        
-        .item-row input {
-            background: transparent;
-            border: none;
-            color: var(--text);
-            font-weight: 600;
-            outline: none;
-            flex: 1;
+
+        .card-header strong {
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
         }
-        
+
         .btn-add {
             background: var(--primary);
             color: white;
             border: none;
-            width: 35px;
-            height: 35px;
-            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            border-radius: 16px;
+            font-size: 26px;
+            font-weight: 400;
             cursor: pointer;
-            font-size: 20px;
+            box-shadow: 0 6px 12px rgba(67, 97, 238, 0.25);
+            transition: 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        
-        .btn-remove {
-            background: var(--danger);
-            color: white;
+
+        .btn-add:hover {
+            transform: scale(1.02);
+            background: var(--primary-light);
+        }
+
+        /* Items */
+        .items-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .item-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(128, 128, 128, 0.03);
+            padding: 12px 16px;
+            border-radius: 20px;
+            border: 1px solid var(--border-light);
+            backdrop-filter: blur(4px);
+            transition: all 0.2s;
+            animation: fadeSlide 0.2s ease;
+        }
+
+        @keyframes fadeSlide {
+            from { opacity: 0; transform: translateX(-8px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .item-row:hover {
+            background: rgba(128, 128, 128, 0.08);
+            border-color: var(--primary-light);
+        }
+
+        .color-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 4px;
+            margin-right: 2px;
+        }
+
+        .item-row input[type="text"] {
+            background: transparent;
             border: none;
-            width: 30px;
-            height: 30px;
-            border-radius: 8px;
-            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            padding: 6px 0;
+            outline: none;
+            color: var(--text-light);
+            flex: 2;
         }
-        
+
+        .item-row input[type="number"] {
+            background: transparent;
+            border: none;
+            font-weight: 600;
+            font-size: 1rem;
+            text-align: right;
+            padding: 6px 0;
+            outline: none;
+            color: var(--text-light);
+            flex: 1;
+            min-width: 70px;
+        }
+
+        .item-row input[type="color"] {
+            width: 36px;
+            height: 36px;
+            border: 2px solid var(--border-light);
+            border-radius: 12px;
+            cursor: pointer;
+            background: transparent;
+            padding: 2px;
+        }
+
+        .delete-btn {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            font-size: 20px;
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.15s;
+        }
+
+        .delete-btn:hover {
+            background: rgba(247, 37, 133, 0.1);
+            color: var(--danger);
+        }
+
+        /* Gráfico */
+        .chart-container {
+            margin-top: 24px;
+            padding: 16px 8px 8px;
+            height: 220px;
+            position: relative;
+        }
+
+        canvas {
+            display: block;
+            margin: 0 auto;
+            max-width: 100%;
+        }
+
+        /* Footer */
         .footer-nav {
             position: fixed;
-            bottom: 20px;
+            bottom: 24px;
             left: 50%;
             transform: translateX(-50%);
-            width: 92%;
-            max-width: 500px;
-            background: var(--bg-card);
-            border-radius: 25px;
+            width: 94%;
+            max-width: 600px;
+            background: var(--card-bg-light);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 40px;
             display: flex;
             justify-content: space-around;
             align-items: center;
-            padding: 15px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+            padding: 8px 12px;
+            height: 90px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            border: 1px solid var(--border-light);
             z-index: 2000;
         }
-        
+
         .footer-item {
             text-align: center;
+            padding: 10px 12px;
+            border-radius: 24px;
+            transition: 0.15s;
+            flex: 1;
         }
-        
+
         .footer-item span {
-            display: block;
-            font-size: 0.7rem;
-            color: var(--text-muted);
-            margin-bottom: 5px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            opacity: 0.7;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
-        
+
         .footer-item strong {
-            font-size: 1.2rem;
+            display: block;
+            font-size: 1.7rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            margin-top: 2px;
         }
-        
-        .empty-state {
-            text-align: center;
-            padding: 40px;
-            color: var(--text-muted);
+
+        #resDisponible {
+            font-size: 2rem;
         }
-        
-        .loading {
-            text-align: center;
-            padding: 40px;
-            font-size: 1.2rem;
+
+        /* Scrollbar */
+        .items-container::-webkit-scrollbar {
+            width: 4px;
+        }
+        .items-container::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 10px;
         }
     </style>
 </head>
-<body>
+<body class="light">
 
+<!-- Overlay y Sidebar -->
 <div class="overlay" id="overlay" onclick="toggleMenu()"></div>
 
 <div class="sidebar" id="sidebar">
-    <h3 style="margin-bottom: 20px;">⚙️ Configuración</h3>
-    <div style="margin-bottom: 20px;">
-        <label style="display: block; margin-bottom: 8px;">Color del Tema:</label>
-        <input type="color" id="themePicker" onchange="updateTheme(this.value)" style="width: 100%; height: 40px; border: none; cursor: pointer;">
+    <h3>
+        <span>⚙️ Ajustes</span>
+    </h3>
+    
+    <div class="setting-group">
+        <label class="setting-label">🎨 Color principal</label>
+        <div class="theme-picker-wrapper">
+            <input type="color" id="themePicker" oninput="onUserInput()" value="#4361ee">
+            <span style="font-size:0.9rem;">Toque para cambiar</span>
+        </div>
     </div>
-    <button onclick="resetApp()" style="background: var(--danger); color: white; border: none; width: 100%; padding: 12px; border-radius: 10px; cursor: pointer; font-weight: 600;">
-        🗑️ Borrar Todo
-    </button>
-    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 0.85rem; color: var(--text-muted);">
-        <div><strong>Smart Budget Pro</strong></div>
-        <div style="margin-top: 10px;">v2.1.0</div>
-        <div id="syncStatus" style="margin-top: 10px; font-size: 0.8rem;">🔄 Conectando...</div>
+    
+    <div class="setting-group">
+        <label class="setting-label">🌓 Apariencia</label>
+        <div class="dark-toggle">
+            <span>Modo oscuro</span>
+            <div class="toggle-switch" id="darkModeToggle" onclick="toggleDarkMode()"></div>
+        </div>
+    </div>
+    
+    <div class="setting-group">
+        <label class="setting-label">🧹 Datos</label>
+        <button class="reset-btn" onclick="resetApp()">
+            ⚡ Borrar todo y reiniciar
+        </button>
+        <p style="font-size:0.75rem; margin-top: 12px; opacity:0.6;">Esta acción elimina los datos en la nube.</p>
+    </div>
+    
+    <div style="margin-top: 30px; font-size:0.8rem; opacity:0.5; text-align:center;">
+        v2.0 · Sync Hernán
     </div>
 </div>
 
+<!-- Banner principal -->
 <div class="top-banner">
     <div class="menu-btn" onclick="toggleMenu()">☰</div>
-    <div class="save-indicator" id="saveIcon">⏳ Cargando...</div>
+    <div class="save-indicator" id="saveIcon">
+        <span id="syncText">🔄 Conectando...</span>
+    </div>
     <div class="header-income">
-        <label style="display: block; margin-bottom: 10px; font-size: 0.9rem; opacity: 0.9;">💵 INGRESO MENSUAL</label>
-        <input type="number" id="sueldoBase" placeholder="0" oninput="onUserInput()">
+        <label>💰 CALCULADORA INTELIGENTE</label><br>
+        <input type="number" id="sueldoBase" placeholder="Ingresa tu sueldo neto" oninput="onUserInput()" value="0">
     </div>
 </div>
 
+<!-- Contenido -->
 <div class="container">
     <div class="dashboard">
+        <!-- Columna izquierda: Deudas + Gráfico -->
         <div class="card">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <strong style="color: var(--danger); font-size: 1.1rem;">💸 GASTOS</strong>
-                <button class="btn-add" onclick="addItem('gastos')">+</button>
+            <div class="card-header">
+                <strong style="color: var(--danger);">📉 DEUDAS</strong>
+                <button class="btn-add" onclick="addItem('deudas')">+</button>
             </div>
-            <div id="listaGastos">
-                <div class="loading">Cargando...</div>
+            <div id="listaDeudas" class="items-container"></div>
+            
+            <!-- Gráfico de distribución -->
+            <div class="chart-container">
+                <canvas id="distributionChart"></canvas>
             </div>
         </div>
         
+        <!-- Columna derecha: Ahorros -->
         <div class="card">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <strong style="color: var(--success); font-size: 1.1rem;">🎯 AHORROS</strong>
+            <div class="card-header">
+                <strong style="color: var(--success);">📈 AHORROS</strong>
                 <button class="btn-add" onclick="addItem('ahorros')">+</button>
             </div>
-            <div id="listaAhorros">
-                <div class="loading">Cargando...</div>
+            <div id="listaAhorros" class="items-container"></div>
+            
+            <!-- Pequeño resumen visual -->
+            <div style="margin-top: 20px; padding: 12px; background: rgba(128,128,128,0.03); border-radius: 20px;">
+                <div style="display:flex; justify-content:space-between; font-size:0.9rem;">
+                    <span>Total ahorros:</span>
+                    <strong id="miniAhorro" style="color:var(--success);">$0</strong>
+                </div>
+                <div style="display:flex; justify-content:space-between; margin-top:8px;">
+                    <span>Total deudas:</span>
+                    <strong id="miniDeuda" style="color:var(--danger);">$0</strong>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
+<!-- Footer con totales -->
 <div class="footer-nav">
     <div class="footer-item">
         <span>💸 GASTOS</span>
-        <strong id="resGasto" style="color: var(--danger)">$ 0</strong>
+        <strong id="resGasto" style="color: var(--danger);">$ 0</strong>
     </div>
     <div class="footer-item">
-        <span>💎 DISPONIBLE</span>
-        <strong id="resDisponible" style="font-size: 1.4rem;">$ 0</strong>
+        <span>✨ NETO</span>
+        <strong id="resDisponible" style="color: var(--success);">$ 0</strong>
     </div>
     <div class="footer-item">
-        <span>🎯 AHORROS</span>
-        <strong id="resAhorro" style="color: var(--success)">$ 0</strong>
+        <span>🐷 AHORROS</span>
+        <strong id="resAhorro" style="color: var(--success);">$ 0</strong>
     </div>
 </div>
 
 <script>
-    // ==========================================
-    // 🔥 CONFIGURACIÓN FIREBASE
-    // ==========================================
+    // ================== CONFIGURACIÓN FIREBASE (NO TOCAR) ==================
     var firebaseConfig = {
         apiKey: "AIzaSyCLb7LaJypnUHQ0TKZ2aTRNK4yAa6SUiZE",
         authDomain: "calculadoramensualsueldo.firebaseapp.com",
@@ -294,241 +642,210 @@
         appId: "1:619721076451:web:56925f6251a3ba53ad5fd6"
     };
 
-    // Inicializar Firebase
-    if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-    }
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     var db = firebase.firestore();
-    
-    // Referencia al documento
-    var docRef = db.collection("usuarios").doc("x9k2mP7qLz4wN1vB8cR5Hernan2026");
 
-    // ==========================================
-    // ESTADO GLOBAL
-    // ==========================================
+    // --- ESTADO GLOBAL ---
     var isUpdatingFromDB = false;
     var saveTimeout;
+    
+    // 🔐 NOMBRE SECRETO DEL DOCUMENTO (cámbialo por uno único si deseas)
+    var docRef = db.collection("usuarios").doc("x9k2mP7qLz4wN1vB8cR5Hernan2026");
 
-    // ==========================================
-    // ✅ SINCRONIZACIÓN EN TIEMPO REAL
-    // ==========================================
-    docRef.onSnapshot(function(doc) {
-        console.log('📥 Recibiendo datos...');
-        
-        if (doc.exists) {
-            var data = doc.data();
-            console.log('Datos recibidos:', data);
-            
-            isUpdatingFromDB = true;
-            
-            // Cargar sueldo
-            if (data.sueldo !== undefined) {
-                document.getElementById('sueldoBase').value = data.sueldo;
+    // ================== GRÁFICO ==================
+    let chartInstance = null;
+    const ctx = document.getElementById('distributionChart').getContext('2d');
+    
+    function initChart() {
+        if (chartInstance) chartInstance.destroy();
+        chartInstance = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Deudas', 'Ahorros', 'Disponible'],
+                datasets: [{
+                    data: [0, 0, 0],
+                    backgroundColor: ['#f72585', '#06d6a0', '#4361ee'],
+                    borderWidth: 0,
+                    borderRadius: 8,
+                    spacing: 2,
+                }]
+            },
+            options: {
+                cutout: '65%',
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { 
+                        callbacks: {
+                            label: (ctx) => ` $${ctx.raw.toLocaleString()}`
+                        }
+                    }
+                }
             }
+        });
+    }
+    initChart();
+
+    // ================== SINCRONIZACIÓN EN TIEMPO REAL (NO TOCAR LÓGICA) ==================
+    docRef.onSnapshot((doc) => {
+        if (doc.exists) {
+            isUpdatingFromDB = true;
+            var data = doc.data();
             
-            // Cargar color del tema
-            if (data.temaColor) {
+            document.getElementById('sueldoBase').value = data.sueldo ?? 0;
+            if(data.temaColor) {
                 document.documentElement.style.setProperty('--primary', data.temaColor);
+                document.documentElement.style.setProperty('--primary-light', adjustColor(data.temaColor, 20));
                 document.getElementById('themePicker').value = data.temaColor;
             }
             
-            // Cargar gastos
-            var gastosContainer = document.getElementById('listaGastos');
-            gastosContainer.innerHTML = '';
-            if (data.gastos && data.gastos.length > 0) {
-                data.gastos.forEach(function(item) {
-                    addItem('gastos', item.nombre, item.monto, item.color, true);
-                });
-            } else {
-                gastosContainer.innerHTML = '<div class="empty-state">📭 Sin gastos<br><small>Agrega tu primer gasto</small></div>';
-            }
+            document.getElementById('listaDeudas').innerHTML = '';
+            document.getElementById('listaAhorros').innerHTML = '';
             
-            // Cargar ahorros
-            var ahorrosContainer = document.getElementById('listaAhorros');
-            ahorrosContainer.innerHTML = '';
-            if (data.ahorros && data.ahorros.length > 0) {
-                data.ahorros.forEach(function(item) {
-                    addItem('ahorros', item.nombre, item.monto, item.color, true);
-                });
-            } else {
-                ahorrosContainer.innerHTML = '<div class="empty-state">🏦 Sin ahorros<br><small>Agrega tu primera meta</small></div>';
-            }
+            if(data.deudas) data.deudas.forEach(d => addItem('deudas', d.nombre, d.monto, d.color, true));
+            if(data.ahorros) data.ahorros.forEach(a => addItem('ahorros', a.nombre, a.monto, a.color, true));
             
-            // Calcular totales
             calculateTotals();
-            
             isUpdatingFromDB = false;
-            updateSyncStatus('✅ Sincronizado');
-            
+            updateSyncStatus('✅ Sincronizado', '#06d6a0');
         } else {
-            console.log('📄 Documento no existe, creando...');
-            // Documento no existe, crear estructura inicial
-            docRef.set({
-                sueldo: 0,
-                temaColor: '#6366f1',
-                gastos: [],
-                ahorros: [],
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            }).then(function() {
-                console.log('✅ Documento creado');
-                updateSyncStatus('📝 Nuevo documento');
-            });
+            updateSyncStatus('📡 Listo para guardar', '#ffb703');
         }
-    }, function(error) {
-        console.error('❌ Error de sincronización:', error);
-        updateSyncStatus('❌ Error de conexión');
+    }, (error) => {
+        console.error("Error de sincronización:", error);
+        updateSyncStatus('❌ Sin conexión', '#f72585');
     });
 
-    // ==========================================
-    // FUNCIONES DE UI
-    // ==========================================
+    function updateSyncStatus(text, color) {
+        const el = document.getElementById('syncText');
+        el.innerHTML = text;
+        document.getElementById('saveIcon').style.backgroundColor = color + '30';
+    }
+
+    // Utilidad para aclarar color
+    function adjustColor(hex, percent) {
+        // simplificado
+        return hex;
+    }
+
+    // ================== FUNCIONES UI (NO TOCAR LÓGICA DE SINCRONIZACIÓN) ==================
     function toggleMenu() {
         document.getElementById('sidebar').classList.toggle('active');
         document.getElementById('overlay').classList.toggle('active');
     }
 
-    function updateSyncStatus(text) {
-        document.getElementById('saveIcon').textContent = text;
-        document.getElementById('syncStatus').textContent = text;
-    }
-
-    function addItem(type, nombre = '', monto = '', color = '#6366f1', fromDB = false) {
-        var container = document.getElementById(type === 'gastos' ? 'listaGastos' : 'listaAhorros');
-        
-        // Remover empty state si existe
-        var emptyState = container.querySelector('.empty-state');
-        if (emptyState) {
-            emptyState.remove();
-        }
-        
-        var div = document.createElement('div');
+    function addItem(type, nombre = '', monto = '', color = '#f72585', fromDB = false) {
+        const container = document.getElementById(type === 'deudas' ? 'listaDeudas' : 'listaAhorros');
+        const div = document.createElement('div');
         div.className = 'item-row';
-        div.style.borderLeftColor = color;
         
-        var inputEvent = fromDB ? '' : 'oninput="onUserInput()"';
+        const defaultColor = type === 'deudas' ? '#f72585' : '#06d6a0';
+        const usedColor = color || defaultColor;
         
         div.innerHTML = `
-            <span style="font-size: 20px;">${type === 'gastos' ? '💸' : '🎯'}</span>
-            <input type="text" class="inp-nom" placeholder="Nombre" value="${nombre}" ${inputEvent} style="flex: 2;">
-            <input type="number" class="inp-mon" placeholder="0" value="${monto}" ${inputEvent} style="flex: 1; text-align: right;">
-            <input type="color" class="inp-col" value="${color}" ${inputEvent} style="width: 35px; height: 35px; border: none; border-radius: 8px; cursor: pointer;">
-            <button class="btn-remove" onclick="removeItem(this)">✕</button>
+            <div class="color-indicator" style="background: ${usedColor};"></div>
+            <input type="text" class="inp-nom" placeholder="Nombre" value="${nombre}" oninput="onUserInput()" style="flex:2">
+            <input type="number" class="inp-mon" placeholder="0" value="${monto}" oninput="onUserInput()" style="flex:1; text-align: right;">
+            <input type="color" class="inp-col" value="${usedColor}" oninput="onUserInput()" style="width:36px;">
+            <button class="delete-btn" onclick="this.parentElement.remove(); onUserInput();">✕</button>
         `;
-        
         container.appendChild(div);
-        
-        if (!fromDB) {
-            onUserInput();
-        }
-    }
-
-    function removeItem(btn) {
-        btn.closest('.item-row').remove();
-        onUserInput();
+        if (!fromDB) onUserInput();
     }
 
     function onUserInput() {
         if (isUpdatingFromDB) return;
-        
         calculateTotals();
-        updateSyncStatus('⏳ Guardando...');
         
+        document.getElementById('saveIcon').style.backgroundColor = '#ffb70330';
+        document.getElementById('syncText').innerHTML = '☁️ Guardando...';
         clearTimeout(saveTimeout);
-        saveTimeout = setTimeout(function() {
-            saveToFirestore();
+        
+        saveTimeout = setTimeout(() => {
+            const theme = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim();
+            docRef.set({
+                sueldo: parseFloat(document.getElementById('sueldoBase').value) || 0,
+                temaColor: theme,
+                deudas: getItemsArray('deudas'),
+                ahorros: getItemsArray('ahorros'),
+                ultimaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
+            }).then(() => {
+                updateSyncStatus('✅ Sincronizado', '#06d6a0');
+            }).catch(err => {
+                updateSyncStatus('❌ Error', '#f72585');
+                console.error(err);
+            });
         }, 800);
     }
 
     function calculateTotals() {
-        var sueldo = parseFloat(document.getElementById('sueldoBase').value) || 0;
-        var totalGastos = 0;
-        var totalAhorros = 0;
+        const sueldo = parseFloat(document.getElementById('sueldoBase').value) || 0;
+        let deudasTotal = 0, ahorrosTotal = 0;
         
-        document.querySelectorAll('#listaGastos .inp-mon').forEach(function(input) {
-            totalGastos += parseFloat(input.value) || 0;
-        });
+        document.querySelectorAll('#listaDeudas .inp-mon').forEach(i => deudasTotal += parseFloat(i.value) || 0);
+        document.querySelectorAll('#listaAhorros .inp-mon').forEach(i => ahorrosTotal += parseFloat(i.value) || 0);
         
-        document.querySelectorAll('#listaAhorros .inp-mon').forEach(function(input) {
-            totalAhorros += parseFloat(input.value) || 0;
-        });
+        const disponible = sueldo - deudasTotal - ahorrosTotal;
         
-        var disponible = sueldo - totalGastos - totalAhorros;
+        document.getElementById('resGasto').innerText = `$ ${deudasTotal.toLocaleString()}`;
+        document.getElementById('resAhorro').innerText = `$ ${ahorrosTotal.toLocaleString()}`;
+        document.getElementById('resDisponible').innerText = `$ ${disponible.toLocaleString()}`;
+        document.getElementById('resDisponible').style.color = disponible < 0 ? 'var(--danger)' : 'var(--success)';
         
-        document.getElementById('resGasto').textContent = '$ ' + totalGastos.toLocaleString();
-        document.getElementById('resAhorro').textContent = '$ ' + totalAhorros.toLocaleString();
-        document.getElementById('resDisponible').textContent = '$ ' + disponible.toLocaleString();
+        document.getElementById('miniDeuda').innerText = `$${deudasTotal.toLocaleString()}`;
+        document.getElementById('miniAhorro').innerText = `$${ahorrosTotal.toLocaleString()}`;
         
-        if (disponible < 0) {
-            document.getElementById('resDisponible').style.color = 'var(--danger)';
-        } else {
-            document.getElementById('resDisponible').style.color = 'var(--success)';
+        // Actualizar gráfico
+        if (chartInstance) {
+            chartInstance.data.datasets[0].data = [deudasTotal, ahorrosTotal, Math.max(disponible, 0)];
+            chartInstance.update();
         }
     }
 
     function getItemsArray(type) {
-        var containerId = type === 'gastos' ? 'listaGastos' : 'listaAhorros';
-        var items = [];
-        
-        document.querySelectorAll('#' + containerId + ' .item-row').forEach(function(row) {
-            items.push({
-                nombre: row.querySelector('.inp-nom').value,
-                monto: parseFloat(row.querySelector('.inp-mon').value) || 0,
-                color: row.querySelector('.inp-col').value
-            });
-        });
-        
-        return items;
-    }
-
-    function saveToFirestore() {
-        var sueldo = parseFloat(document.getElementById('sueldoBase').value) || 0;
-        var theme = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim();
-        
-        var data = {
-            sueldo: sueldo,
-            temaColor: theme,
-            gastos: getItemsArray('gastos'),
-            ahorros: getItemsArray('ahorros'),
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        };
-        
-        docRef.set(data, { merge: true })
-            .then(function() {
-                console.log('✅ Datos guardados');
-                updateSyncStatus('✅ Guardado');
-                setTimeout(function() {
-                    updateSyncStatus('✅ Sincronizado');
-                }, 1000);
-            })
-            .catch(function(error) {
-                console.error('❌ Error al guardar:', error);
-                updateSyncStatus('❌ Error al guardar');
-            });
-    }
-
-    function updateTheme(color) {
-        document.documentElement.style.setProperty('--primary', color);
-        onUserInput();
+        const listId = type === 'deudas' ? 'listaDeudas' : 'listaAhorros';
+        return Array.from(document.querySelectorAll(`#${listId} .item-row`)).map(r => ({
+            nombre: r.querySelector('.inp-nom').value,
+            monto: parseFloat(r.querySelector('.inp-mon').value) || 0,
+            color: r.querySelector('.inp-col').value
+        }));
     }
 
     function resetApp() {
-        if (confirm('¿Estás seguro de borrar todos los datos? Esta acción no se puede deshacer.')) {
-            docRef.delete()
-                .then(function() {
-                    console.log('✅ Datos borrados');
-                    location.reload();
-                })
-                .catch(function(error) {
-                    console.error('❌ Error al borrar:', error);
-                    alert('Error al borrar los datos');
-                });
+        if(confirm("⚠️ ¿Eliminar todos los datos de la nube? Esta acción es irreversible.")) {
+            docRef.delete().then(() => {
+                location.reload();
+            }).catch(err => alert("Error: " + err.message));
         }
     }
 
-    // Inicializar
-    console.log('🚀 Smart Budget Pro iniciado');
-    updateSyncStatus('🔄 Conectando...');
-</script>
+    // ================== MODO OSCURO (LOCAL) ==================
+    function toggleDarkMode() {
+        document.body.classList.toggle('dark');
+        const isDark = document.body.classList.contains('dark');
+        document.getElementById('darkModeToggle').classList.toggle('active', isDark);
+        localStorage.setItem('darkMode', isDark ? 'enabled' : 'disabled');
+    }
 
+    // Cargar preferencia
+    (function loadDarkMode() {
+        if (localStorage.getItem('darkMode') === 'enabled') {
+            document.body.classList.add('dark');
+            document.getElementById('darkModeToggle').classList.add('active');
+        }
+    })();
+
+    // Sincronizar color picker con variable primaria
+    document.getElementById('themePicker').addEventListener('input', (e) => {
+        document.documentElement.style.setProperty('--primary', e.target.value);
+        onUserInput();
+    });
+
+    // Ajuste inicial
+    window.addEventListener('load', () => {
+        calculateTotals();
+    });
+</script>
 </body>
 </html>
