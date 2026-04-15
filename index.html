@@ -4,1282 +4,427 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
     <meta name="theme-color" content="#0d0d1a">
-    <meta name="description" content="Smart Budget Pro - Tu asistente financiero inteligente">
-    <title>💰 Smart Budget Pro v4.0</title>
+    <title>💰 Smart Budget Pro</title>
     
-    <!-- Firebase SDK v8 (CONFIGURACIÓN ORIGINAL - SIN CAMBIOS) -->
+    <!-- 🔥 FIREBASE SDK v8 - CONFIGURACIÓN ORIGINAL (NO TOCAR) 🔥 -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     
     <!-- Chart.js para gráficas -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
-    <!-- jsPDF para reportes -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    
     <!-- Fuente -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
     <style>
-        /* ===== VARIABLES CSS ===== */
         :root {
-            --primary: #6366f1;
-            --primary-dark: #4f46e5;
-            --secondary: #8b5cf6;
+            --primary: #6366f1; --primary-dark: #4f46e5; --secondary: #8b5cf6;
             --bg-gradient: linear-gradient(135deg, #1a1a3e 0%, #2d1b69 50%, #1a1a3e 100%);
-            --bg-color: #0d0d1a;
-            --card-bg: rgba(21, 21, 48, 0.95);
-            --card-bg-solid: #151530;
-            --item-bg: rgba(26, 26, 66, 0.8);
-            --text-primary: #e2e8f0;
-            --text-secondary: #94a3b8;
-            --text-muted: #64748b;
-            --danger: #ef4444;
-            --success: #22c55e;
-            --warning: #f59e0b;
-            --info: #3b82f6;
-            --border-radius: 20px;
-            --border-radius-sm: 14px;
+            --bg-color: #0d0d1a; --card-bg: rgba(21, 21, 48, 0.95);
+            --card-bg-solid: #151530; --item-bg: rgba(26, 26, 66, 0.8);
+            --text-primary: #e2e8f0; --text-secondary: #94a3b8; --text-muted: #64748b;
+            --danger: #ef4444; --success: #22c55e; --warning: #f59e0b; --info: #3b82f6;
+            --border-radius: 20px; --border-radius-sm: 14px;
             --transition: all 0.25s cubic-bezier(0.2, 0, 0, 1);
-            --sidebar-width: 380px;
+            --sidebar-width: 340px;
             --safe-area-top: env(safe-area-inset-top);
             --safe-area-bottom: env(safe-area-inset-bottom);
-            --shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            --shadow: 0 15px 35px rgba(0,0,0,0.3);
         }
-
         [data-theme="light"] {
             --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #667eea 100%);
-            --bg-color: #f0f4f8;
-            --card-bg: rgba(255, 255, 255, 0.95);
-            --card-bg-solid: #ffffff;
-            --item-bg: #f8fafc;
-            --text-primary: #0f172a;
-            --text-secondary: #475569;
-            --text-muted: #64748b;
-            --shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+            --bg-color: #f0f4f8; --card-bg: rgba(255,255,255,0.95);
+            --card-bg-solid: #fff; --item-bg: #f8fafc;
+            --text-primary: #0f172a; --text-secondary: #475569;
         }
-
-        [data-private="true"] .amount-sensitive {
-            filter: blur(8px);
-            user-select: none;
-            cursor: default;
-        }
-        [data-private="true"] .amount-sensitive:hover {
-            filter: blur(0);
-        }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        [data-private="true"] .amount { filter: blur(6px); cursor: default; transition: filter 0.2s; }
+        [data-private="true"] .amount:hover { filter: blur(0); }
         
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
             background: var(--bg-color);
-            background-image: 
-                radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.08) 0%, transparent 30%),
-                radial-gradient(circle at 90% 80%, rgba(139, 92, 246, 0.06) 0%, transparent 35%);
+            background-image: radial-gradient(circle at 10% 20%, rgba(99,102,241,0.08) 0%, transparent 30%);
             color: var(--text-primary);
             min-height: 100vh;
             line-height: 1.5;
             -webkit-font-smoothing: antialiased;
             transition: var(--transition);
             overflow-x: hidden;
-            padding-bottom: 120px;
+            padding-bottom: 100px;
         }
-
-        /* ===== SIDEBAR ===== */
-        .sidebar {
-            position: fixed;
-            left: calc(-1 * var(--sidebar-width));
-            top: 0;
-            width: var(--sidebar-width);
-            max-width: 90vw;
-            height: 100vh;
-            background: var(--card-bg-solid);
-            backdrop-filter: blur(20px);
-            z-index: 3000;
-            transition: var(--transition);
-            padding: calc(20px + var(--safe-area-top)) 16px calc(20px + var(--safe-area-bottom));
-            box-shadow: 20px 0 60px rgba(0,0,0,0.4);
-            display: flex;
-            flex-direction: column;
-            overflow-y: auto;
-            border-right: 1px solid rgba(255,255,255,0.08);
-            scrollbar-width: thin;
-            scrollbar-color: var(--primary) transparent;
-        }
-        .sidebar::-webkit-scrollbar { width: 6px; }
-        .sidebar::-webkit-scrollbar-track { background: transparent; }
-        .sidebar::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 3px; }
-        .sidebar.active { left: 0; }
         
+        /* Sidebar */
+        .sidebar {
+            position: fixed; left: calc(-1 * var(--sidebar-width)); top: 0;
+            width: var(--sidebar-width); height: 100vh;
+            background: var(--card-bg-solid); backdrop-filter: blur(16px);
+            z-index: 3000; transition: var(--transition);
+            padding: calc(20px + var(--safe-area-top)) 16px calc(20px + var(--safe-area-bottom));
+            box-shadow: 20px 0 40px rgba(0,0,0,0.3);
+            display: flex; flex-direction: column; overflow-y: auto;
+            border-right: 1px solid rgba(255,255,255,0.08);
+        }
+        .sidebar.active { left: 0; }
         .sidebar-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding-bottom: 16px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex; align-items: center; gap: 12px;
+            padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.1);
             margin-bottom: 16px;
         }
         .sidebar-header h3 {
-            font-size: 1.2rem;
-            font-weight: 800;
+            font-size: 1.2rem; font-weight: 800;
             background: linear-gradient(135deg, #667eea, #764ba2);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            flex: 1;
+            -webkit-background-clip: text; color: transparent; flex: 1;
         }
-        .version-badge {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: white;
-            font-size: 0.65rem;
-            font-weight: 700;
-            padding: 4px 10px;
-            border-radius: 20px;
-            animation: pulse 2s infinite;
-        }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.8; } }
-        
         .sidebar-close {
-            background: rgba(255,255,255,0.08);
-            border: none;
-            font-size: 1.4rem;
-            cursor: pointer;
-            color: var(--text-muted);
-            width: 38px;
-            height: 38px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            background: rgba(255,255,255,0.08); border: none;
+            font-size: 1.4rem; cursor: pointer; color: var(--text-muted);
+            width: 36px; height: 36px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
             transition: var(--transition);
         }
-        .sidebar-close:hover { background: rgba(255,255,255,0.15); color: var(--text-primary); transform: rotate(90deg); }
-
-        .sidebar-section { margin-bottom: 18px; }
+        .sidebar-close:hover { background: rgba(255,255,255,0.15); color: var(--text-primary); }
+        
+        .sidebar-section { margin-bottom: 16px; }
         .sidebar-section-title {
-            font-size: 0.65rem;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 0.12em;
-            color: var(--text-muted);
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
+            font-size: 0.65rem; font-weight: 800; text-transform: uppercase;
+            letter-spacing: 0.12em; color: var(--text-muted);
+            margin-bottom: 8px;
         }
-
         .sidebar-option {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 14px;
-            border-radius: var(--border-radius-sm);
-            cursor: pointer;
-            transition: var(--transition);
-            margin-bottom: 4px;
-            font-weight: 600;
-            font-size: 0.9rem;
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 12px; border-radius: var(--border-radius-sm);
+            cursor: pointer; transition: var(--transition);
+            margin-bottom: 4px; font-weight: 600; font-size: 0.9rem;
             background: rgba(255,255,255,0.03);
-            border: 1px solid transparent;
-            position: relative;
-            overflow: hidden;
         }
-        .sidebar-option::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 0;
-            height: 100%;
-            width: 3px;
-            background: var(--primary);
-            opacity: 0;
-            transition: var(--transition);
-        }
-        .sidebar-option:hover { 
-            background: rgba(255,255,255,0.1); 
-            border-color: rgba(255,255,255,0.1);
-            transform: translateX(4px);
-        }
-        .sidebar-option:hover::before { opacity: 1; }
-        .sidebar-option:active { transform: scale(0.98); }
-        .sidebar-option.danger:hover { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
-        .sidebar-option-icon { font-size: 1.2rem; width: 26px; text-align: center; flex-shrink: 0; }
+        .sidebar-option:hover { background: rgba(255,255,255,0.1); transform: translateX(3px); }
+        .sidebar-option.danger:hover { background: rgba(239,68,68,0.15); color: var(--danger); }
+        .sidebar-option-icon { font-size: 1.1rem; width: 24px; text-align: center; }
         .sidebar-option-label { flex: 1; }
-        .sidebar-option-badge {
-            background: var(--danger);
-            color: white;
-            font-size: 0.6rem;
-            padding: 2px 8px;
-            border-radius: 10px;
-            font-weight: 700;
-        }
-
+        
         .toggle-switch {
-            position: relative;
-            width: 46px;
-            height: 26px;
-            background: #333366;
-            border-radius: 13px;
-            cursor: pointer;
-            transition: var(--transition);
-            flex-shrink: 0;
+            position: relative; width: 44px; height: 24px;
+            background: #333366; border-radius: 12px;
+            cursor: pointer; transition: var(--transition);
         }
         .toggle-switch::after {
-            content: '';
-            position: absolute;
-            width: 20px;
-            height: 20px;
-            background: #888;
-            border-radius: 50%;
-            top: 3px;
-            left: 3px;
+            content: ''; position: absolute; width: 18px; height: 18px;
+            background: #888; border-radius: 50%; top: 3px; left: 3px;
             transition: var(--transition);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
         .toggle-switch.active { background: var(--primary); }
         .toggle-switch.active::after { left: 23px; background: white; }
-
-        .color-picker-container {
-            background: rgba(255,255,255,0.04);
-            border-radius: var(--border-radius-sm);
-            padding: 12px;
-            margin-top: 8px;
-            border: 1px solid rgba(255,255,255,0.06);
-        }
-        .color-picker-label {
-            font-size: 0.75rem;
-            font-weight: 700;
-            margin-bottom: 10px;
-            color: var(--text-secondary);
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .color-presets {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 7px;
-            margin-bottom: 10px;
-        }
+        
+        .color-presets { display: grid; grid-template-columns: repeat(5,1fr); gap: 6px; }
         .color-preset {
-            width: 100%;
-            aspect-ratio: 1;
-            border-radius: 10px;
-            cursor: pointer;
-            border: 2px solid transparent;
-            transition: var(--transition);
-            position: relative;
-            overflow: hidden;
+            width: 100%; aspect-ratio: 1; border-radius: 8px;
+            cursor: pointer; border: 2px solid transparent; transition: var(--transition);
         }
-        .color-preset::after {
-            content: '✓';
-            position: absolute;
-            inset: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 1rem;
-            font-weight: 800;
-            opacity: 0;
-            transition: var(--transition);
-            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        }
-        .color-preset:hover { transform: scale(1.08); }
-        .color-preset.active { 
-            border-color: white; 
-            transform: scale(1.05); 
-            box-shadow: 0 0 20px rgba(255,255,255,0.4);
-        }
-        .color-preset.active::after { opacity: 1; }
-
-        /* ===== SYNC STATUS ===== */
-        .sync-status-card {
-            background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(22, 163, 74, 0.1));
-            border: 1px solid rgba(34, 197, 94, 0.3);
-            border-radius: var(--border-radius-sm);
-            padding: 12px;
-            margin: 8px 0;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .sync-status-icon {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1rem;
-            animation: syncPulse 2s infinite;
-        }
-        @keyframes syncPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); } 50% { box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); } }
-        .sync-status-icon.warning { animation: syncWarning 1.5s infinite; background: rgba(245, 158, 11, 0.2); }
-        @keyframes syncWarning { 0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); } 50% { box-shadow: 0 0 0 8px rgba(245, 158, 11, 0); } }
-        .sync-status-icon.error { animation: none; background: rgba(239, 68, 68, 0.2); }
-        .sync-status-text { font-size: 0.8rem; font-weight: 600; }
-        .sync-timestamp { font-size: 0.7rem; color: var(--text-muted); margin-top: 2px; }
-
-        /* ===== OVERLAY ===== */
+        .color-preset:hover { transform: scale(1.1); }
+        .color-preset.active { border-color: white; transform: scale(1.05); box-shadow: 0 0 12px rgba(255,255,255,0.4); }
+        
         .overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.6);
-            z-index: 2500;
-            display: none;
-            backdrop-filter: blur(8px);
-            animation: fadeIn 0.25s ease;
+            position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+            z-index: 2500; display: none; backdrop-filter: blur(4px);
         }
         .overlay.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-        /* ===== TOP BANNER ===== */
+        
+        /* Top Banner */
         .top-banner {
             background: var(--bg-gradient);
-            padding: calc(30px + var(--safe-area-top)) 20px 45px;
-            color: white;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-            border-bottom-left-radius: 30px;
-            border-bottom-right-radius: 30px;
+            padding: calc(30px + var(--safe-area-top)) 20px 40px;
+            color: white; text-align: center;
+            position: relative; overflow: hidden;
+            border-bottom-left-radius: 28px; border-bottom-right-radius: 28px;
         }
-        .top-banner::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
-            animation: pulse 12s ease-in-out infinite;
-        }
-        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }
-        
         .menu-btn {
-            position: absolute;
-            left: 20px;
-            top: calc(16px + var(--safe-area-top));
-            width: 46px;
-            height: 46px;
-            border-radius: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            position: absolute; left: 20px; top: calc(16px + var(--safe-area-top));
+            width: 44px; height: 44px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
             transition: var(--transition);
-            background: rgba(255,255,255,0.15);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.2);
-            color: white;
-            font-size: 1.5rem;
-            cursor: pointer;
-            z-index: 10;
+            background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2);
+            color: white; font-size: 1.4rem; cursor: pointer; z-index: 10;
         }
-        .menu-btn:hover { background: rgba(255,255,255,0.25); transform: scale(1.05); }
-        .menu-btn:active { transform: scale(0.95); }
+        .menu-btn:hover { background: rgba(255,255,255,0.25); }
         
         .save-indicator {
-            position: absolute;
-            right: 20px;
-            top: calc(16px + var(--safe-area-top));
-            font-size: 0.7rem;
-            font-weight: 700;
-            background: rgba(34, 197, 94, 0.2);
-            padding: 6px 14px;
-            border-radius: 25px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            color: #bbf7d0;
-            border: 1px solid rgba(34, 197, 94, 0.3);
-            backdrop-filter: blur(10px);
-            z-index: 10;
-            animation: slideIn 0.4s ease;
-            max-width: calc(100% - 120px);
+            position: absolute; right: 20px; top: calc(16px + var(--safe-area-top));
+            font-size: 0.7rem; font-weight: 700;
+            background: rgba(34,197,94,0.2); padding: 6px 12px;
+            border-radius: 20px; display: flex; align-items: center; gap: 5px;
+            color: #bbf7d0; border: 1px solid rgba(34,197,94,0.3);
+            backdrop-filter: blur(8px); z-index: 10;
         }
-        @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
-        .save-indicator.warning { background: rgba(245, 158, 11, 0.2); color: #fef3c7; border-color: rgba(245, 158, 11, 0.3); }
-        .save-indicator.error { background: rgba(239, 68, 68, 0.2); color: #fecaca; border-color: rgba(239, 68, 68, 0.3); }
+        .save-indicator.warning { background: rgba(245,158,11,0.2); color: #fef3c7; }
+        .save-indicator.error { background: rgba(239,68,68,0.2); color: #fecaca; }
         
-        .header-income { position: relative; z-index: 5; margin-top: 20px; }
+        .header-income { position: relative; z-index: 5; margin-top: 16px; }
         .header-income label {
-            display: block;
-            font-size: 0.75rem;
-            font-weight: 800;
-            opacity: 0.9;
-            margin-bottom: 10px;
-            letter-spacing: 0.12em;
+            display: block; font-size: 0.7rem; font-weight: 800;
+            opacity: 0.9; margin-bottom: 8px; letter-spacing: 0.12em;
             text-transform: uppercase;
         }
         .header-income input {
-            background: rgba(255,255,255,0.12);
-            border: 2px solid rgba(255,255,255,0.2);
-            border-radius: 22px;
-            color: white;
-            font-size: 2.5rem;
-            font-weight: 800;
-            text-align: center;
-            width: min(90%, 380px);
-            padding: 14px 20px;
-            outline: none;
-            transition: var(--transition);
-            backdrop-filter: blur(10px);
+            background: rgba(255,255,255,0.12); border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 20px; color: white; font-size: 2.2rem;
+            font-weight: 800; text-align: center; width: min(90%, 340px);
+            padding: 12px 18px; outline: none; transition: var(--transition);
         }
         .header-income input:focus {
-            background: rgba(255,255,255,0.2);
-            border-color: rgba(255,255,255,0.5);
-            box-shadow: 0 0 0 4px rgba(99,102,241,0.3), 0 0 30px rgba(99,102,241,0.4);
-            transform: scale(1.02);
+            background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.5);
+            box-shadow: 0 0 0 3px rgba(99,102,241,0.3);
         }
-        .header-income input::placeholder { color: rgba(255,255,255,0.4); }
-
-        /* ===== PAYDAY COUNTDOWN ===== */
-        .payday-banner {
-            background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(234, 179, 8, 0.15));
-            border: 1px solid rgba(245, 158, 11, 0.3);
-            border-radius: 14px;
-            padding: 12px 16px;
-            margin: 10px 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            animation: slideDown 0.4s ease;
-        }
-        @keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        .payday-text { font-size: 0.85rem; font-weight: 600; }
-        .payday-countdown { 
-            background: var(--warning); 
-            color: #1a1a2e; 
-            padding: 4px 12px; 
-            border-radius: 20px; 
-            font-weight: 800; 
-            font-size: 0.8rem;
-        }
-
-        /* ===== STATS CARDS ===== */
+        
+        /* Stats */
         .stats-section {
-            max-width: 1200px;
-            margin: -35px auto 0;
-            padding: 0 20px;
-            position: relative;
-            z-index: 20;
+            max-width: 1100px; margin: -30px auto 0; padding: 0 20px;
+            position: relative; z-index: 20;
         }
-        
         .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 18px;
-            margin-bottom: 25px;
+            display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin-bottom: 20px;
         }
-        
         .stat-card {
-            background: var(--card-bg);
-            backdrop-filter: blur(16px);
-            border-radius: 22px;
-            padding: 20px 16px;
-            text-align: center;
-            box-shadow: var(--shadow-lg);
-            transition: var(--transition);
-            border: 1px solid rgba(255,255,255,0.08);
-            position: relative;
-            overflow: hidden;
+            background: var(--card-bg); backdrop-filter: blur(12px);
+            border-radius: 20px; padding: 18px 14px; text-align: center;
+            box-shadow: var(--shadow); transition: var(--transition);
+            border: 1px solid rgba(255,255,255,0.08); position: relative;
         }
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, var(--primary), var(--secondary));
-            opacity: 0;
-            transition: var(--transition);
-        }
-        .stat-card:hover { 
-            transform: translateY(-6px); 
-            box-shadow: 0 30px 60px rgba(0,0,0,0.4);
-            border-color: rgba(255,255,255,0.15);
-        }
-        .stat-card:hover::before { opacity: 1; }
+        .stat-card:hover { transform: translateY(-4px); }
         
         .circular-progress {
-            position: relative;
-            width: 110px;
-            height: 110px;
-            margin: 0 auto 14px;
+            position: relative; width: 100px; height: 100px; margin: 0 auto 12px;
         }
-        .circular-progress svg { width: 110px; height: 110px; transform: rotate(-90deg); }
-        .bg-circle { fill: none; stroke: rgba(255,255,255,0.1); stroke-width: 7; }
+        .circular-progress svg { width: 100px; height: 100px; transform: rotate(-90deg); }
+        .bg-circle { fill: none; stroke: rgba(255,255,255,0.1); stroke-width: 6; }
         .progress-circle {
-            fill: none;
-            stroke-width: 7;
-            stroke-linecap: round;
-            stroke-dasharray: 339.292;
-            stroke-dashoffset: 339.292;
-            transition: stroke-dashoffset 0.9s cubic-bezier(0.2, 0.9, 0.4, 1);
-            filter: drop-shadow(0 0 8px currentColor);
+            fill: none; stroke-width: 6; stroke-linecap: round;
+            stroke-dasharray: 339.292; stroke-dashoffset: 339.292;
+            transition: stroke-dashoffset 0.8s ease;
         }
         .progress-circle.gastos { stroke: var(--danger); }
         .progress-circle.disponible { stroke: var(--success); }
         .progress-circle.ahorros { stroke: #16a34a; }
         .center-text {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%); text-align: center;
         }
-        .center-percent { font-size: 1.4rem; font-weight: 800; line-height: 1; }
-        .center-label { font-size: 0.6rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; margin-top: 3px; }
+        .center-percent { font-size: 1.3rem; font-weight: 800; line-height: 1; }
+        .center-label { font-size: 0.55rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; margin-top: 2px; }
         
-        .stat-value { font-size: 1.7rem; font-weight: 800; margin: 6px 0 3px; }
-        .stat-label { font-size: 0.7rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; }
+        .stat-value { font-size: 1.5rem; font-weight: 800; margin: 4px 0 2px; }
+        .stat-label { font-size: 0.65rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; }
         .stat-card-gastos .stat-value { color: var(--danger); }
         .stat-card-disponible .stat-value { color: var(--success); }
         .stat-card-ahorros .stat-value { color: #16a34a; }
-
-        /* ===== HEALTH BADGE ===== */
+        
         .health-badge {
-            position: absolute;
-            top: 12px;
-            right: 12px;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 0.65rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
+            position: absolute; top: 10px; right: 10px;
+            padding: 3px 8px; border-radius: 15px;
+            font-size: 0.6rem; font-weight: 700; text-transform: uppercase;
         }
-        .health-badge.healthy { background: rgba(34, 197, 94, 0.2); color: #86efac; }
-        .health-badge.warning { background: rgba(245, 158, 11, 0.2); color: #fcd34d; }
-        .health-badge.critical { background: rgba(239, 68, 68, 0.2); color: #fca5a5; }
-
-        /* ===== FINANCIAL SCORE ===== */
-        .financial-score {
-            text-align: center;
-            padding: 16px;
-            background: rgba(255,255,255,0.03);
-            border-radius: 16px;
-            margin: 16px 20px;
-            border: 1px solid rgba(255,255,255,0.08);
-        }
-        .score-circle {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 10px;
-            font-size: 1.5rem;
-            font-weight: 800;
-            background: conic-gradient(var(--success) 0%, var(--success) var(--score-percent), rgba(255,255,255,0.1) var(--score-percent) 100%);
-            position: relative;
-        }
-        .score-circle::after {
-            content: '';
-            position: absolute;
-            width: 60px;
-            height: 60px;
-            background: var(--card-bg-solid);
-            border-radius: 50%;
-        }
-        .score-circle span { position: relative; z-index: 1; }
-        .score-label { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; }
-        .score-tips { font-size: 0.75rem; color: var(--text-secondary); margin-top: 8px; }
-
-        /* ===== CONTAINER Y DASHBOARD ===== */
-        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px 20px; }
-        .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
-
-        /* ===== CARDS ===== */
+        .health-badge.healthy { background: rgba(34,197,94,0.2); color: #86efac; }
+        .health-badge.warning { background: rgba(245,158,11,0.2); color: #fcd34d; }
+        .health-badge.critical { background: rgba(239,68,68,0.2); color: #fca5a5; }
+        
+        /* Container & Dashboard */
+        .container { max-width: 1100px; margin: 0 auto; padding: 0 20px 20px; }
+        .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        
+        /* Cards */
         .card {
-            background: var(--card-bg);
-            backdrop-filter: blur(16px);
-            border-radius: 22px;
-            padding: 22px;
-            box-shadow: var(--shadow-lg);
-            border: 1px solid rgba(255,255,255,0.08);
-            transition: var(--transition);
+            background: var(--card-bg); backdrop-filter: blur(12px);
+            border-radius: 20px; padding: 20px;
+            box-shadow: var(--shadow); border: 1px solid rgba(255,255,255,0.08);
         }
-        .card:hover { border-color: rgba(255,255,255,0.12); }
         .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 14px;
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 16px; padding-bottom: 12px;
             border-bottom: 1px solid rgba(255,255,255,0.08);
         }
-        .card-title {
-            font-size: 1.15rem;
-            font-weight: 800;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
+        .card-title { font-size: 1.1rem; font-weight: 800; display: flex; align-items: center; gap: 6px; }
         .btn-add {
             background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: white;
-            border: none;
-            width: 40px;
-            height: 40px;
-            border-radius: 12px;
-            cursor: pointer;
-            font-size: 1.5rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: var(--transition);
-            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+            color: white; border: none; width: 36px; height: 36px;
+            border-radius: 10px; cursor: pointer; font-size: 1.4rem;
+            display: flex; align-items: center; justify-content: center;
+            transition: var(--transition); box-shadow: 0 6px 20px rgba(99,102,241,0.4);
         }
-        .btn-add:hover { transform: scale(1.1) rotate(90deg); box-shadow: 0 12px 35px rgba(99, 102, 241, 0.6); }
-        .btn-add:active { transform: scale(0.95); }
-
-        /* ===== SEARCH BAR ===== */
-        .search-bar {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 16px;
-            padding: 8px;
-            background: rgba(255,255,255,0.05);
-            border-radius: 12px;
-        }
-        .search-bar input {
-            flex: 1;
-            background: transparent;
-            border: none;
-            color: var(--text-primary);
-            font-size: 0.9rem;
-            outline: none;
-        }
-        .search-bar input::placeholder { color: var(--text-muted); }
-        .search-bar button {
-            background: var(--primary);
-            border: none;
-            color: white;
-            padding: 8px 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: var(--transition);
-        }
-        .search-bar button:hover { background: var(--primary-dark); }
-
-        /* ===== ITEM ROW ===== */
-        .items-container { display: flex; flex-direction: column; gap: 10px; max-height: 380px; overflow-y: auto; padding-right: 4px; }
+        .btn-add:hover { transform: scale(1.1); }
+        
+        /* Items */
+        .items-container { display: flex; flex-direction: column; gap: 8px; max-height: 340px; overflow-y: auto; }
         .items-container::-webkit-scrollbar { width: 4px; }
         .items-container::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 2px; }
         
         .item-row {
-            display: grid;
-            grid-template-columns: 5px auto 1fr auto;
-            align-items: center;
-            background: var(--item-bg);
-            border-radius: 14px;
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(255,255,255,0.06);
-            transition: var(--transition);
-            animation: itemSlide 0.3s ease;
+            display: grid; grid-template-columns: 4px auto 1fr auto;
+            align-items: center; background: var(--item-bg);
+            border-radius: 12px; border: 1px solid rgba(255,255,255,0.06);
+            transition: var(--transition); animation: slideIn 0.25s ease;
             overflow: hidden;
-            position: relative;
         }
-        .item-row::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.03), transparent);
-            opacity: 0;
-            transition: var(--transition);
-            pointer-events: none;
-        }
-        .item-row:hover::after { opacity: 1; }
-        @keyframes itemSlide { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+        .item-row.completed { opacity: 0.7; background: rgba(34,197,94,0.08); border-color: rgba(34,197,94,0.25); }
+        .item-row.completed .item-name { text-decoration: line-through; color: var(--text-muted); }
         
-        .item-row.completed { opacity: 0.75; background: rgba(34, 197, 94, 0.08); border-color: rgba(34, 197, 94, 0.25); }
-        .item-row.completed .item-name-input { text-decoration: line-through; color: var(--text-muted); }
-        
-        .item-color-line {
-            width: 100%;
-            height: 100%;
-            background: var(--item-color, var(--primary));
-            transition: var(--transition);
-        }
-        
-        .item-color-picker {
-            padding: 0 6px;
-            display: flex;
-            align-items: center;
-        }
+        .item-color { width: 100%; height: 100%; background: var(--item-color, var(--primary)); }
+        .item-color-picker { padding: 0 5px; display: flex; align-items: center; }
         .item-color-input {
-            width: 30px;
-            height: 30px;
-            border: 2px solid rgba(255,255,255,0.25);
-            border-radius: 9px;
-            cursor: pointer;
-            background: none;
-            padding: 0;
-            transition: var(--transition);
+            width: 28px; height: 28px; border: 2px solid rgba(255,255,255,0.25);
+            border-radius: 7px; cursor: pointer; background: none; padding: 0;
         }
-        .item-color-input::-webkit-color-swatch-wrapper { padding: 0; }
-        .item-color-input::-webkit-color-swatch { border: none; border-radius: 7px; }
-        .item-color-input:hover { transform: scale(1.12); border-color: white; box-shadow: 0 0 15px rgba(255,255,255,0.3); }
+        .item-color-input::-webkit-color-swatch { border: none; border-radius: 5px; }
         
-        .item-content {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 0 10px 6px;
-            min-width: 0;
-        }
-        
+        .item-content { display: flex; align-items: center; gap: 8px; padding: 8px 0 8px 5px; min-width: 0; }
         .item-icon {
-            font-size: 1.15rem;
-            width: 30px;
-            height: 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(255,255,255,0.08);
-            border-radius: 9px;
-            flex-shrink: 0;
-            transition: var(--transition);
+            font-size: 1.1rem; width: 28px; height: 28px;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(255,255,255,0.08); border-radius: 7px; flex-shrink: 0;
         }
-        .item-row:hover .item-icon { background: rgba(255,255,255,0.15); transform: scale(1.1); }
-        
-        .item-details {
-            flex: 1;
-            min-width: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 3px;
+        .item-details { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+        .item-name {
+            background: transparent; border: none; font-family: inherit;
+            font-size: 0.9rem; font-weight: 600; color: var(--text-primary);
+            padding: 2px 0; outline: none; width: 100%;
         }
-        .item-name-input {
-            background: transparent;
-            border: none;
-            font-family: inherit;
-            font-size: 0.92rem;
-            font-weight: 600;
-            color: var(--text-primary);
-            padding: 3px 0;
-            outline: none;
-            width: 100%;
-        }
-        .item-name-input::placeholder { color: var(--text-muted); opacity: 0.6; }
-        
-        .item-meta {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            flex-wrap: wrap;
-        }
+        .item-name::placeholder { color: var(--text-muted); opacity: 0.6; }
+        .item-meta { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
         .category-select {
-            background: rgba(255,255,255,0.08);
-            border: 1px solid rgba(255,255,255,0.12);
-            border-radius: 18px;
-            padding: 3px 10px;
-            font-size: 0.68rem;
-            font-weight: 700;
-            color: inherit;
-            outline: none;
-            cursor: pointer;
-            max-width: 110px;
-            transition: var(--transition);
+            background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 15px; padding: 2px 8px; font-size: 0.65rem;
+            font-weight: 700; color: inherit; outline: none; cursor: pointer; max-width: 100px;
         }
-        .category-select:hover { background: rgba(255,255,255,0.12); }
-        .category-select option { background: var(--card-bg-solid); color: var(--text-primary); }
+        .category-select option { background: var(--card-bg-solid); }
+        .item-amount {
+            width: 85px; background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.12); border-radius: 15px;
+            padding: 4px 8px; font-family: inherit; font-size: 0.85rem;
+            font-weight: 700; color: var(--text-primary); text-align: right; outline: none;
+        }
+        .item-amount:focus { border-color: var(--primary); background: rgba(255,255,255,0.12); }
         
-        .item-amount-input {
-            width: 95px;
-            background: rgba(255,255,255,0.08);
-            border: 1px solid rgba(255,255,255,0.12);
-            border-radius: 18px;
-            padding: 5px 10px;
-            font-family: inherit;
-            font-size: 0.88rem;
-            font-weight: 700;
-            color: var(--text-primary);
-            text-align: right;
-            outline: none;
-            transition: var(--transition);
-        }
-        .item-amount-input:focus { border-color: var(--primary); background: rgba(255,255,255,0.15); box-shadow: 0 0 0 3px rgba(99,102,241,0.2); }
-        
-        .item-note {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            margin-top: 4px;
-            font-style: italic;
-            max-width: 200px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        
-        .item-actions {
-            display: flex;
-            align-items: center;
-            gap: 3px;
-            padding-right: 6px;
-        }
+        .item-actions { display: flex; align-items: center; gap: 2px; padding-right: 5px; }
         .btn-complete, .btn-remove {
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            cursor: pointer;
-            width: 34px;
-            height: 34px;
-            border-radius: 9px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.15rem;
-            transition: var(--transition);
+            background: none; border: none; color: var(--text-muted);
+            cursor: pointer; width: 32px; height: 32px; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.1rem; transition: var(--transition);
         }
-        .btn-complete:hover { background: rgba(34, 197, 94, 0.2); color: var(--success); transform: scale(1.1); }
-        .btn-remove:hover { background: rgba(239, 68, 68, 0.2); color: var(--danger); transform: scale(1.1); }
-
-        /* ===== PROGRESS BAR ===== */
-        .progress-container { margin-top: 20px; padding-top: 16px; border-top: 1px dashed rgba(255,255,255,0.1); }
-        .progress-label { display: flex; justify-content: space-between; font-size: 0.72rem; margin-bottom: 8px; color: var(--text-muted); font-weight: 600; }
-        .progress-bar { height: 7px; background: rgba(255,255,255,0.08); border-radius: 4px; overflow: hidden; position: relative; }
-        .progress-bar::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-            animation: shimmer 2s infinite;
-        }
-        @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
-        .progress-fill { height: 100%; border-radius: 4px; transition: width 0.9s cubic-bezier(0.2, 0.9, 0.4, 1); position: relative; }
+        .btn-complete:hover { background: rgba(34,197,94,0.2); color: var(--success); }
+        .btn-remove:hover { background: rgba(239,68,68,0.2); color: var(--danger); }
+        
+        /* Progress */
+        .progress-container { margin-top: 16px; padding-top: 12px; border-top: 1px dashed rgba(255,255,255,0.1); }
+        .progress-label { display: flex; justify-content: space-between; font-size: 0.7rem; margin-bottom: 6px; color: var(--text-muted); font-weight: 600; }
+        .progress-bar { height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; }
+        .progress-fill { height: 100%; border-radius: 3px; transition: width 0.7s ease; }
         .progress-fill.red { background: linear-gradient(90deg, #ef4444, #f87171); }
         .progress-fill.green { background: linear-gradient(90deg, #22c55e, #4ade80); }
-
-        /* ===== FOOTER CON COLORES ===== */
+        
+        /* Footer con colores */
         .footer-nav {
-            position: fixed;
-            bottom: calc(20px + var(--safe-area-bottom));
-            left: 50%;
-            transform: translateX(-50%);
-            width: calc(100% - 40px);
-            max-width: 580px;
-            background: var(--card-bg);
-            backdrop-filter: blur(24px);
-            border-radius: 28px;
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            padding: 16px 18px;
-            box-shadow: var(--shadow-lg);
-            z-index: 2000;
-            border: 1px solid rgba(255,255,255,0.12);
-            overflow: hidden;
+            position: fixed; bottom: calc(16px + var(--safe-area-bottom)); left: 50%;
+            transform: translateX(-50%); width: calc(100% - 32px); max-width: 540px;
+            background: var(--card-bg); backdrop-filter: blur(20px);
+            border-radius: 24px; display: grid; grid-template-columns: repeat(3,1fr);
+            padding: 12px 16px; box-shadow: var(--shadow); z-index: 2000;
+            border: 1px solid rgba(255,255,255,0.12); overflow: hidden;
         }
-        
-        .footer-item { 
-            text-align: center; 
-            padding: 8px 12px;
-            border-radius: 16px;
-            transition: var(--transition);
-            position: relative;
-            overflow: hidden;
-        }
+        .footer-item { text-align: center; padding: 6px 10px; border-radius: 14px; position: relative; }
         .footer-item::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: var(--footer-color, var(--primary));
-            opacity: 0.6;
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+            background: var(--footer-color, var(--primary)); opacity: 0.7;
         }
-        .footer-item:nth-child(1) { 
-            --footer-color: var(--danger);
-            background: rgba(239, 68, 68, 0.08);
-        }
-        .footer-item:nth-child(2) { 
-            --footer-color: var(--info);
-            background: rgba(59, 130, 246, 0.08);
-        }
-        .footer-item:nth-child(3) { 
-            --footer-color: var(--success);
-            background: rgba(34, 197, 94, 0.08);
-        }
-        
-        .footer-item span { 
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 5px;
-            font-size: 0.65rem; 
-            font-weight: 700; 
-            color: var(--text-muted); 
-            text-transform: uppercase; 
-            margin-bottom: 6px; 
-            letter-spacing: 0.05em; 
+        .footer-item:nth-child(1) { --footer-color: var(--danger); background: rgba(239,68,68,0.08); }
+        .footer-item:nth-child(2) { --footer-color: var(--info); background: rgba(59,130,246,0.08); }
+        .footer-item:nth-child(3) { --footer-color: var(--success); background: rgba(34,197,94,0.08); }
+        .footer-item span {
+            display: flex; align-items: center; justify-content: center; gap: 4px;
+            font-size: 0.6rem; font-weight: 700; color: var(--text-muted);
+            text-transform: uppercase; margin-bottom: 3px; letter-spacing: 0.04em;
         }
         .footer-item:nth-child(1) span { color: var(--danger); }
         .footer-item:nth-child(2) span { color: var(--info); }
         .footer-item:nth-child(3) span { color: var(--success); }
-        
-        .footer-amount { 
-            font-size: 1.35rem; 
-            font-weight: 800;
-            text-shadow: 0 2px 8px rgba(0,0,0,0.2);
-        }
+        .footer-amount { font-size: 1.2rem; font-weight: 800; }
         .footer-item:nth-child(1) .footer-amount { color: var(--danger); }
         .footer-item:nth-child(2) .footer-amount { color: var(--info); }
         .footer-item:nth-child(3) .footer-amount { color: var(--success); }
+        .footer-percent { font-size: 0.7rem; font-weight: 700; margin-top: 2px; }
         
-        .footer-percent { 
-            font-size: 0.75rem; 
-            font-weight: 700; 
-            margin-top: 4px;
-            padding: 3px 10px;
-            border-radius: 12px;
-            display: inline-block;
+        /* Toast */
+        .toast-container {
+            position: fixed; bottom: 120px; right: 16px; z-index: 4000;
+            display: flex; flex-direction: column; gap: 8px; max-width: 280px;
         }
-        .footer-item:nth-child(1) .footer-percent { 
-            color: var(--danger);
-            background: rgba(239, 68, 68, 0.15);
-        }
-        .footer-item:nth-child(2) .footer-percent { 
-            color: var(--info);
-            background: rgba(59, 130, 246, 0.15);
-        }
-        .footer-item:nth-child(3) .footer-percent { 
-            color: var(--success);
-            background: rgba(34, 197, 94, 0.15);
-        }
-        .footer-icon { font-size: 1rem; }
-
-        /* ===== ALERTS ===== */
-        .alert-banner {
-            background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(220, 38, 38, 0.1));
-            border: 1px solid rgba(239, 68, 68, 0.3);
-            border-radius: 12px;
-            padding: 12px 16px;
-            margin: 10px 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 0.85rem;
-            animation: slideDown 0.4s ease;
-        }
-        .alert-banner.warning {
-            background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(217, 119, 6, 0.1));
-            border-color: rgba(245, 158, 11, 0.3);
-        }
-        .alert-icon { font-size: 1.2rem; }
-
-        /* ===== TOAST ===== */
-        .toast-container { position: fixed; bottom: 150px; right: 20px; z-index: 4000; display: flex; flex-direction: column; gap: 10px; max-width: 320px; }
         .toast {
-            background: var(--card-bg-solid);
-            padding: 14px 18px;
-            border-radius: 14px;
-            box-shadow: var(--shadow-lg);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            animation: toastIn 0.3s ease;
-            border-left: 4px solid var(--primary);
-            font-weight: 600;
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255,255,255,0.1);
+            background: var(--card-bg-solid); padding: 12px 16px;
+            border-radius: 12px; box-shadow: var(--shadow);
+            display: flex; align-items: center; gap: 10px;
+            animation: toastIn 0.25s ease; border-left: 4px solid var(--primary);
+            font-weight: 600; font-size: 0.9rem; border: 1px solid rgba(255,255,255,0.1);
         }
-        @keyframes toastIn { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes toastIn { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
         .toast.success { border-left-color: var(--success); }
         .toast.error { border-left-color: var(--danger); }
-        .toast.warning { border-left-color: var(--warning); }
-
-        /* ===== MODAL ===== */
+        
+        /* Modal */
         .modal {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.75);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 5000;
-            backdrop-filter: blur(10px);
-            padding: 20px;
+            position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+            display: none; align-items: center; justify-content: center;
+            z-index: 5000; backdrop-filter: blur(8px); padding: 20px;
         }
-        .modal.active { display: flex; animation: modalFadeIn 0.25s ease; }
-        @keyframes modalFadeIn { from { opacity: 0; } to { opacity: 1; } }
-        
+        .modal.active { display: flex; }
         .modal-content {
-            background: var(--card-bg-solid);
-            border-radius: 26px;
-            padding: 28px;
-            width: 100%;
-            max-width: 520px;
-            max-height: 85vh;
-            overflow-y: auto;
-            box-shadow: var(--shadow-lg);
-            border: 1px solid rgba(255,255,255,0.12);
-            animation: modalSlide 0.3s ease;
+            background: var(--card-bg-solid); border-radius: 22px;
+            padding: 24px; width: 100%; max-width: 460px;
+            box-shadow: var(--shadow); border: 1px solid rgba(255,255,255,0.12);
         }
-        @keyframes modalSlide { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        
-        .modal-title { font-size: 1.4rem; font-weight: 800; margin-bottom: 14px; display: flex; align-items: center; gap: 10px; }
-        .modal-text { color: var(--text-secondary); margin-bottom: 24px; line-height: 1.65; font-size: 0.95rem; white-space: pre-line; }
-        .modal-buttons { display: flex; gap: 10px; justify-content: flex-end; }
+        .modal-title { font-size: 1.3rem; font-weight: 800; margin-bottom: 12px; }
+        .modal-text { color: var(--text-secondary); margin-bottom: 20px; line-height: 1.6; font-size: 0.95rem; white-space: pre-line; }
+        .modal-buttons { display: flex; gap: 8px; justify-content: flex-end; }
         .btn {
-            padding: 11px 26px;
-            border-radius: 38px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: var(--transition);
-            border: none;
-            font-size: 0.92rem;
-            font-family: inherit;
+            padding: 10px 22px; border-radius: 32px; font-weight: 700;
+            cursor: pointer; transition: var(--transition); border: none;
+            font-size: 0.9rem; font-family: inherit;
         }
-        .btn:hover { transform: translateY(-2px); }
-        .btn:active { transform: translateY(0); }
-        .btn-primary { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4); }
-        .btn-secondary { background: rgba(255,255,255,0.1); color: var(--text-primary); border: 1px solid rgba(255,255,255,0.15); }
-        .btn-danger { background: var(--danger); color: white; }
-
-        /* ===== FORM INPUTS ===== */
-        .form-group { margin-bottom: 16px; }
-        .form-group label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text-secondary); }
-        .form-group input, .form-group select, .form-group textarea {
-            width: 100%;
-            padding: 10px 14px;
-            border-radius: 10px;
-            border: 1px solid rgba(255,255,255,0.15);
-            background: rgba(255,255,255,0.05);
-            color: var(--text-primary);
-            font-size: 0.95rem;
-            outline: none;
-            transition: var(--transition);
-        }
-        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
-            border-color: var(--primary);
-            background: rgba(255,255,255,0.1);
-            box-shadow: 0 0 0 3px rgba(99,102,241,0.2);
-        }
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-
-        /* ===== CHART MODAL ===== */
-        .chart-container {
-            background: rgba(255,255,255,0.03);
-            border-radius: 18px;
-            padding: 16px;
-            margin: 16px 0;
-            border: 1px solid rgba(255,255,255,0.08);
-        }
-        .chart-title { font-size: 0.9rem; font-weight: 700; margin-bottom: 12px; text-align: center; color: var(--text-secondary); }
-
-        /* ===== MANUAL SECTION ===== */
-        .manual-step {
-            display: flex;
-            gap: 12px;
-            padding: 12px;
-            background: rgba(255,255,255,0.03);
-            border-radius: 12px;
-            margin-bottom: 10px;
-            border-left: 3px solid var(--primary);
-        }
-        .manual-step-number {
-            background: var(--primary);
-            color: white;
-            width: 26px;
-            height: 26px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 800;
-            font-size: 0.85rem;
-            flex-shrink: 0;
-        }
-        .manual-step-content strong { color: var(--text-primary); display: block; margin-bottom: 3px; }
-        .manual-step-content { font-size: 0.9rem; }
-
-        /* ===== ACHIEVEMENTS ===== */
-        .achievements-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin-top: 12px;
-        }
-        .achievement {
-            background: rgba(255,255,255,0.05);
-            border-radius: 12px;
-            padding: 10px 8px;
-            text-align: center;
-            border: 1px solid rgba(255,255,255,0.08);
-            transition: var(--transition);
-        }
-        .achievement.unlocked { background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(234, 179, 8, 0.15)); border-color: rgba(245, 158, 11, 0.4); }
-        .achievement-icon { font-size: 1.5rem; margin-bottom: 4px; }
-        .achievement-name { font-size: 0.65rem; font-weight: 700; }
-        .achievement.locked { opacity: 0.5; }
-        .achievement.locked .achievement-icon { filter: grayscale(1); }
-
-        /* ===== SHORTCUTS ===== */
-        .shortcut-key {
-            background: rgba(255,255,255,0.1);
-            padding: 2px 8px;
-            border-radius: 6px;
-            font-family: monospace;
-            font-weight: 700;
-            font-size: 0.8rem;
-            border: 1px solid rgba(255,255,255,0.2);
-        }
-
-        /* ===== OFFLINE INDICATOR ===== */
-        .offline-indicator {
-            position: fixed;
-            top: calc(10px + var(--safe-area-top));
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(245, 158, 11, 0.9);
-            color: #1a1a2e;
-            padding: 8px 20px;
-            border-radius: 25px;
-            font-size: 0.8rem;
-            font-weight: 700;
-            z-index: 6000;
-            display: none;
-            animation: slideDown 0.3s ease;
-            box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4);
-        }
-        .offline-indicator.active { display: flex; align-items: center; gap: 8px; }
-        @keyframes slideDown { from { transform: translate(-50%, -100%); } to { transform: translate(-50%, 0); } }
-
-        /* ===== CALENDAR VIEW ===== */
-        .calendar-view {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 4px;
-            margin-top: 12px;
-        }
-        .calendar-day {
-            aspect-ratio: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background: rgba(255,255,255,0.05);
-            border-radius: 8px;
-            font-size: 0.8rem;
-            position: relative;
-            cursor: pointer;
-            transition: var(--transition);
-        }
-        .calendar-day:hover { background: rgba(255,255,255,0.1); }
-        .calendar-day.today { border: 2px solid var(--primary); }
-        .calendar-day.has-bill::after {
-            content: '';
-            position: absolute;
-            bottom: 4px;
-            width: 6px;
-            height: 6px;
-            background: var(--danger);
-            border-radius: 50%;
-        }
-        .calendar-day.has-bill.warning::after { background: var(--warning); }
-        .calendar-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-        }
-        .calendar-header button {
-            background: rgba(255,255,255,0.1);
-            border: none;
-            color: var(--text-primary);
-            width: 30px;
-            height: 30px;
-            border-radius: 8px;
-            cursor: pointer;
-        }
-
-        /* ===== GOALS LIST ===== */
-        .goal-item {
-            background: rgba(255,255,255,0.05);
-            border-radius: 12px;
-            padding: 12px;
-            margin-bottom: 10px;
-            border-left: 4px solid var(--success);
-        }
-        .goal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        .goal-name { font-weight: 700; font-size: 0.95rem; }
-        .goal-amount { font-weight: 800; color: var(--success); }
-        .goal-progress { height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; margin: 8px 0; }
-        .goal-progress-fill { height: 100%; background: linear-gradient(90deg, var(--success), #4ade80); transition: width 0.5s ease; }
-        .goal-meta { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); }
-
-        /* ===== ACCOUNTS TAB ===== */
-        .account-selector {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 16px;
-            overflow-x: auto;
-            padding-bottom: 4px;
-        }
-        .account-chip {
-            padding: 6px 14px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            cursor: pointer;
-            white-space: nowrap;
-            transition: var(--transition);
-            border: 2px solid transparent;
-        }
-        .account-chip.active {
-            background: var(--primary);
-            border-color: white;
-        }
-        .account-chip:hover { background: rgba(255,255,255,0.15); }
-
-        /* ===== RESPONSIVE ===== */
+        .btn:hover { transform: translateY(-1px); }
+        .btn-primary { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; }
+        .btn-secondary { background: rgba(255,255,255,0.1); color: var(--text-primary); }
+        
+        /* Chart */
+        .chart-container { background: rgba(255,255,255,0.03); border-radius: 14px; padding: 12px; margin: 12px 0; }
+        
+        /* Empty state */
+        .empty-state { text-align: center; padding: 30px 12px; color: var(--text-muted); }
+        .empty-state-icon { font-size: 2.5rem; margin-bottom: 8px; opacity: 0.5; }
+        .empty-state-text { font-size: 0.85rem; }
+        
+        /* Responsive */
         @media (max-width: 768px) {
-            .stats-grid { grid-template-columns: 1fr; gap: 14px; }
-            .stat-card { display: flex; align-items: center; text-align: left; padding: 14px 16px; gap: 16px; }
-            .circular-progress { margin: 0; width: 75px; height: 75px; }
-            .circular-progress svg { width: 75px; height: 75px; }
+            .stats-grid { grid-template-columns: 1fr; gap: 12px; }
+            .stat-card { display: flex; align-items: center; text-align: left; padding: 14px; gap: 14px; }
+            .circular-progress { margin: 0; width: 70px; height: 70px; }
+            .circular-progress svg { width: 70px; height: 70px; }
             .center-percent { font-size: 1rem; }
-            .stat-value { font-size: 1.3rem; }
+            .stat-value { font-size: 1.25rem; }
             .dashboard { grid-template-columns: 1fr; }
             .item-content { flex-wrap: wrap; }
-            .item-details { min-width: 100%; order: 2; margin-top: 3px; }
+            .item-details { min-width: 100%; order: 2; margin-top: 2px; }
             .item-meta { justify-content: space-between; }
-            .item-amount-input { width: 85px; }
-            .footer-nav { width: calc(100% - 30px); }
-            .form-row { grid-template-columns: 1fr; }
+            .item-amount { width: 80px; }
+            .footer-nav { width: calc(100% - 24px); }
         }
         @media (max-width: 480px) {
-            .item-row { grid-template-columns: 4px auto 1fr auto; }
-            .item-color-picker { padding: 0 3px; }
-            .item-color-input { width: 26px; height: 26px; }
-            .sidebar { width: 320px; }
-            :root { --sidebar-width: 320px; }
+            .item-row { grid-template-columns: 3px auto 1fr auto; }
+            .item-color-input { width: 24px; height: 24px; }
+            .sidebar { width: 300px; }
+            :root { --sidebar-width: 300px; }
         }
-
-        .empty-state {
-            text-align: center;
-            padding: 35px 16px;
-            color: var(--text-muted);
-            background: rgba(255,255,255,0.03);
-            border-radius: 18px;
-            border: 1px dashed rgba(255,255,255,0.1);
-        }
-        .empty-state-icon { font-size: 2.8rem; margin-bottom: 10px; opacity: 0.5; }
-        .empty-state-text { font-size: 0.9rem; }
     </style>
 </head>
 <body>
-
-<div class="offline-indicator" id="offlineIndicator">
-    <span>📡</span> <span>Modo sin conexión - Se sincronizará automáticamente</span>
-</div>
 
 <div class="overlay" id="overlay" onclick="toggleMenu()"></div>
 
@@ -1287,41 +432,40 @@
 <div class="sidebar" id="sidebar">
     <div class="sidebar-header">
         <h3>⚙️ Smart Budget Pro</h3>
-        <span class="version-badge">v4.0</span>
         <button class="sidebar-close" onclick="toggleMenu()">✕</button>
     </div>
 
     <div class="sidebar-section">
-        <div class="sidebar-section-title">☁️ Estado del Servidor</div>
-        <div class="sync-status-card">
-            <div class="sync-status-icon" id="syncIcon">✅</div>
-            <div>
-                <div class="sync-status-text" id="syncStatusText">Conectado</div>
-                <div class="sync-timestamp">Última sync: <span id="lastSync">--:--</span></div>
-            </div>
+        <div class="sidebar-section-title">☁️ Sincronización</div>
+        <div class="sidebar-option">
+            <span class="sidebar-option-icon">🔄</span>
+            <span class="sidebar-option-label" id="syncStatus">✅ Conectado</span>
         </div>
         <div class="sidebar-option" onclick="forceSync()">
-            <span class="sidebar-option-icon">🔄</span>
+            <span class="sidebar-option-icon">⬇️</span>
             <span class="sidebar-option-label">Sincronizar Ahora</span>
+        </div>
+        <div style="font-size:0.7rem; color:var(--text-muted); margin-left:36px; margin-top:4px;">
+            Última: <span id="lastSync">--:--</span>
         </div>
     </div>
 
     <div class="sidebar-section">
         <div class="sidebar-section-title">🔐 Privacidad</div>
-        <div class="sidebar-option" onclick="togglePrivateMode()">
+        <div class="sidebar-option" onclick="togglePrivate()">
             <span class="sidebar-option-icon">👁️</span>
-            <span class="sidebar-option-label">Modo Privado</span>
+            <span class="sidebar-option-label">Ocultar Montos</span>
             <div class="toggle-switch" id="privateToggle"></div>
         </div>
     </div>
 
     <div class="sidebar-section">
         <div class="sidebar-section-title">💱 Moneda</div>
-        <div style="display:grid; grid-template-columns: repeat(2,1fr); gap:7px;">
-            <button class="sidebar-option currency-btn active" data-curr="USD" onclick="setCurrency('USD')">$ USD</button>
-            <button class="sidebar-option currency-btn" data-curr="EUR" onclick="setCurrency('EUR')">€ EUR</button>
-            <button class="sidebar-option currency-btn" data-curr="MXN" onclick="setCurrency('MXN')">$ MXN</button>
-            <button class="sidebar-option currency-btn" data-curr="COP" onclick="setCurrency('COP')">$ COP</button>
+        <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:6px;">
+            <button class="sidebar-option currency-btn active" data-c="USD" onclick="setCurrency('USD')">$ USD</button>
+            <button class="sidebar-option currency-btn" data-c="EUR" onclick="setCurrency('EUR')">€ EUR</button>
+            <button class="sidebar-option currency-btn" data-c="MXN" onclick="setCurrency('MXN')">$ MXN</button>
+            <button class="sidebar-option currency-btn" data-c="COP" onclick="setCurrency('COP')">$ COP</button>
         </div>
     </div>
 
@@ -1329,68 +473,41 @@
         <div class="sidebar-section-title">🎨 Apariencia</div>
         <div class="sidebar-option" onclick="toggleTheme()">
             <span class="sidebar-option-icon">🌓</span>
-            <span class="sidebar-option-label">Modo Claro / Oscuro</span>
+            <span class="sidebar-option-label">Modo Oscuro/Claro</span>
             <div class="toggle-switch" id="themeToggle"></div>
         </div>
-        <div class="color-picker-container">
-            <div class="color-picker-label">🎨 Color Principal</div>
+        <div style="margin-top:8px;">
+            <div style="font-size:0.7rem; color:var(--text-muted); margin-bottom:6px;">🎨 Color Principal</div>
             <div class="color-presets" id="colorPresets"></div>
         </div>
     </div>
 
     <div class="sidebar-section">
         <div class="sidebar-section-title">📊 Análisis</div>
-        <div class="sidebar-option" onclick="showChartModal()">
+        <div class="sidebar-option" onclick="showChart()">
             <span class="sidebar-option-icon">🥧</span>
             <span class="sidebar-option-label">Gráfica de Gastos</span>
         </div>
-        <div class="sidebar-option" onclick="showDetailedStats()">
+        <div class="sidebar-option" onclick="showStats()">
             <span class="sidebar-option-icon">📈</span>
             <span class="sidebar-option-label">Estadísticas</span>
-        </div>
-        <div class="sidebar-option" onclick="showCalendarModal()">
-            <span class="sidebar-option-icon">📅</span>
-            <span class="sidebar-option-label">Calendario</span>
-        </div>
-        <div class="sidebar-option" onclick="showAchievements()">
-            <span class="sidebar-option-icon">🏆</span>
-            <span class="sidebar-option-label">Logros</span>
-        </div>
-    </div>
-
-    <div class="sidebar-section">
-        <div class="sidebar-section-title">🎯 Metas</div>
-        <div class="sidebar-option" onclick="showGoalsModal()">
-            <span class="sidebar-option-icon">🎯</span>
-            <span class="sidebar-option-label">Gestionar Metas</span>
         </div>
     </div>
 
     <div class="sidebar-section">
         <div class="sidebar-section-title">📦 Datos</div>
         <div class="sidebar-option" onclick="exportData()">📤 Exportar JSON</div>
-        <div class="sidebar-option" onclick="exportPDF()">📄 Exportar PDF</div>
         <div class="sidebar-option" onclick="exportCSV()">📊 Exportar CSV</div>
         <div class="sidebar-option" onclick="importData()">📥 Importar</div>
     </div>
 
     <div class="sidebar-section">
         <div class="sidebar-section-title">❓ Ayuda</div>
-        <div class="sidebar-option" onclick="showManual()">📖 Manual de Uso</div>
-        <div class="sidebar-option" onclick="showShortcuts()">⌨️ Atajos de Teclado</div>
         <div class="sidebar-option danger" onclick="confirmReset()">🗑️ Borrar Todo</div>
-    </div>
-
-    <div class="sidebar-footer" style="margin-top:auto; padding-top:16px; border-top:1px solid rgba(255,255,255,0.1); text-align:center;">
-        <small style="color:var(--text-muted); display:block; line-height:1.8;">
-            💰 Smart Budget Pro<br>
-            <span style="color:var(--primary); font-weight:700;">v4.0.0</span> · Build 2026.04<br>
-            <span id="appStatus">🟢 Sistema operativo</span>
-        </small>
     </div>
 </div>
 
-<!-- Banner superior -->
+<!-- Top Banner -->
 <div class="top-banner">
     <button class="menu-btn" onclick="toggleMenu()">☰</button>
     <div class="save-indicator" id="saveIcon">
@@ -1398,120 +515,91 @@
     </div>
     <div class="header-income">
         <label>💵 INGRESO MENSUAL</label>
-        <input type="number" id="sueldoBase" placeholder="0" min="0" step="1" class="amount-sensitive">
+        <input type="number" id="sueldoBase" placeholder="0" min="0" step="1" class="amount">
     </div>
 </div>
 
-<!-- Payday Countdown -->
-<div class="payday-banner" id="paydayBanner" style="display:none;">
-    <span class="payday-text">🗓️ Próximo ingreso en:</span>
-    <span class="payday-countdown" id="paydayCountdown">-- días</span>
-</div>
-
-<!-- Financial Score -->
-<div class="financial-score" id="financialScore" style="display:none;">
-    <div class="score-circle" id="scoreCircle"><span id="scoreValue">--</span></div>
-    <div class="score-label">Salud Financiera</div>
-    <div class="score-tips" id="scoreTips">Configura tu ingreso para ver tu score</div>
-</div>
-
-<!-- Stats con círculos -->
+<!-- Stats -->
 <div class="stats-section">
     <div class="stats-grid">
         <div class="stat-card stat-card-gastos">
             <span class="health-badge healthy" id="gastosHealth">Excelente</span>
             <div class="circular-progress">
-                <svg viewBox="0 0 120 120"><circle class="bg-circle" cx="60" cy="60" r="54"></circle><circle class="progress-circle gastos" id="gastosProgress" cx="60" cy="60" r="54"></circle></svg>
+                <svg viewBox="0 0 120 120"><circle class="bg-circle" cx="60" cy="60" r="54"/><circle class="progress-circle gastos" id="gastosProgress" cx="60" cy="60" r="54"/></svg>
                 <div class="center-text"><span class="center-percent" id="gastosPercent">0%</span><span class="center-label">gastos</span></div>
             </div>
-            <div><div class="stat-value amount-sensitive" id="statGastos">$0</div><div class="stat-label">💸 Gastos</div></div>
+            <div><div class="stat-value amount" id="statGastos">$0</div><div class="stat-label">💸 Gastos</div></div>
         </div>
         <div class="stat-card stat-card-disponible">
             <span class="health-badge healthy" id="disponibleHealth">Saludable</span>
             <div class="circular-progress">
-                <svg viewBox="0 0 120 120"><circle class="bg-circle" cx="60" cy="60" r="54"></circle><circle class="progress-circle disponible" id="disponibleProgress" cx="60" cy="60" r="54"></circle></svg>
+                <svg viewBox="0 0 120 120"><circle class="bg-circle" cx="60" cy="60" r="54"/><circle class="progress-circle disponible" id="disponibleProgress" cx="60" cy="60" r="54"/></svg>
                 <div class="center-text"><span class="center-percent" id="disponiblePercent">0%</span><span class="center-label">disponible</span></div>
             </div>
-            <div><div class="stat-value amount-sensitive" id="statDisponible">$0</div><div class="stat-label">💎 Disponible</div></div>
+            <div><div class="stat-value amount" id="statDisponible">$0</div><div class="stat-label">💎 Disponible</div></div>
         </div>
         <div class="stat-card stat-card-ahorros">
             <span class="health-badge critical" id="ahorrosHealth">A Mejorar</span>
             <div class="circular-progress">
-                <svg viewBox="0 0 120 120"><circle class="bg-circle" cx="60" cy="60" r="54"></circle><circle class="progress-circle ahorros" id="ahorrosProgress" cx="60" cy="60" r="54"></circle></svg>
+                <svg viewBox="0 0 120 120"><circle class="bg-circle" cx="60" cy="60" r="54"/><circle class="progress-circle ahorros" id="ahorrosProgress" cx="60" cy="60" r="54"/></svg>
                 <div class="center-text"><span class="center-percent" id="ahorrosPercent">0%</span><span class="center-label">ahorros</span></div>
             </div>
-            <div><div class="stat-value amount-sensitive" id="statAhorros">$0</div><div class="stat-label">🎯 Ahorros</div></div>
+            <div><div class="stat-value amount" id="statAhorros">$0</div><div class="stat-label">🎯 Ahorros</div></div>
         </div>
     </div>
 </div>
 
-<!-- Contenido principal -->
+<!-- Main Content -->
 <div class="container">
-    <!-- Search Bar -->
-    <div class="search-bar">
-        <input type="text" id="searchInput" placeholder="🔍 Buscar transacción, categoría o nota...">
-        <button onclick="searchItems()">Buscar</button>
-    </div>
-
-    <!-- Account Selector -->
-    <div class="account-selector" id="accountSelector">
-        <div class="account-chip active" data-account="all" onclick="filterByAccount('all')">💳 Todas</div>
-        <div class="account-chip" data-account="efectivo" onclick="filterByAccount('efectivo')">💵 Efectivo</div>
-        <div class="account-chip" data-account="banco" onclick="filterByAccount('banco')">🏦 Banco</div>
-        <div class="account-chip" data-account="tarjeta" onclick="filterByAccount('tarjeta')">💳 Tarjeta</div>
-    </div>
-
     <div class="dashboard">
         <div class="card">
             <div class="card-header">
-                <strong class="card-title" style="color:#f87171;">💸 Deudas y Gastos</strong>
-                <button class="btn-add" id="addGastoBtn">+</button>
+                <strong class="card-title" style="color:#f87171;">💸 Gastos</strong>
+                <button class="btn-add" id="addGasto">+</button>
             </div>
-            <div class="items-container" id="listaDeudas"></div>
+            <div class="items-container" id="listaGastos"></div>
             <div class="progress-container">
-                <div class="progress-label"><span>Progreso del presupuesto</span><span id="deudaProgressText">0%</span></div>
-                <div class="progress-bar"><div class="progress-fill red" id="deudaBar"></div></div>
+                <div class="progress-label"><span>Presupuesto usado</span><span id="gastoProgressText">0%</span></div>
+                <div class="progress-bar"><div class="progress-fill red" id="gastoBar"></div></div>
             </div>
-            <div id="excesoGastoMsg" style="margin-top:12px; font-size:0.8rem; color:var(--danger); display:none; background:rgba(239,68,68,0.1); padding:10px; border-radius:10px;">
-                ⚠️ <strong>Alerta:</strong> Has excedido tu presupuesto de gastos. Considera revisar tus categorías.
-            </div>
+            <div id="alertGasto" style="margin-top:10px; font-size:0.75rem; color:var(--danger); display:none;">⚠️ Has excedido tu presupuesto</div>
         </div>
         <div class="card">
             <div class="card-header">
-                <strong class="card-title" style="color:#4ade80;">🎯 Metas de Ahorro</strong>
-                <button class="btn-add" id="addAhorroBtn">+</button>
+                <strong class="card-title" style="color:#4ade80;">🎯 Ahorros</strong>
+                <button class="btn-add" id="addAhorro">+</button>
             </div>
             <div class="items-container" id="listaAhorros"></div>
             <div class="progress-container">
-                <div class="progress-label"><span>Meta de ahorro alcanzada</span><span id="ahorroProgressText">0%</span></div>
+                <div class="progress-label"><span>Meta de ahorro</span><span id="ahorroProgressText">0%</span></div>
                 <div class="progress-bar"><div class="progress-fill green" id="ahorroBar"></div></div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Footer con colores -->
+<!-- Footer -->
 <div class="footer-nav">
     <div class="footer-item">
-        <span><span class="footer-icon">💸</span> Gastos</span>
-        <div class="footer-amount amount-sensitive" id="resGasto">$0</div>
-        <div class="footer-percent" id="gastosFooterPercent">0%</div>
+        <span>💸 Gastos</span>
+        <div class="footer-amount amount" id="resGasto">$0</div>
+        <div class="footer-percent" id="gastoFooter">0%</div>
     </div>
     <div class="footer-item">
-        <span><span class="footer-icon">💎</span> Disponible</span>
-        <div class="footer-amount amount-sensitive" id="resDisponible">$0</div>
-        <div class="footer-percent" id="disponibleFooterPercent">0%</div>
+        <span>💎 Disponible</span>
+        <div class="footer-amount amount" id="resDisponible">$0</div>
+        <div class="footer-percent" id="dispFooter">0%</div>
     </div>
     <div class="footer-item">
-        <span><span class="footer-icon">🎯</span> Ahorros</span>
-        <div class="footer-amount amount-sensitive" id="resAhorro">$0</div>
-        <div class="footer-percent" id="ahorrosFooterPercent">0%</div>
+        <span>🎯 Ahorros</span>
+        <div class="footer-amount amount" id="resAhorro">$0</div>
+        <div class="footer-percent" id="ahorroFooter">0%</div>
     </div>
 </div>
 
 <div class="toast-container" id="toastContainer"></div>
 
-<!-- Modal Genérico -->
+<!-- Modal -->
 <div class="modal" id="modal">
     <div class="modal-content">
         <h4 class="modal-title" id="modalTitle">Confirmar</h4>
@@ -1523,1280 +611,237 @@
     </div>
 </div>
 
-<!-- Modal de Gráfica -->
+<!-- Chart Modal -->
 <div class="modal" id="chartModal">
     <div class="modal-content">
         <h4 class="modal-title">🥧 Distribución de Gastos</h4>
-        <p class="modal-text" style="margin-bottom:12px;">Visualiza tus gastos por categoría con porcentajes en tiempo real.</p>
-        <div class="chart-container">
-            <div class="chart-title">Porcentaje por Categoría</div>
-            <canvas id="expenseChart"></canvas>
-        </div>
-        <div id="chartLegend" style="margin-top:16px; display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:0.8rem;"></div>
-        <div class="modal-buttons" style="margin-top:20px;">
-            <button class="btn btn-secondary" onclick="closeChartModal()">Cerrar</button>
-            <button class="btn btn-primary" onclick="exportChart()">📸 Guardar Imagen</button>
-        </div>
-    </div>
-</div>
-
-<!-- Modal de Calendario -->
-<div class="modal" id="calendarModal">
-    <div class="modal-content">
-        <h4 class="modal-title">📅 Calendario de Facturas</h4>
-        <p class="modal-text">Visualiza tus fechas de pago y vencimientos.</p>
-        <div class="calendar-header">
-            <button onclick="changeMonth(-1)">◀</button>
-            <strong id="calendarMonthYear">--</strong>
-            <button onclick="changeMonth(1)">▶</button>
-        </div>
-        <div class="calendar-view" id="calendarGrid"></div>
-        <div id="calendarBills" style="margin-top:16px; font-size:0.85rem;"></div>
-        <div class="modal-buttons" style="margin-top:20px;">
-            <button class="btn btn-primary" onclick="closeCalendarModal()">Cerrar</button>
-            <button class="btn btn-secondary" onclick="addBillFromCalendar()">+ Agregar Factura</button>
-        </div>
-    </div>
-</div>
-
-<!-- Modal de Metas -->
-<div class="modal" id="goalsModal">
-    <div class="modal-content">
-        <h4 class="modal-title">🎯 Metas de Ahorro</h4>
-        <div id="goalsList" style="max-height:40vh; overflow-y:auto; margin-bottom:16px;"></div>
-        <div class="form-group">
-            <label>Nueva Meta</label>
-            <div class="form-row">
-                <input type="text" id="goalName" placeholder="Nombre de la meta">
-                <input type="number" id="goalAmount" placeholder="Monto objetivo">
-            </div>
-        </div>
-        <div class="modal-buttons">
-            <button class="btn btn-secondary" onclick="closeGoalsModal()">Cerrar</button>
-            <button class="btn btn-primary" onclick="addGoal()">Crear Meta</button>
-        </div>
-    </div>
-</div>
-
-<!-- Modal de Manual -->
-<div class="modal" id="manualModal">
-    <div class="modal-content">
-        <h4 class="modal-title">📖 Manual de Uso</h4>
-        <div style="max-height:60vh; overflow-y:auto; padding-right:8px;">
-            <div class="manual-step">
-                <div class="manual-step-number">1</div>
-                <div class="manual-step-content"><strong>Configura tu ingreso mensual</strong>Ingresa tu sueldo o ingreso mensual en el campo superior para que la app calcule automáticamente tus porcentajes.</div>
-            </div>
-            <div class="manual-step">
-                <div class="manual-step-number">2</div>
-                <div class="manual-step-content"><strong>Agrega gastos y metas</strong>Usa los botones <strong>+</strong> en cada sección para añadir nuevos ítems. Personaliza nombre, categoría, monto y color.</div>
-            </div>
-            <div class="manual-step">
-                <div class="manual-step-number">3</div>
-                <div class="manual-step-content"><strong>Marca como completado</strong>✅ Haz clic en el botón de check para marcar gastos pagados o metas alcanzadas. Se visualizarán con estilo diferente.</div>
-            </div>
-            <div class="manual-step">
-                <div class="manual-step-number">4</div>
-                <div class="manual-step-content"><strong>Personaliza tu experiencia</strong>🎨 Cambia el tema, color principal y moneda desde el menú lateral. ¡Tus preferencias se guardan automáticamente!</div>
-            </div>
-            <div class="manual-step">
-                <div class="manual-step-number">5</div>
-                <div class="manual-step-content"><strong>Analiza tus finanzas</strong>📊 Accede a las gráficas y estadísticas para entender mejor tus patrones de gasto y optimizar tu presupuesto.</div>
-            </div>
-            <div class="manual-step">
-                <div class="manual-step-number">6</div>
-                <div class="manual-step-content"><strong>Sincronización automática</strong>☁️ Todos tus cambios se guardan en la nube en tiempo real. ¡Accede desde cualquier dispositivo!</div>
-            </div>
-        </div>
-        <div class="modal-buttons" style="margin-top:16px;">
-            <button class="btn btn-primary" onclick="closeManual()">¡Entendido!</button>
-        </div>
-    </div>
-</div>
-
-<!-- Modal de Atajos -->
-<div class="modal" id="shortcutsModal">
-    <div class="modal-content">
-        <h4 class="modal-title">⌨️ Atajos de Teclado</h4>
-        <div style="display:grid; gap:10px; margin:16px 0;">
-            <div style="display:flex; justify-content:space-between; padding:10px; background:rgba(255,255,255,0.05); border-radius:10px;">
-                <span>Abrir menú lateral</span>
-                <span class="shortcut-key">M</span>
-            </div>
-            <div style="display:flex; justify-content:space-between; padding:10px; background:rgba(255,255,255,0.05); border-radius:10px;">
-                <span>Agregar nuevo gasto</span>
-                <span class="shortcut-key">G</span>
-            </div>
-            <div style="display:flex; justify-content:space-between; padding:10px; background:rgba(255,255,255,0.05); border-radius:10px;">
-                <span>Agregar nuevo ahorro</span>
-                <span class="shortcut-key">A</span>
-            </div>
-            <div style="display:flex; justify-content:space-between; padding:10px; background:rgba(255,255,255,0.05); border-radius:10px;">
-                <span>Forzar sincronización</span>
-                <span class="shortcut-key">Ctrl + S</span>
-            </div>
-            <div style="display:flex; justify-content:space-between; padding:10px; background:rgba(255,255,255,0.05); border-radius:10px;">
-                <span>Cerrar modales</span>
-                <span class="shortcut-key">Esc</span>
-            </div>
-            <div style="display:flex; justify-content:space-between; padding:10px; background:rgba(255,255,255,0.05); border-radius:10px;">
-                <span>Alternar tema</span>
-                <span class="shortcut-key">T</span>
-            </div>
-            <div style="display:flex; justify-content:space-between; padding:10px; background:rgba(255,255,255,0.05); border-radius:10px;">
-                <span>Modo privado</span>
-                <span class="shortcut-key">P</span>
-            </div>
-        </div>
-        <div class="modal-buttons">
-            <button class="btn btn-primary" onclick="closeShortcuts()">Cerrar</button>
-        </div>
-    </div>
-</div>
-
-<!-- Modal de Logros -->
-<div class="modal" id="achievementsModal">
-    <div class="modal-content">
-        <h4 class="modal-title">🏆 Tus Logros</h4>
-        <p class="modal-text">¡Gana insignias al usar Smart Budget Pro!</p>
-        <div class="achievements-grid" id="achievementsList"></div>
-        <div class="modal-buttons" style="margin-top:20px;">
-            <button class="btn btn-primary" onclick="closeAchievements()">Cerrar</button>
-        </div>
+        <div class="chart-container"><canvas id="expenseChart"></canvas></div>
+        <div class="modal-buttons"><button class="btn btn-primary" onclick="closeChart()">Cerrar</button></div>
     </div>
 </div>
 
 <input type="file" id="importFile" accept=".json" style="display:none">
 
 <script>
-    (function(){
-        "use strict";
+(function(){
+    "use strict";
 
-        // ========== 🔥 CONFIGURACIÓN DE FIREBASE - ¡NO TOCAR! 🔥 ==========
-        var firebaseConfig = {
-            apiKey: "AIzaSyCLb7LaJypnUHQ0TKZ2aTRNK4yAa6SUiZE",
-            authDomain: "calculadoramensualsueldo.firebaseapp.com",
-            projectId: "calculadoramensualsueldo",
-            storageBucket: "calculadoramensualsueldo.appspot.com",
-            messagingSenderId: "619721076451",
-            appId: "1:619721076451:web:56925f6251a3ba53ad5fd6"
-        };
+    // 🔥🔥🔥 CONFIGURACIÓN FIREBASE - NO MODIFICAR 🔥🔥🔥
+    const firebaseConfig = {
+        apiKey: "AIzaSyCLb7LaJypnUHQ0TKZ2aTRNK4yAa6SUiZE",
+        authDomain: "calculadoramensualsueldo.firebaseapp.com",
+        projectId: "calculadoramensualsueldo",
+        storageBucket: "calculadoramensualsueldo.appspot.com",
+        messagingSenderId: "619721076451",
+        appId: "1:619721076451:web:56925f6251a3ba53ad5fd6"
+    };
+    if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    db.settings({ experimentalForceLongPolling: true, merge: true });
+    // 🔥🔥🔥 FIN CONFIGURACIÓN - NO TOCAR 🔥🔥🔥
 
-        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-        var db = firebase.firestore();
-        db.settings({ experimentalForceLongPolling: true, merge: true });
+    const docRef = db.collection("usuarios").doc("x9k2mP7qLz4wN1vB8cR5Hernan2026");
+    
+    // Estado
+    let isSyncing = false, saveTimer, currency = 'USD', privateMode = false, chartInst = null;
+    const symbols = {USD:'$', EUR:'€', MXN:'$', COP:'$'};
+    const icons = {general:'📌',vivienda:'🏠',comida:'🍔',transporte:'🚗',servicios:'💡',ocio:'🎮',salud:'🏥',emergencia:'🚨',vacaciones:'✈️',inversion:'📈',compra:'🛒',educacion:'📚'};
+    const CIRC = 2 * Math.PI * 54;
 
-        // ========== ESTADO GLOBAL ==========
-        var isUpdatingFromDB = false;
-        var saveTimeout;
-        var currentCurrency = 'USD';
-        var currencySymbols = { USD:'$', EUR:'€', MXN:'$', COP:'$' };
-        var categoryIcons = {
-            general:'📌', vivienda:'🏠', comida:'🍔', transporte:'🚗',
-            servicios:'💡', ocio:'🎮', salud:'🏥', emergencia:'🚨',
-            vacaciones:'✈️', inversion:'📈', compra:'🛒', educacion:'📚'
-        };
-        var CIRCUMFERENCE = 2 * Math.PI * 54;
-        var chartInstance = null;
-        var currentAccount = 'all';
-        var isPrivateMode = false;
-        var currentMonth = new Date().getMonth();
-        var currentYear = new Date().getFullYear();
+    // Inicializar
+    function init(){
+        renderColors(); setupEvents(); setupSync(); loadPrefs();
+        toast('✨ Smart Budget Pro listo', 'success');
+    }
+
+    // 🔥 Sincronización con Firebase (INTACTA) 🔥
+    function setupSync(){
+        updateSync('🔄 Conectando...','warning');
+        docRef.onSnapshot(doc => {
+            isSyncing = true;
+            if(doc.exists){
+                const d = doc.data();
+                $('#sueldoBase').value = d.sueldo ?? '';
+                if(d.temaColor){ 
+                    document.documentElement.style.setProperty('--primary', d.temaColor);
+                    $$('.color-preset').forEach(p => p.classList.toggle('active', p.dataset.c === d.temaColor));
+                }
+                if(d.darkMode !== undefined){
+                    document.documentElement[d.darkMode ? 'removeAttribute' : 'setAttribute']('data-theme', 'light');
+                    $('#themeToggle').classList.toggle('active', !d.darkMode);
+                }
+                if(d.currency){ currency = d.currency; updateCurrencyUI(); }
+                if(d.privateMode !== undefined){ 
+                    privateMode = d.privateMode; 
+                    document.documentElement.setAttribute('data-private', privateMode);
+                    $('#privateToggle').classList.toggle('active', privateMode);
+                }
+                renderLists(d.deudas||[], d.ahorros||[]);
+            } else renderLists([],[]);
+            calc(); updateBadges(); isSyncing = false;
+            updateSync('✅ Sincronizado','success');
+            $('#lastSync').textContent = new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+        }, err => {
+            console.error('Sync error:', err);
+            updateSync('❌ Error','error');
+            toast('Error de sincronización', 'error');
+        });
+    }
+
+    function renderLists(deudas, ahorros){
+        const [c1,c2] = ['#listaGastos','#listaAhorros'].map(id => $(id));
+        c1.innerHTML = c2.innerHTML = '';
+        deudas.length ? deudas.forEach(i => createItem('gastos',i,true)) : empty(c1,'📭','Sin gastos','Agrega tu primer gasto');
+        ahorros.length ? ahorros.forEach(i => createItem('ahorros',i,true)) : empty(c2,'🏦','Sin metas','Define una meta');
+    }
+
+    function createItem(type, data, fromDB=false){
+        const container = $(type==='gastos'?'#listaGastos':'#listaAhorros');
+        if(container.querySelector('.empty-state')) container.innerHTML = '';
+        const row = document.createElement('div');
+        row.className = 'item-row' + (data.completed?' completed':'');
+        row.style.setProperty('--item-color', data.color || (type==='gastos'?'#ef4444':'#22c55e'));
+        const cats = (type==='gastos'?['general','vivienda','comida','transporte','servicios','ocio','salud']:['general','emergencia','vacaciones','inversion','compra','educacion'])
+            .map(c => `<option value="${c}" ${c===data.category?'selected':''}>${icons[c]} ${c}</option>`).join('');
+        row.innerHTML = `<div class="item-color"></div><div class="item-color-picker"><input type="color" class="item-color-input" value="${data.color||'#ef4444'}"></div>
+            <div class="item-content"><span class="item-icon">${icons[data.category]||'📌'}</span>
+            <div class="item-details"><input type="text" class="item-name" placeholder="${type==='gastos'?'Gasto...':'Meta...'}" value="${data.nombre||''}">
+            <div class="item-meta"><select class="category-select">${cats}</select><input type="number" class="item-amount amount" placeholder="0" min="0" step="0.01" value="${data.monto||''}"></div></div></div>
+            <div class="item-actions"><button class="btn-complete" title="Completado">✔️</button><button class="btn-remove" title="Eliminar">✕</button></div>`;
         
-        var achievements = {
-            firstItem: { name: 'Primer Paso', icon: '🌱', unlocked: false },
-            budget100: { name: 'Presupuesto Activo', icon: '💰', unlocked: false },
-            saver: { name: 'Ahorrador', icon: '🐷', unlocked: false },
-            organized: { name: 'Organizado', icon: '📋', unlocked: false },
-            pro: { name: 'Pro User', icon: '⭐', unlocked: false }
-        };
+        const [name, amt, sel, col, comp, rem] = [row.querySelector('.item-name'), row.querySelector('.item-amount'), row.querySelector('.category-select'), row.querySelector('.item-color-input'), row.querySelector('.btn-complete'), row.querySelector('.btn-remove')];
+        [name,amt].forEach(el => el.addEventListener('input', () => !isSyncing && userChange()));
+        sel.addEventListener('change', () => { row.querySelector('.item-icon').textContent = icons[sel.value]||'📌'; !isSyncing && userChange(); });
+        col.addEventListener('input', () => { row.style.setProperty('--item-color', col.value); !isSyncing && userChange(); });
+        comp.addEventListener('click', () => { row.classList.toggle('completed'); !isSyncing && userChange(); });
+        rem.addEventListener('click', () => {
+            row.style.opacity='0'; row.style.transform='translateX(20px)';
+            setTimeout(() => { row.remove(); if(!container.querySelector('.item-row')) empty(container, type==='gastos'?'📭':'🏦', type==='gastos'?'Sin gastos':'Sin metas', 'Agrega uno nuevo'); !isSyncing && userChange(); }, 200);
+        });
+        container.appendChild(row);
+        if(!fromDB) userChange();
+    }
+
+    function empty(el, icon, title, sub){ el.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${icon}</div><p class="empty-state-text"><strong>${title}</strong><br><small>${sub}</small></p></div>`; }
+
+    // Cálculos
+    function calc(){
+        const sueldo = +$('#sueldoBase').value||0, symbol = symbols[currency];
+        let gastos=0, ahorros=0;
+        $$('.deuda-mon').forEach(i => gastos += +i.value||0);
+        $$('.ahorro-mon').forEach(i => ahorros += +i.value||0);
+        const disponible = Math.max(0, sueldo - gastos - ahorros), exceso = (gastos+ahorros) > sueldo;
+        const gp = sueldo?Math.min(100,(gastos/sueldo)*100):0, ap = sueldo?Math.min(100,(ahorros/sueldo)*100):0, dp = sueldo?Math.max(0,(disponible/sueldo)*100):0;
         
-        var goals = [];
-        var bills = [];
-        var customCategories = [];
+        animate('statGastos', gastos, symbol); animate('statAhorros', ahorros, symbol); animate('statDisponible', disponible, symbol);
+        updateCircle('gastosProgress', gp); updateCircle('ahorrosProgress', ap); updateCircle('disponibleProgress', dp);
+        $('#gastosPercent').textContent = sueldo?Math.round(gp)+'%':'0%';
+        $('#ahorrosPercent').textContent = sueldo?Math.round(ap)+'%':'0%';
+        $('#disponiblePercent').textContent = sueldo?Math.round(dp)+'%':'0%';
+        $('#resGasto').textContent = symbol+' '+fmt(gastos); $('#resAhorro').textContent = symbol+' '+fmt(ahorros); $('#resDisponible').textContent = symbol+' '+fmt(disponible);
+        $('#gastoFooter').textContent = Math.round(gp)+'%'; $('#ahorroFooter').textContent = Math.round(ap)+'%'; $('#dispFooter').textContent = Math.round(dp)+'%';
+        $('#gastoProgressText').textContent = Math.round(gp)+'%'; $('#gastoBar').style.width = gp+'%';
+        $('#ahorroProgressText').textContent = Math.round(ap)+'%'; $('#ahorroBar').style.width = ap+'%';
+        $('#alertGasto').style.display = exceso ? 'block' : 'none';
+        updateBadges();
+    }
 
-        // ========== REFERENCIA FIRESTORE - ¡NO CAMBIAR! ==========
-        var docRef = db.collection("usuarios").doc("x9k2mP7qLz4wN1vB8cR5Hernan2026");
+    function animate(id, val, sym){
+        const el = $(id), cur = +el.textContent.replace(/[^0-9.-]/g,'')||0, dur=300, steps=15, inc=(val-cur)/steps;
+        let s=0; const t=setInterval(()=>{ s++; el.textContent = sym+' '+fmt(Math.round((cur+inc*s)*100)/100); if(s>=steps){ clearInterval(t); el.textContent = sym+' '+fmt(val); } }, dur/steps);
+    }
+    function fmt(n){ return n.toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+    function updateCircle(id, pct){ const c = $(id); c.style.strokeDashoffset = CIRC - (pct/100)*CIRC; }
 
-        // ========== INICIALIZACIÓN ==========
-        function init() {
-            console.log('🚀 Smart Budget Pro v4.0 Iniciando...');
-            setupEventListeners();
-            renderColorPresets();
-            renderAchievements();
-            setupFirestoreListener();
-            checkOnlineStatus();
-            loadPreferences();
-            initPaydayCountdown();
-            showToast('✨ ¡Bienvenido a Smart Budget Pro v4.0!', 'success');
-            setTimeout(checkAchievements, 2000);
-        }
+    // ✅ Badges corregidos
+    function updateBadges(){
+        const s = +$('#sueldoBase').value||0, g = $$('.deuda-mon').reduce((a,i)=>a+(+i.value||0),0), ah = $$('.ahorro-mon').reduce((a,i)=>a+(+i.value||0),0), d = s-g-ah;
+        // Gastos: menos es mejor
+        const gb = $('#gastosHealth'); if(!s){ gb.textContent='Sin ingresos'; gb.className='health-badge warning'; }
+        else { const p=(g/s)*100; if(p<50){gb.textContent='Excelente';gb.className='health-badge healthy'} else if(p<90){gb.textContent='Normal';gb.className='health-badge warning'} else {gb.textContent='A Mejorar';gb.className='health-badge critical'} }
+        // Disponible: más es mejor
+        const db = $('#disponibleHealth'); if(!s){ db.textContent='Sin ingresos'; db.className='health-badge warning'; }
+        else { const p=(d/s)*100; if(p>40){db.textContent='Saludable';db.className='health-badge healthy'} else if(p>15){db.textContent='Ajustado';db.className='health-badge warning'} else {db.textContent='Crítico';db.className='health-badge critical'} }
+        // Ahorros: más es mejor
+        const ab = $('#ahorrosHealth'); if(!s){ ab.textContent='Sin ingresos'; ab.className='health-badge warning'; }
+        else { const p=(ah/s)*100; if(p>=30){ab.textContent='¡Excelente!';ab.className='health-badge healthy'} else if(p>=10){ab.textContent='Bien';ab.className='health-badge warning'} else {ab.textContent='A Mejorar';ab.className='health-badge critical'} }
+    }
 
-        // ========== FIRESTORE LISTENER - SISTEMA ORIGINAL INTACTO ==========
-        function setupFirestoreListener() {
-            console.log('📡 Conectando al servidor...');
-            updateSyncStatus('🔄 Conectando...', 'warning');
-            
-            docRef.onSnapshot(function(doc) {
-                isUpdatingFromDB = true;
-                if (doc.exists) {
-                    var data = doc.data();
-                    console.log('📥 Datos sincronizados desde el servidor');
-                    
-                    document.getElementById('sueldoBase').value = data.sueldo !== undefined ? data.sueldo : '';
-                    
-                    if(data.temaColor) {
-                        document.documentElement.style.setProperty('--primary', data.temaColor);
-                        document.querySelectorAll('.color-preset').forEach(function(p) {
-                            p.classList.toggle('active', p.dataset.color.toLowerCase() === data.temaColor.toLowerCase());
-                        });
-                    }
-                    
-                    if(data.darkMode !== undefined) {
-                        var isDark = data.darkMode;
-                        if(isDark) {
-                            document.documentElement.removeAttribute('data-theme');
-                        } else {
-                            document.documentElement.setAttribute('data-theme', 'light');
-                        }
-                        document.getElementById('themeToggle').classList.toggle('active', isDark);
-                    }
-                    
-                    if(data.currency) { currentCurrency = data.currency; updateCurrencyUI(); }
-                    if(data.privateMode !== undefined) { 
-                        isPrivateMode = data.privateMode; 
-                        document.documentElement.setAttribute('data-private', isPrivateMode);
-                        document.getElementById('privateToggle').classList.toggle('active', isPrivateMode);
-                    }
-                    
-                    renderListsFromData(data.deudas || [], data.ahorros || []);
-                    
-                    if(data.achievements) { Object.assign(achievements, data.achievements); renderAchievements(); }
-                    if(data.goals) { goals = data.goals; renderGoalsList(); }
-                    if(data.bills) { bills = data.bills; renderCalendar(); }
-                    if(data.customCategories) { customCategories = data.customCategories; }
-                } else {
-                    console.log('📄 Nuevo documento - Estructura inicial');
-                    renderListsFromData([], []);
-                }
-                
-                calculateTotals();
-                updateHealthBadges();
-                calculateFinancialScore();
-                isUpdatingFromDB = false;
-                updateSyncStatus('✅ Sincronizado', 'success');
-                updateLastSyncTime();
-                savePreferences();
-            }, function(error) {
-                console.error('❌ Error en Firestore:', error.code, error.message);
-                updateSyncStatus('❌ Error de conexión', 'error');
-                showToast('Error de sincronización: ' + error.message, 'error');
-            });
-        }
+    // Guardado
+    function userChange(){ if(isSyncing) return; calc(); updateSync('📡 Guardando...','warning'); clearTimeout(saveTimer); saveTimer=setTimeout(saveToDB,800); }
+    function saveToDB(){
+        const sueldo = +$('#sueldoBase').value||0, theme = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim(), dark = !document.documentElement.hasAttribute('data-theme');
+        const deudas = $$('##listaGastos .item-row').map(r => ({nombre:r.querySelector('.item-name').value,monto:+r.querySelector('.item-amount').value||0,color:r.style.getPropertyValue('--item-color').trim()||'#ef4444',category:r.querySelector('.category-select').value,completed:r.classList.contains('completed')}));
+        const ahorros = $$('##listaAhorros .item-row').map(r => ({nombre:r.querySelector('.item-name').value,monto:+r.querySelector('.item-amount').value||0,color:r.style.getPropertyValue('--item-color').trim()||'#22c55e',category:r.querySelector('.category-select').value,completed:r.classList.contains('completed')}));
+        docRef.set({sueldo,temaColor:theme,darkMode:dark,currency,privateMode,deudas,ahorros,ultimaActualizacion:firebase.firestore.FieldValue.serverTimestamp()}, {merge:true})
+            .then(()=>{ updateSync('✅ Sincronizado','success'); $('#lastSync').textContent = new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}); savePrefs(); })
+            .catch(e=>{ console.error(e); updateSync('❌ Error','error'); toast('Error al guardar','error'); });
+    }
 
-        function renderListsFromData(deudas, ahorros) {
-            var deudasContainer = document.getElementById('listaDeudas');
-            var ahorrosContainer = document.getElementById('listaAhorros');
-            deudasContainer.innerHTML = '';
-            ahorrosContainer.innerHTML = '';
-            
-            if(deudas.length) {
-                deudas.forEach(function(d) { createItemElement('deudas', d, true); });
-            } else {
-                showEmptyState(deudasContainer, '📭', 'Sin gastos registrados', 'Agrega tu primer gasto para comenzar');
-            }
-            if(ahorros.length) {
-                ahorros.forEach(function(a) { createItemElement('ahorros', a, true); });
-            } else {
-                showEmptyState(ahorrosContainer, '🏦', 'Sin metas de ahorro', 'Define una meta y empieza a ahorrar');
-            }
-        }
+    // UI Helpers
+    function toggleMenu(){ $('#sidebar').classList.toggle('active'); $('#overlay').classList.toggle('active'); }
+    function toggleTheme(){ const h=document.documentElement, d=!h.hasAttribute('data-theme'); h[d?'setAttribute':'removeAttribute']('data-theme','light'); $('#themeToggle').classList.toggle('active',!d); if(!isSyncing) userChange(); toast(d?'☀️ Modo claro':'🌙 Modo oscuro','success'); }
+    function togglePrivate(){ privateMode = !privateMode; document.documentElement.setAttribute('data-private',privateMode); $('#privateToggle').classList.toggle('active',privateMode); if(!isSyncing) userChange(); toast(privateMode?'👁️ Montos ocultos':'👁️ Montos visibles','success'); }
+    function setCurrency(c){ currency=c; updateCurrencyUI(); if(!isSyncing) userChange(); toast('💱 '+c,'success'); toggleMenu(); }
+    function updateCurrencyUI(){ $$('.currency-btn').forEach(b=>b.classList.toggle('active',b.dataset.c===currency)); calc(); }
+    function updateSync(txt, type){
+        const icons={success:'✅',warning:'📡',error:'❌'}, cls={success:'',warning:'warning',error:'error'};
+        $('#saveIcon').firstChild.textContent = icons[type]; $('#saveText').textContent = txt.replace(/^[✅📡❌]\s*/,'');
+        $('#syncStatus').textContent = txt; $('#saveIcon').className = 'save-indicator '+cls[type];
+    }
+    function toast(msg, type='success'){
+        const t=document.createElement('div'); t.className='toast '+type; t.innerHTML=`<span>${type==='success'?'✅':'❌'}</span><span>${msg}</span>`;
+        $('#toastContainer').appendChild(t); setTimeout(()=>{t.style.opacity='0';t.style.transform='translateX(30px)';setTimeout(()=>t.remove(),200)},3000);
+    }
+    function renderColors(){
+        const colors=['#6366f1','#ec4899','#10b981','#f59e0b','#3b82f6','#8b5cf6','#ef4444','#14b8a6','#a855f7','#22c55e'];
+        const c=$('#colorPresets'); c.innerHTML=colors.map(col=>`<div class="color-preset" data-c="${col}" style="background:${col}"></div>`).join('');
+        $$('.color-preset').forEach(p=>p.onclick=()=>{ $$('.color-preset').forEach(x=>x.classList.remove('active')); p.classList.add('active'); document.documentElement.style.setProperty('--primary',p.dataset.c); if(!isSyncing) userChange(); toast('🎨 Color actualizado','success'); });
+    }
+    function setupEvents(){
+        $('#sueldoBase').addEventListener('input', userChange);
+        $('#addGasto').onclick=()=>{ createItem('gastos',{nombre:'',monto:'',color:'#ef4444',category:'general'}); };
+        $('#addAhorro').onclick=()=>{ createItem('ahorros',{nombre:'',monto:'',color:'#22c55e',category:'general'}); };
+        $$('.currency-btn').forEach(b=>b.onclick=()=>setCurrency(b.dataset.c));
+        document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ toggleMenu(); closeModal(); closeChart(); } if(e.key.toLowerCase()==='m') toggleMenu(); if(e.key.toLowerCase()==='t') toggleTheme(); if(e.key.toLowerCase()==='p') togglePrivate(); if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='s'){ e.preventDefault(); forceSync(); } });
+        $('#overlay').onclick=toggleMenu; $('#importFile').onchange=handleImport;
+    }
+    function loadPrefs(){ try{ const t=localStorage.getItem('sbp_t'); if(t==='light'){ document.documentElement.setAttribute('data-theme','light'); $('#themeToggle').classList.add('active'); } const c=localStorage.getItem('sbp_c'); if(c){ currency=c; updateCurrencyUI(); } const col=localStorage.getItem('sbp_col'); if(col){ document.documentElement.style.setProperty('--primary',col); $$('.color-preset').forEach(p=>p.classList.toggle('active',p.dataset.c===col)); } const p=localStorage.getItem('sbp_p'); if(p==='true'){ privateMode=true; document.documentElement.setAttribute('data-private',true); $('#privateToggle').classList.add('active'); } }catch(e){} }
+    function savePrefs(){ try{ localStorage.setItem('sbp_t',document.documentElement.hasAttribute('data-theme')?'light':'dark'); localStorage.setItem('sbp_c',currency); localStorage.setItem('sbp_col',getComputedStyle(document.documentElement).getPropertyValue('--primary').trim()); localStorage.setItem('sbp_p',privateMode); }catch(e){} }
+    
+    // Export/Import
+    function exportData(){ docRef.get().then(doc=>{ if(doc.exists){ const b=new Blob([JSON.stringify(doc.data(),null,2)],{type:'application/json'}), a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='budget_'+new Date().toISOString().slice(0,10)+'.json'; a.click(); toast('📤 Exportado','success'); } }); toggleMenu(); }
+    function exportCSV(){ const r=[['Tipo','Nombre','Categoría','Monto','Completado']]; $$('##listaGastos .item-row').forEach(row=>r.push(['Gasto',row.querySelector('.item-name').value,row.querySelector('.category-select').value,row.querySelector('.item-amount').value,row.classList.contains('completed')?'Sí':'No'])); $$('##listaAhorros .item-row').forEach(row=>r.push(['Ahorro',row.querySelector('.item-name').value,row.querySelector('.category-select').value,row.querySelector('.item-amount').value,row.classList.contains('completed')?'Sí':'No'])); const csv=r.map(x=>x.map(c=>'"'+c+'"').join(',')).join('\n'), b=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'}), a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='budget_'+new Date().toISOString().slice(0,10)+'.csv'; a.click(); toast('📊 CSV exportado','success'); toggleMenu(); }
+    function importData(){ $('#importFile').click(); toggleMenu(); }
+    function handleImport(e){ const f=e.target.files[0]; if(!f) return; const rd=new FileReader(); rd.onload=ev=>{ try{ const d=JSON.parse(ev.target.result); if(d.sueldo!==undefined){ docRef.set(d).then(()=>{ toast('📥 Importado','success'); setTimeout(()=>location.reload(),1000); }); } else throw 0; }catch(err){ toast('❌ Archivo inválido','error'); } }; rd.readAsText(f); e.target.value=''; }
 
-        function createItemElement(type, itemData, append) {
-            if (append === undefined) append = true;
-            var container = document.getElementById(type === 'deudas' ? 'listaDeudas' : 'listaAhorros');
-            if(append && container.querySelector('.empty-state')) container.innerHTML = '';
-            
-            var row = document.createElement('div');
-            row.className = 'item-row' + (itemData.completed ? ' completed' : '');
-            row.dataset.type = type;
-            row.dataset.account = itemData.account || 'all';
-            row.style.setProperty('--item-color', itemData.color || (type==='deudas'?'#ef4444':'#22c55e'));
-            
-            var categories = type === 'deudas' 
-                ? ['general','vivienda','comida','transporte','servicios','ocio','salud']
-                : ['general','emergencia','vacaciones','inversion','compra','educacion'];
-            
-            var catOptions = categories.map(function(c) { 
-                return '<option value="' + c + '" ' + (c===itemData.category?'selected':'') + '>' + categoryIcons[c] + ' ' + c.charAt(0).toUpperCase()+c.slice(1) + '</option>';
-            }).join('');
-            
-            row.innerHTML = 
-                '<div class="item-color-line"></div>' +
-                '<div class="item-color-picker">' +
-                    '<input type="color" class="item-color-input" value="' + (itemData.color || '#ef4444') + '" title="Cambiar color">' +
-                '</div>' +
-                '<div class="item-content">' +
-                    '<span class="item-icon">' + (categoryIcons[itemData.category] || '📌') + '</span>' +
-                    '<div class="item-details">' +
-                        '<input type="text" class="item-name-input" placeholder="' + (type==='deudas'?'Nombre del gasto...':'Nombre de la meta...') + '" value="' + (itemData.nombre || '') + '">' +
-                        (itemData.note ? '<div class="item-note">' + itemData.note + '</div>' : '') +
-                        '<div class="item-meta">' +
-                            '<select class="category-select">' + catOptions + '</select>' +
-                            '<input type="number" class="item-amount-input amount-sensitive ' + (type==='deudas'?'deuda-mon':'ahorro-mon') + '" placeholder="0" min="0" step="0.01" value="' + (itemData.monto || '') + '">' +
-                        '</div>' +
-                    '</div>' +
-                '</div>' +
-                '<div class="item-actions">' +
-                    '<button class="btn-complete" title="Marcar como completado">✔️</button>' +
-                    '<button class="btn-remove" title="Eliminar">✕</button>' +
-                '</div>';
-            
-            var nameInput = row.querySelector('.item-name-input');
-            var amountInput = row.querySelector('.item-amount-input');
-            var select = row.querySelector('.category-select');
-            var colorInput = row.querySelector('.item-color-input');
-            var completeBtn = row.querySelector('.btn-complete');
-            var removeBtn = row.querySelector('.btn-remove');
-            
-            nameInput.addEventListener('input', function() { if(!isUpdatingFromDB) onUserInput(); });
-            amountInput.addEventListener('input', function() { if(!isUpdatingFromDB) onUserInput(); });
-            select.addEventListener('change', function() {
-                row.querySelector('.item-icon').textContent = categoryIcons[this.value] || '📌';
-                if(!isUpdatingFromDB) onUserInput();
-            });
-            colorInput.addEventListener('input', function() {
-                row.style.setProperty('--item-color', this.value);
-                if(!isUpdatingFromDB) onUserInput();
-            });
-            completeBtn.addEventListener('click', function() {
-                row.classList.toggle('completed');
-                if(!isUpdatingFromDB) onUserInput();
-                checkAchievements();
-            });
-            removeBtn.addEventListener('click', function() {
-                row.style.opacity = '0';
-                row.style.transform = 'translateX(20px) scale(0.95)';
-                setTimeout(function() {
-                    row.remove();
-                    if(!container.querySelector('.item-row')) {
-                        showEmptyState(container, type==='deudas'?'📭':'', 
-                            type==='deudas'?'Sin gastos':'Sin metas', 
-                            type==='deudas'?'Agrega tu primer gasto':'Define una meta de ahorro');
-                    }
-                    if(!isUpdatingFromDB) onUserInput();
-                }, 250);
-            });
-            
-            // Swipe to delete
-            var touchStartX = 0;
-            row.addEventListener('touchstart', function(e) { touchStartX = e.touches[0].clientX; }, {passive:true});
-            row.addEventListener('touchend', function(e) {
-                var touchEndX = e.changedTouches[0].clientX;
-                if(touchStartX - touchEndX > 50) removeBtn.click();
-            }, {passive:true});
-            
-            if(append) container.appendChild(row);
-            return row;
-        }
+    // Chart
+    function showChart(){
+        const ctx=$('#expenseChart').getContext('2d'), cats={}, total=0;
+        $$('##listaGastos .item-row').forEach(r=>{ const c=r.querySelector('.category-select').value||'general', m=+r.querySelector('.item-amount').value||0; if(m>0){ cats[c]=(cats[c]||0)+m; total+=m; } });
+        if(!total){ toast('📊 Agrega gastos primero','warning'); toggleMenu(); return; }
+        const labels=Object.keys(cats).map(c=>(icons[c]||'📌')+' '+c), data=Object.values(cats), colors=['#6366f1','#ec4899','#10b981','#f59e0b','#3b82f6','#8b5cf6','#ef4444','#14b8a6'];
+        if(chartInst) chartInst.destroy();
+        chartInst=new Chart(ctx,{type:'doughnut',data:{labels,datasets:[{data,bgColor:colors.slice(0,data.length),borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>(ctx.label+': '+symbols[currency]+ctx.parsed.toFixed(2)+' ('+((ctx.parsed/total)*100).toFixed(1)+'%)')}}}}});
+        $('#chartModal').classList.add('active'); toggleMenu();
+    }
+    function closeChart(){ $('#chartModal').classList.remove('active'); }
 
-        function showEmptyState(container, icon, title, subtitle) {
-            container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">' + icon + '</div><p class="empty-state-text"><strong>' + title + '</strong><br><small>' + subtitle + '</small></p></div>';
-        }
+    // Stats & Reset
+    function showStats(){ const s=+$('#sueldoBase').value||0, g=$$('.deuda-mon').reduce((a,i)=>a+(+i.value||0),0), ah=$$('.ahorro-mon').reduce((a,i)=>a+(+i.value||0),0), d=s-g-ah, sym=symbols[currency]; modal('📊 Resumen','💵 Ingreso: '+sym+fmt(s)+'\n💸 Gastos: '+sym+fmt(g)+' ('+(s?((g/s)*100).toFixed(1):0)+'%)\n🎯 Ahorros: '+sym+fmt(ah)+' ('+(s?((ah/s)*100).toFixed(1):0)+'%)\n💎 Disponible: '+sym+fmt(Math.max(0,d))); toggleMenu(); }
+    function confirmReset(){ modal('🗑️ ¿Borrar todo?','⚠️ Esta acción es irreversible. ¿Continuar?',()=>{ docRef.delete().then(()=>{ toast('🗑️ Datos borrados','success'); setTimeout(()=>location.reload(),1000); }); }); toggleMenu(); }
+    function forceSync(){ updateSync('🔄 Sincronizando...','warning'); userChange(); setTimeout(()=>toast('✅ Sincronizado','success'),1000); toggleMenu(); }
 
-        // ========== CÁLCULOS Y ACTUALIZACIONES ==========
-        function calculateTotals() {
-            var sueldo = parseFloat(document.getElementById('sueldoBase').value) || 0;
-            var gastos = 0, ahorros = 0;
-            
-            document.querySelectorAll('.deuda-mon').forEach(function(i) { gastos += parseFloat(i.value) || 0; });
-            document.querySelectorAll('.ahorro-mon').forEach(function(i) { ahorros += parseFloat(i.value) || 0; });
-            
-            var disponible = Math.max(0, sueldo - gastos - ahorros);
-            var exceso = (gastos + ahorros) > sueldo;
-            var symbol = currencySymbols[currentCurrency];
-            
-            var gastosPercent = sueldo === 0 ? 0 : Math.min(100, (gastos / sueldo) * 100);
-            var ahorrosPercent = sueldo === 0 ? 0 : Math.min(100, (ahorros / sueldo) * 100);
-            var disponiblePercent = sueldo === 0 ? 0 : Math.max(0, (disponible / sueldo) * 100);
-            
-            animateValue('statGastos', gastos, symbol, 'danger');
-            animateValue('statAhorros', ahorros, symbol, 'success');
-            animateValue('statDisponible', disponible, symbol, disponible < 0 ? 'danger' : 'success');
-            
-            updateCircle('gastosProgress', gastosPercent);
-            updateCircle('ahorrosProgress', ahorrosPercent);
-            updateCircle('disponibleProgress', disponiblePercent);
-            
-            document.getElementById('gastosPercent').textContent = sueldo===0 ? '0%' : Math.round(gastosPercent) + '%';
-            document.getElementById('ahorrosPercent').textContent = sueldo===0 ? '0%' : Math.round(ahorrosPercent) + '%';
-            document.getElementById('disponiblePercent').textContent = sueldo===0 ? '0%' : Math.round(disponiblePercent) + '%';
-            
-            document.getElementById('resGasto').textContent = symbol + ' ' + formatNumber(gastos);
-            document.getElementById('resAhorro').textContent = symbol + ' ' + formatNumber(ahorros);
-            document.getElementById('resDisponible').textContent = symbol + ' ' + formatNumber(disponible);
-            document.getElementById('gastosFooterPercent').textContent = Math.round(gastosPercent) + '%';
-            document.getElementById('ahorrosFooterPercent').textContent = Math.round(ahorrosPercent) + '%';
-            document.getElementById('disponibleFooterPercent').textContent = Math.round(disponiblePercent) + '%';
-            
-            document.getElementById('deudaProgressText').textContent = Math.round(gastosPercent) + '%';
-            document.getElementById('deudaBar').style.width = gastosPercent + '%';
-            document.getElementById('ahorroProgressText').textContent = Math.round(ahorrosPercent) + '%';
-            document.getElementById('ahorroBar').style.width = ahorrosPercent + '%';
-            
-            document.getElementById('excesoGastoMsg').style.display = exceso ? 'block' : 'none';
-            
-            updateHealthBadges();
-            calculateFinancialScore();
-            checkBudgetAlerts();
-            checkAchievements();
-        }
+    // Modal
+    function modal(title, text, onConfirm){ $('#modalTitle').textContent=title; $('#modalText').textContent=text; $('#modalConfirm').onclick=()=>{ closeModal(); if(onConfirm) onConfirm(); }; $('#modalConfirm').textContent=onConfirm?'Confirmar':'Cerrar'; $('#modal').classList.add('active'); }
+    function closeModal(){ $('#modal').classList.remove('active'); }
 
-        function animateValue(elementId, value, symbol, colorClass) {
-            var el = document.getElementById(elementId);
-            var current = parseFloat(el.textContent.replace(/[^0-9.-]/g, '')) || 0;
-            var duration = 400;
-            var steps = 20;
-            var stepValue = (value - current) / steps;
-            var step = 0;
-            
-            var timer = setInterval(function() {
-                step++;
-                var newValue = current + stepValue * step;
-                el.textContent = symbol + ' ' + formatNumber(Math.round(newValue * 100) / 100);
-                if(elementId.includes('Gastos')) el.style.color = 'var(--danger)';
-                else if(elementId.includes('Ahorro')) el.style.color = 'var(--success)';
-                else el.style.color = value < 0 ? 'var(--danger)' : 'var(--success)';
-                if(step >= steps) {
-                    clearInterval(timer);
-                    el.textContent = symbol + ' ' + formatNumber(value);
-                }
-            }, duration / steps);
-        }
+    // Utils
+    const $=s=>document.querySelector(s), $$=s=>document.querySelectorAll(s.replace('##','#'));
+    window.toggleMenu=toggleMenu; window.toggleTheme=toggleTheme; window.togglePrivate=togglePrivate; window.setCurrency=setCurrency; window.exportData=exportData; window.exportCSV=exportCSV; window.importData=importData; window.showChart=showChart; window.closeChart=closeChart; window.showStats=showStats; window.confirmReset=confirmReset; window.forceSync=forceSync; window.closeModal=closeModal; window.userChange=userChange;
 
-        function formatNumber(num) {
-            return num.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        }
-
-        function updateCircle(id, percent) {
-            var circle = document.getElementById(id);
-            var offset = CIRCUMFERENCE - (percent / 100) * CIRCUMFERENCE;
-            circle.style.strokeDashoffset = offset;
-        }
-
-        // ===== BADGES CORREGIDOS =====
-        function updateHealthBadges() {
-            var sueldo = parseFloat(document.getElementById('sueldoBase').value) || 0;
-            var gastos = Array.from(document.querySelectorAll('.deuda-mon')).reduce(function(s,i){return s+(parseFloat(i.value)||0);},0);
-            var ahorros = Array.from(document.querySelectorAll('.ahorro-mon')).reduce(function(s,i){return s+(parseFloat(i.value)||0);},0);
-            var disponible = sueldo - gastos - ahorros;
-            
-            // Gastos: Menos es mejor
-            var gastosBadge = document.getElementById('gastosHealth');
-            if(sueldo === 0) {
-                gastosBadge.textContent = 'Sin ingresos';
-                gastosBadge.className = 'health-badge warning';
-            } else {
-                var gastosPercent = (gastos / sueldo) * 100;
-                if(gastosPercent < 50) { 
-                    gastosBadge.textContent = 'Excelente'; 
-                    gastosBadge.className = 'health-badge healthy'; 
-                }
-                else if(gastosPercent < 90) { 
-                    gastosBadge.textContent = 'Normal'; 
-                    gastosBadge.className = 'health-badge warning'; 
-                }
-                else { 
-                    gastosBadge.textContent = 'A Mejorar'; 
-                    gastosBadge.className = 'health-badge critical'; 
-                }
-            }
-            
-            // Disponible: Más es mejor
-            var disponibleBadge = document.getElementById('disponibleHealth');
-            if(sueldo === 0) {
-                disponibleBadge.textContent = 'Sin ingresos';
-                disponibleBadge.className = 'health-badge warning';
-            } else {
-                var disponiblePercent = (disponible / sueldo) * 100;
-                if(disponiblePercent > 40) { 
-                    disponibleBadge.textContent = 'Saludable'; 
-                    disponibleBadge.className = 'health-badge healthy'; 
-                }
-                else if(disponiblePercent > 15) { 
-                    disponibleBadge.textContent = 'Ajustado'; 
-                    disponibleBadge.className = 'health-badge warning'; 
-                }
-                else { 
-                    disponibleBadge.textContent = 'Crítico'; 
-                    disponibleBadge.className = 'health-badge critical'; 
-                }
-            }
-            
-            // Ahorros: Más es mejor
-            var ahorrosBadge = document.getElementById('ahorrosHealth');
-            if(sueldo === 0) {
-                ahorrosBadge.textContent = 'Sin ingresos';
-                ahorrosBadge.className = 'health-badge warning';
-            } else {
-                var ahorrosPercentCalc = (ahorros / sueldo) * 100;
-                if(ahorrosPercentCalc >= 30) { 
-                    ahorrosBadge.textContent = '¡Excelente!'; 
-                    ahorrosBadge.className = 'health-badge healthy'; 
-                }
-                else if(ahorrosPercentCalc >= 10) { 
-                    ahorrosBadge.textContent = 'Bien'; 
-                    ahorrosBadge.className = 'health-badge warning'; 
-                }
-                else { 
-                    ahorrosBadge.textContent = 'A Mejorar'; 
-                    ahorrosBadge.className = 'health-badge critical'; 
-                }
-            }
-        }
-
-        // ===== FINANCIAL SCORE =====
-        function calculateFinancialScore() {
-            var sueldo = parseFloat(document.getElementById('sueldoBase').value) || 0;
-            if(sueldo === 0) {
-                document.getElementById('financialScore').style.display = 'none';
-                return;
-            }
-            document.getElementById('financialScore').style.display = 'block';
-            
-            var gastos = Array.from(document.querySelectorAll('.deuda-mon')).reduce(function(s,i){return s+(parseFloat(i.value)||0);},0);
-            var ahorros = Array.from(document.querySelectorAll('.ahorro-mon')).reduce(function(s,i){return s+(parseFloat(i.value)||0);},0);
-            var disponible = sueldo - gastos - ahorros;
-            
-            var score = 50; // Base
-            if((gastos/sueldo)*100 < 50) score += 20;
-            else if((gastos/sueldo)*100 < 80) score += 10;
-            
-            if((ahorros/sueldo)*100 >= 20) score += 20;
-            else if((ahorros/sueldo)*100 >= 10) score += 10;
-            
-            if((disponible/sueldo)*100 > 30) score += 10;
-            
-            score = Math.min(100, Math.max(0, score));
-            
-            document.getElementById('scoreValue').textContent = score;
-            document.getElementById('scoreCircle').style.setProperty('--score-percent', score + '%');
-            
-            var tips = document.getElementById('scoreTips');
-            if(score >= 80) tips.textContent = '🎉 ¡Excelente gestión financiera!';
-            else if(score >= 60) tips.textContent = '💪 Vas por buen camino, sigue así';
-            else if(score >= 40) tips.textContent = '📈 Puedes mejorar reduciendo gastos';
-            else tips.textContent = '⚠️ Revisa tu presupuesto urgentemente';
-        }
-
-        // ===== BUDGET ALERTS =====
-        function checkBudgetAlerts() {
-            var sueldo = parseFloat(document.getElementById('sueldoBase').value) || 0;
-            if(sueldo === 0) return;
-            
-            var gastos = Array.from(document.querySelectorAll('.deuda-mon')).reduce(function(s,i){return s+(parseFloat(i.value)||0);},0);
-            var percent = (gastos / sueldo) * 100;
-            
-            if(percent >= 90 && percent < 100) {
-                showAlert('⚠️ Has usado el ' + Math.round(percent) + '% de tu presupuesto', 'warning');
-            } else if(percent >= 100) {
-                showAlert('🚨 ¡Has excedido tu presupuesto!', 'error');
-            }
-        }
-
-        function showAlert(message, type) {
-            var existing = document.querySelector('.alert-banner');
-            if(existing) existing.remove();
-            
-            var alert = document.createElement('div');
-            alert.className = 'alert-banner' + (type === 'warning' ? ' warning' : '');
-            alert.innerHTML = '<span class="alert-icon">' + (type === 'warning' ? '⚠️' : '🚨') + '</span><span>' + message + '</span>';
-            document.querySelector('.top-banner').after(alert);
-            
-            setTimeout(function() { alert.remove(); }, 5000);
-        }
-
-        // ===== PAYDAY COUNTDOWN =====
-        function initPaydayCountdown() {
-            var payday = 15; // Día de pago (configurable)
-            var today = new Date().getDate();
-            var daysLeft = payday > today ? payday - today : 30 - today + payday;
-            
-            if(daysLeft <= 7) {
-                document.getElementById('paydayBanner').style.display = 'flex';
-                document.getElementById('paydayCountdown').textContent = daysLeft + ' días';
-            }
-        }
-
-        // ===== PRIVATE MODE =====
-        function togglePrivateMode() {
-            isPrivateMode = !isPrivateMode;
-            document.documentElement.setAttribute('data-private', isPrivateMode);
-            document.getElementById('privateToggle').classList.toggle('active', isPrivateMode);
-            if(!isUpdatingFromDB) onUserInput();
-            showToast(isPrivateMode ? '👁️ Modo privado activado' : '👁️ Modo privado desactivado', 'success');
-        }
-
-        // ========== GUARDADO EN FIRESTORE ==========
-        function onUserInput() {
-            if(isUpdatingFromDB) return;
-            calculateTotals();
-            updateSyncStatus('📡 Guardando...', 'warning');
-            clearTimeout(saveTimeout);
-            saveTimeout = setTimeout(function() { saveToFirestore(); }, 900);
-        }
-
-        function saveToFirestore() {
-            var sueldo = parseFloat(document.getElementById('sueldoBase').value) || 0;
-            var theme = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim();
-            var isDark = !document.documentElement.hasAttribute('data-theme');
-            
-            var deudas = Array.from(document.querySelectorAll('#listaDeudas .item-row')).map(function(row) {
-                return {
-                    nombre: row.querySelector('.item-name-input').value,
-                    monto: parseFloat(row.querySelector('.item-amount-input').value) || 0,
-                    color: row.style.getPropertyValue('--item-color').trim() || '#ef4444',
-                    category: row.querySelector('.category-select').value,
-                    completed: row.classList.contains('completed'),
-                    note: row.querySelector('.item-note') ? row.querySelector('.item-note').textContent : '',
-                    account: row.dataset.account || 'all'
-                };
-            });
-            
-            var ahorros = Array.from(document.querySelectorAll('#listaAhorros .item-row')).map(function(row) {
-                return {
-                    nombre: row.querySelector('.item-name-input').value,
-                    monto: parseFloat(row.querySelector('.item-amount-input').value) || 0,
-                    color: row.style.getPropertyValue('--item-color').trim() || '#22c55e',
-                    category: row.querySelector('.category-select').value,
-                    completed: row.classList.contains('completed'),
-                    note: row.querySelector('.item-note') ? row.querySelector('.item-note').textContent : '',
-                    account: row.dataset.account || 'all'
-                };
-            });
-            
-            var dataToSave = {
-                sueldo: sueldo,
-                temaColor: theme,
-                darkMode: isDark,
-                privateMode: isPrivateMode,
-                currency: currentCurrency,
-                deudas: deudas,
-                ahorros: ahorros,
-                goals: goals,
-                bills: bills,
-                achievements: achievements,
-                customCategories: customCategories,
-                ultimaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
-            };
-            
-            docRef.set(dataToSave, { merge: true }).then(function() {
-                console.log('📤 Datos guardados exitosamente');
-                updateSyncStatus('✅ Sincronizado', 'success');
-                updateLastSyncTime();
-                savePreferences();
-            }).catch(function(err) {
-                console.error('❌ Error al guardar:', err);
-                updateSyncStatus('❌ Error al guardar', 'error');
-                showToast('Error: ' + err.message, 'error');
-            });
-        }
-
-        // ========== FUNCIONES UI ==========
-        function toggleMenu() {
-            document.getElementById('sidebar').classList.toggle('active');
-            document.getElementById('overlay').classList.toggle('active');
-        }
-
-        function toggleTheme() {
-            var html = document.documentElement;
-            var isDark = !html.hasAttribute('data-theme');
-            if(isDark) html.setAttribute('data-theme', 'light');
-            else html.removeAttribute('data-theme');
-            document.getElementById('themeToggle').classList.toggle('active', !isDark);
-            if(!isUpdatingFromDB) onUserInput();
-            showToast(isDark ? '☀️ Modo claro activado' : '🌙 Modo oscuro activado', 'success');
-        }
-
-        function setCurrency(curr) {
-            currentCurrency = curr;
-            updateCurrencyUI();
-            if(!isUpdatingFromDB) onUserInput();
-            showToast('💱 Moneda: ' + curr, 'success');
-            toggleMenu();
-        }
-
-        function updateCurrencyUI() {
-            document.querySelectorAll('[data-curr]').forEach(function(btn) {
-                btn.classList.toggle('active', btn.dataset.curr === currentCurrency);
-            });
-            calculateTotals();
-        }
-
-        function updateSyncStatus(text, type) {
-            var iconSpan = document.querySelector('#saveIcon span:first-child');
-            var textSpan = document.getElementById('saveText');
-            var syncIcon = document.getElementById('syncIcon');
-            var syncText = document.getElementById('syncStatusText');
-            
-            var icons = { success:'✅', warning:'📡', error:'❌' };
-            var classes = { success:'', warning:'warning', error:'error' };
-            
-            if(iconSpan) iconSpan.textContent = icons[type];
-            if(textSpan) textSpan.textContent = text.replace(/^[✅📡❌]\s*/, '');
-            if(syncIcon) { syncIcon.textContent = icons[type]; syncIcon.className = 'sync-status-icon ' + classes[type]; }
-            if(syncText) syncText.textContent = text.replace(/^[✅📡❌]\s*/, '');
-            document.getElementById('saveIcon').className = 'save-indicator ' + classes[type];
-        }
-
-        function updateLastSyncTime() {
-            var now = new Date();
-            document.getElementById('lastSync').textContent = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-        }
-
-        function showToast(msg, type) {
-            type = type || 'success';
-            var container = document.getElementById('toastContainer');
-            var toast = document.createElement('div');
-            toast.className = 'toast ' + type;
-            toast.innerHTML = '<span style="font-size:1.2rem">' + (type==='success'?'✅':type==='error'?'❌':'️') + '</span><span>' + msg + '</span>';
-            container.appendChild(toast);
-            setTimeout(function() { 
-                toast.style.opacity = '0'; 
-                toast.style.transform = 'translateX(40px)';
-                setTimeout(function() { toast.remove(); }, 300);
-            }, 3500);
-        }
-
-        function renderColorPresets() {
-            var presets = ['#6366f1','#ec4899','#10b981','#f59e0b','#3b82f6','#8b5cf6','#ef4444','#14b8a6','#a855f7','#22c55e'];
-            var container = document.getElementById('colorPresets');
-            container.innerHTML = presets.map(function(c) { 
-                return '<div class="color-preset" style="background:' + c + '" data-color="' + c + '" title="' + c + '"></div>'; 
-            }).join('');
-            container.querySelectorAll('.color-preset').forEach(function(el) {
-                el.addEventListener('click', function() {
-                    container.querySelectorAll('.color-preset').forEach(function(p) { p.classList.remove('active'); });
-                    el.classList.add('active');
-                    document.documentElement.style.setProperty('--primary', el.dataset.color);
-                    if(!isUpdatingFromDB) onUserInput();
-                    showToast('🎨 Color actualizado', 'success');
-                });
-            });
-        }
-
-        function setupEventListeners() {
-            document.getElementById('sueldoBase').addEventListener('input', onUserInput);
-            document.getElementById('addGastoBtn').addEventListener('click', function() {
-                createItemElement('deudas', { nombre:'', monto:'', color:'#ef4444', category:'general', account: currentAccount });
-                onUserInput(); checkAchievements();
-            });
-            document.getElementById('addAhorroBtn').addEventListener('click', function() {
-                createItemElement('ahorros', { nombre:'', monto:'', color:'#22c55e', category:'general', account: currentAccount });
-                onUserInput(); checkAchievements();
-            });
-            document.querySelectorAll('[data-curr]').forEach(function(btn) {
-                btn.addEventListener('click', function() { setCurrency(btn.dataset.curr); });
-            });
-            document.addEventListener('keydown', handleKeyboardShortcuts);
-            document.getElementById('overlay').addEventListener('click', toggleMenu);
-            document.getElementById('importFile').addEventListener('change', handleImport);
-            document.getElementById('searchInput').addEventListener('input', searchItems);
-            
-            window.addEventListener('online', function() { 
-                document.getElementById('offlineIndicator').classList.remove('active');
-                showToast('🔄 Conectado - Sincronizando...', 'success');
-                forceSync();
-            });
-            window.addEventListener('offline', function() {
-                document.getElementById('offlineIndicator').classList.add('active');
-                showToast('📡 Modo sin conexión', 'warning');
-            });
-        }
-
-        function handleKeyboardShortcuts(e) {
-            if(e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-            if(e.key.toLowerCase() === 'm') { e.preventDefault(); toggleMenu(); }
-            if(e.key.toLowerCase() === 'g') { e.preventDefault(); document.getElementById('addGastoBtn').click(); }
-            if(e.key.toLowerCase() === 'a') { e.preventDefault(); document.getElementById('addAhorroBtn').click(); }
-            if(e.key.toLowerCase() === 't') { e.preventDefault(); toggleTheme(); }
-            if(e.key.toLowerCase() === 'p') { e.preventDefault(); togglePrivateMode(); }
-            if(e.key === 'Escape') { 
-                closeModal(); closeChartModal(); closeCalendarModal(); closeGoalsModal();
-                closeManual(); closeShortcuts(); closeAchievements();
-                document.getElementById('sidebar').classList.remove('active');
-                document.getElementById('overlay').classList.remove('active');
-            }
-            if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { 
-                e.preventDefault(); forceSync(); 
-            }
-        }
-
-        // ===== SEARCH =====
-        function searchItems() {
-            var query = document.getElementById('searchInput').value.toLowerCase();
-            if(!query) { calculateTotals(); return; }
-            
-            document.querySelectorAll('.item-row').forEach(function(row) {
-                var name = row.querySelector('.item-name-input').value.toLowerCase();
-                var category = row.querySelector('.category-select').value.toLowerCase();
-                var note = row.querySelector('.item-note') ? row.querySelector('.item-note').textContent.toLowerCase() : '';
-                
-                if(name.includes(query) || category.includes(query) || note.includes(query)) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-        }
-
-        // ===== ACCOUNT FILTER =====
-        function filterByAccount(account) {
-            currentAccount = account;
-            document.querySelectorAll('.account-chip').forEach(function(chip) {
-                chip.classList.toggle('active', chip.dataset.account === account);
-            });
-            
-            document.querySelectorAll('.item-row').forEach(function(row) {
-                if(account === 'all' || row.dataset.account === account) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-        }
-
-        // ===== EXPORT/IMPORT =====
-        function exportData() {
-            docRef.get().then(function(doc) {
-                if(doc.exists) {
-                    var blob = new Blob([JSON.stringify(doc.data(), null, 2)], {type:'application/json'});
-                    var a = document.createElement('a');
-                    a.href = URL.createObjectURL(blob);
-                    a.download = 'smartbudget_backup_' + new Date().toISOString().slice(0,10) + '.json';
-                    a.click();
-                    URL.revokeObjectURL(a.href);
-                    showToast('📤 Backup exportado exitosamente', 'success');
-                }
-            });
-            toggleMenu();
-        }
-
-        function exportPDF() {
-            if(!window.jspdf) { showToast('📄 Cargando librería PDF...', 'warning'); return; }
-            var { jsPDF } = window.jspdf;
-            var doc = new jsPDF();
-            
-            var sueldo = document.getElementById('sueldoBase').value || '0';
-            var gastos = document.getElementById('resGasto').textContent;
-            var ahorros = document.getElementById('resAhorro').textContent;
-            var disponible = document.getElementById('resDisponible').textContent;
-            
-            doc.setFontSize(18);
-            doc.text('Smart Budget Pro - Reporte', 20, 20);
-            doc.setFontSize(12);
-            doc.text('Fecha: ' + new Date().toLocaleDateString('es-ES'), 20, 30);
-            doc.text('--------------------------------', 20, 40);
-            doc.text('Ingreso Mensual: ' + sueldo + ' ' + currentCurrency, 20, 55);
-            doc.text('Gastos Totales: ' + gastos, 20, 65);
-            doc.text('Ahorros: ' + ahorros, 20, 75);
-            doc.text('Disponible: ' + disponible, 20, 85);
-            
-            doc.save('smartbudget_reporte_' + new Date().toISOString().slice(0,10) + '.pdf');
-            showToast('📄 PDF exportado', 'success');
-            toggleMenu();
-        }
-
-        function exportCSV() {
-            var rows = [['Tipo', 'Nombre', 'Categoría', 'Monto', 'Completado', 'Cuenta', 'Nota', 'Moneda']];
-            document.querySelectorAll('#listaDeudas .item-row').forEach(function(row) {
-                rows.push(['Gasto', row.querySelector('.item-name-input').value, row.querySelector('.category-select').value, 
-                    row.querySelector('.item-amount-input').value, row.classList.contains('completed') ? 'Sí' : 'No',
-                    row.dataset.account || 'all', row.querySelector('.item-note') ? row.querySelector('.item-note').textContent : '', currentCurrency]);
-            });
-            document.querySelectorAll('#listaAhorros .item-row').forEach(function(row) {
-                rows.push(['Ahorro', row.querySelector('.item-name-input').value, row.querySelector('.category-select').value, 
-                    row.querySelector('.item-amount-input').value, row.classList.contains('completed') ? 'Sí' : 'No',
-                    row.dataset.account || 'all', row.querySelector('.item-note') ? row.querySelector('.item-note').textContent : '', currentCurrency]);
-            });
-            var csv = rows.map(function(r) { return r.map(function(c) { return '"' + c + '"'; }).join(','); }).join('\n');
-            var blob = new Blob(['\ufeff' + csv], {type: 'text/csv;charset=utf-8;'});
-            var a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = 'smartbudget_export_' + new Date().toISOString().slice(0,10) + '.csv';
-            a.click();
-            showToast('📊 CSV exportado', 'success');
-            toggleMenu();
-        }
-
-        function importData() { document.getElementById('importFile').click(); toggleMenu(); }
-
-        function handleImport(event) {
-            var file = event.target.files[0];
-            if(!file) return;
-            var reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    var data = JSON.parse(e.target.result);
-                    if(data.sueldo !== undefined && data.deudas !== undefined) {
-                        docRef.set(data).then(function() { 
-                            showToast('📥 Datos importados correctamente', 'success');
-                            setTimeout(function(){ location.reload(); }, 1500);
-                        });
-                    } else { throw new Error('Formato inválido'); }
-                } catch(err) { showToast('❌ Archivo inválido o corrupto', 'error'); }
-            };
-            reader.readAsText(file);
-            event.target.value = '';
-        }
-
-        // ===== CHART =====
-        function showChartModal() {
-            var ctx = document.getElementById('expenseChart').getContext('2d');
-            var categories = {};
-            var total = 0;
-            
-            document.querySelectorAll('#listaDeudas .item-row').forEach(function(row) {
-                var cat = row.querySelector('.category-select').value || 'general';
-                var monto = parseFloat(row.querySelector('.item-amount-input').value) || 0;
-                if(monto > 0) { categories[cat] = (categories[cat] || 0) + monto; total += monto; }
-            });
-            
-            if(total === 0) {
-                showToast('📊 Agrega gastos para ver la gráfica', 'warning');
-                toggleMenu();
-                return;
-            }
-            
-            var labels = Object.keys(categories).map(function(c) { return (categoryIcons[c] || '📌') + ' ' + c.charAt(0).toUpperCase() + c.slice(1); });
-            var data = Object.values(categories);
-            var colors = ['#6366f1','#ec4899','#10b981','#f59e0b','#3b82f6','#8b5cf6','#ef4444','#14b8a6','#a855f7','#22c55e'];
-            
-            if(chartInstance) chartInstance.destroy();
-            
-            chartInstance = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: labels,
-                    datasets: [{ data: data, backgroundColor: colors.slice(0, data.length), borderWidth: 0, hoverOffset: 15 }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    cutout: '65%',
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    var percent = ((context.parsed / total) * 100).toFixed(1);
-                                    return context.label + ': ' + currencySymbols[currentCurrency] + context.parsed.toFixed(2) + ' (' + percent + '%)';
-                                }
-                            }
-                        }
-                    },
-                    animation: { animateScale: true, animateRotate: true }
-                }
-            });
-            
-            var legend = document.getElementById('chartLegend');
-            legend.innerHTML = labels.map(function(label, i) {
-                var percent = ((data[i] / total) * 100).toFixed(1);
-                return '<div style="display:flex;align-items:center;gap:6px;"><span style="width:12px;height:12px;border-radius:3px;background:' + colors[i] + '"></span><span>' + label + ' <strong>' + percent + '%</strong></span></div>';
-            }).join('');
-            
-            document.getElementById('chartModal').classList.add('active');
-            toggleMenu();
-        }
-
-        function closeChartModal() { document.getElementById('chartModal').classList.remove('active'); }
-        function exportChart() {
-            var canvas = document.getElementById('expenseChart');
-            var link = document.createElement('a');
-            link.download = 'grafica_gastos_' + new Date().toISOString().slice(0,10) + '.png';
-            link.href = canvas.toDataURL('image/png');
-            link.click();
-            showToast('📸 Imagen guardada', 'success');
-        }
-
-        // ===== CALENDAR =====
-        function showCalendarModal() {
-            renderCalendar();
-            document.getElementById('calendarModal').classList.add('active');
-            toggleMenu();
-        }
-        function closeCalendarModal() { document.getElementById('calendarModal').classList.remove('active'); }
-        
-        function renderCalendar() {
-            var monthNames = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-            document.getElementById('calendarMonthYear').textContent = monthNames[currentMonth] + ' ' + currentYear;
-            
-            var firstDay = new Date(currentYear, currentMonth, 1).getDay();
-            var daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-            var today = new Date();
-            
-            var grid = document.getElementById('calendarGrid');
-            grid.innerHTML = '';
-            
-            ['D','L','M','M','J','V','S'].forEach(function(d) {
-                grid.innerHTML += '<div style="font-size:0.7rem;color:var(--text-muted);text-align:center;font-weight:700;">' + d + '</div>';
-            });
-            
-            for(var i = 0; i < firstDay; i++) grid.innerHTML += '<div></div>';
-            
-            for(var day = 1; day <= daysInMonth; day++) {
-                var hasBill = bills.some(function(b) { 
-                    var d = new Date(b.date);
-                    return d.getDate() === day && d.getMonth() === currentMonth && d.getFullYear() === currentYear;
-                });
-                var isToday = day === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear();
-                
-                var dayEl = document.createElement('div');
-                dayEl.className = 'calendar-day' + (isToday ? ' today' : '') + (hasBill ? ' has-bill' : '');
-                dayEl.textContent = day;
-                dayEl.onclick = function(d) { return function() { showDayBills(d); }; }(day);
-                grid.appendChild(dayEl);
-            }
-            
-            renderBillsList();
-        }
-        
-        function changeMonth(delta) {
-            currentMonth += delta;
-            if(currentMonth > 11) { currentMonth = 0; currentYear++; }
-            if(currentMonth < 0) { currentMonth = 11; currentYear--; }
-            renderCalendar();
-        }
-        
-        function showDayBills(day) {
-            var dayBills = bills.filter(function(b) {
-                var d = new Date(b.date);
-                return d.getDate() === day && d.getMonth() === currentMonth && d.getFullYear() === currentYear;
-            });
-            if(dayBills.length) {
-                showToast('📅 Facturas: ' + dayBills.map(function(b){return b.name;}).join(', '), 'success');
-            }
-        }
-        
-        function renderBillsList() {
-            var list = document.getElementById('calendarBills');
-            var monthBills = bills.filter(function(b) {
-                var d = new Date(b.date);
-                return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
-            });
-            if(monthBills.length) {
-                list.innerHTML = '<strong>Facturas del mes:</strong><br>' + 
-                    monthBills.map(function(b){ 
-                        var d = new Date(b.date);
-                        return '• ' + d.getDate() + ': ' + b.name + ' (' + currencySymbols[currentCurrency] + b.amount + ')';
-                    }).join('<br>');
-            } else {
-                list.innerHTML = '<em style="color:var(--text-muted)">Sin facturas este mes</em>';
-            }
-        }
-        
-        function addBillFromCalendar() {
-            var name = prompt('Nombre de la factura:');
-            var amount = prompt('Monto:');
-            var day = prompt('Día del mes (1-31):', '15');
-            if(name && amount && day) {
-                bills.push({
-                    name: name,
-                    amount: parseFloat(amount),
-                    date: new Date(currentYear, currentMonth, parseInt(day)).toISOString()
-                });
-                renderCalendar();
-                if(!isUpdatingFromDB) onUserInput();
-                showToast('📅 Factura agregada', 'success');
-            }
-        }
-
-        // ===== GOALS =====
-        function showGoalsModal() {
-            renderGoalsList();
-            document.getElementById('goalsModal').classList.add('active');
-            toggleMenu();
-        }
-        function closeGoalsModal() { document.getElementById('goalsModal').classList.remove('active'); }
-        
-        function renderGoalsList() {
-            var list = document.getElementById('goalsList');
-            if(!goals.length) {
-                list.innerHTML = '<p style="color:var(--text-muted);text-align:center">Sin metas creadas</p>';
-                return;
-            }
-            list.innerHTML = goals.map(function(g, i) {
-                var percent = Math.min(100, Math.round((g.saved / g.target) * 100));
-                return '<div class="goal-item">' +
-                    '<div class="goal-header"><span class="goal-name">' + g.name + '</span><span class="goal-amount">' + currencySymbols[currentCurrency] + g.saved + '/' + g.target + '</span></div>' +
-                    '<div class="goal-progress"><div class="goal-progress-fill" style="width:' + percent + '%"></div></div>' +
-                    '<div class="goal-meta"><span>' + percent + '% completado</span><button onclick="deleteGoal(' + i + ')" style="background:none;border:none;color:var(--danger);cursor:pointer">🗑️</button></div>' +
-                    '</div>';
-            }).join('');
-        }
-        
-        function addGoal() {
-            var name = document.getElementById('goalName').value;
-            var amount = parseFloat(document.getElementById('goalAmount').value);
-            if(name && amount) {
-                goals.push({ name: name, target: amount, saved: 0, created: new Date().toISOString() });
-                document.getElementById('goalName').value = '';
-                document.getElementById('goalAmount').value = '';
-                renderGoalsList();
-                if(!isUpdatingFromDB) onUserInput();
-                showToast('🎯 Meta creada: ' + name, 'success');
-            }
-        }
-        
-        function deleteGoal(index) {
-            goals.splice(index, 1);
-            renderGoalsList();
-            if(!isUpdatingFromDB) onUserInput();
-            showToast('🗑️ Meta eliminada', 'success');
-        }
-
-        // ===== ACHIEVEMENTS =====
-        function renderAchievements() {
-            var container = document.getElementById('achievementsList');
-            container.innerHTML = Object.keys(achievements).map(function(key) {
-                var a = achievements[key];
-                return '<div class="achievement ' + (a.unlocked ? 'unlocked' : 'locked') + '">' +
-                    '<div class="achievement-icon">' + a.icon + '</div>' +
-                    '<div class="achievement-name">' + a.name + '</div></div>';
-            }).join('');
-        }
-
-        function showAchievements() { renderAchievements(); document.getElementById('achievementsModal').classList.add('active'); toggleMenu(); }
-        function closeAchievements() { document.getElementById('achievementsModal').classList.remove('active'); }
-
-        function checkAchievements() {
-            var gastosCount = document.querySelectorAll('#listaDeudas .item-row').length;
-            var ahorrosCount = document.querySelectorAll('#listaAhorros .item-row').length;
-            var completedCount = document.querySelectorAll('.item-row.completed').length;
-            var sueldo = parseFloat(document.getElementById('sueldoBase').value) || 0;
-            var ahorros = Array.from(document.querySelectorAll('.ahorro-mon')).reduce(function(s,i){return s+(parseFloat(i.value)||0);},0);
-            
-            var changed = false;
-            if(gastosCount + ahorrosCount >= 1 && !achievements.firstItem.unlocked) { achievements.firstItem.unlocked = true; changed = true; showToast('🏆 Logro: ' + achievements.firstItem.icon + ' ' + achievements.firstItem.name, 'success'); }
-            if(sueldo > 0 && !achievements.budget100.unlocked) { achievements.budget100.unlocked = true; changed = true; showToast('🏆 Logro: ' + achievements.budget100.icon + ' ' + achievements.budget100.name, 'success'); }
-            if(ahorros >= sueldo * 0.1 && !achievements.saver.unlocked) { achievements.saver.unlocked = true; changed = true; showToast('🏆 Logro: ' + achievements.saver.icon + ' ' + achievements.saver.name, 'success'); }
-            if(completedCount >= 3 && !achievements.organized.unlocked) { achievements.organized.unlocked = true; changed = true; showToast('🏆 Logro: ' + achievements.organized.icon + ' ' + achievements.organized.name, 'success'); }
-            if(gastosCount + ahorrosCount >= 10 && completedCount >= 5 && !achievements.pro.unlocked) { achievements.pro.unlocked = true; changed = true; showToast('🏆 Logro PRO: ' + achievements.pro.icon + ' ' + achievements.pro.name, 'success'); }
-            
-            if(changed && !isUpdatingFromDB) { saveToFirestore(); renderAchievements(); }
-        }
-
-        // ===== MODALES =====
-        function showModal(title, text, onConfirm) {
-            document.getElementById('modalTitle').textContent = title;
-            document.getElementById('modalText').innerHTML = text;
-            var confirmBtn = document.getElementById('modalConfirm');
-            confirmBtn.onclick = function() { closeModal(); if(onConfirm) onConfirm(); };
-            confirmBtn.textContent = onConfirm ? 'Confirmar' : 'Cerrar';
-            document.getElementById('modal').classList.add('active');
-        }
-        function closeModal() { document.getElementById('modal').classList.remove('active'); }
-        function showManual() { document.getElementById('manualModal').classList.add('active'); toggleMenu(); }
-        function closeManual() { document.getElementById('manualModal').classList.remove('active'); }
-        function showShortcuts() { document.getElementById('shortcutsModal').classList.add('active'); toggleMenu(); }
-        function closeShortcuts() { document.getElementById('shortcutsModal').classList.remove('active'); }
-
-        function confirmReset() {
-            showModal('🗑️ ¿Borrar todo?', 
-                '<strong>⚠️ Esta acción es irreversible.</strong><br><br>Se eliminarán permanentemente todos tus datos del servidor. ¿Continuar?',
-                function() {
-                    docRef.delete().then(function() { 
-                        showToast('🗑️ Datos eliminados', 'success'); 
-                        setTimeout(function(){ location.reload(); }, 1200);
-                    }).catch(function(err) { showToast('Error: ' + err.message, 'error'); });
-                }
-            );
-            toggleMenu();
-        }
-
-        function forceSync() {
-            updateSyncStatus('🔄 Sincronizando...', 'warning');
-            onUserInput();
-            setTimeout(function() { showToast('✅ Sincronización completada', 'success'); }, 1500);
-            toggleMenu();
-        }
-
-        // ===== PREFERENCIAS =====
-        function savePreferences() {
-            try {
-                localStorage.setItem('sbp_theme', document.documentElement.hasAttribute('data-theme') ? 'light' : 'dark');
-                localStorage.setItem('sbp_currency', currentCurrency);
-                localStorage.setItem('sbp_primary', getComputedStyle(document.documentElement).getPropertyValue('--primary').trim());
-                localStorage.setItem('sbp_private', isPrivateMode);
-            } catch(e) {}
-        }
-        
-        function loadPreferences() {
-            try {
-                var theme = localStorage.getItem('sbp_theme');
-                if(theme === 'light') {
-                    document.documentElement.setAttribute('data-theme', 'light');
-                    document.getElementById('themeToggle').classList.add('active');
-                }
-                var curr = localStorage.getItem('sbp_currency');
-                if(curr) { currentCurrency = curr; updateCurrencyUI(); }
-                var color = localStorage.getItem('sbp_primary');
-                if(color) {
-                    document.documentElement.style.setProperty('--primary', color);
-                    document.querySelectorAll('.color-preset').forEach(function(p) {
-                        p.classList.toggle('active', p.dataset.color.toLowerCase() === color.toLowerCase());
-                    });
-                }
-                var priv = localStorage.getItem('sbp_private');
-                if(priv === 'true') {
-                    isPrivateMode = true;
-                    document.documentElement.setAttribute('data-private', true);
-                    document.getElementById('privateToggle').classList.add('active');
-                }
-            } catch(e) {}
-        }
-
-        function checkOnlineStatus() {
-            if(!navigator.onLine) document.getElementById('offlineIndicator').classList.add('active');
-        }
-
-        // ===== GLOBAL EXPOSURE =====
-        window.toggleMenu = toggleMenu;
-        window.toggleTheme = toggleTheme;
-        window.togglePrivateMode = togglePrivateMode;
-        window.setCurrency = setCurrency;
-        window.exportData = exportData;
-        window.exportPDF = exportPDF;
-        window.exportCSV = exportCSV;
-        window.importData = importData;
-        window.showChartModal = showChartModal;
-        window.closeChartModal = closeChartModal;
-        window.exportChart = exportChart;
-        window.showCalendarModal = showCalendarModal;
-        window.closeCalendarModal = closeCalendarModal;
-        window.changeMonth = changeMonth;
-        window.addBillFromCalendar = addBillFromCalendar;
-        window.showGoalsModal = showGoalsModal;
-        window.closeGoalsModal = closeGoalsModal;
-        window.addGoal = addGoal;
-        window.deleteGoal = deleteGoal;
-        window.showDetailedStats = function() { /* same as before */ showModal('📊 Estadísticas', 'Función disponible', null); toggleMenu(); };
-        window.showManual = showManual;
-        window.closeManual = closeManual;
-        window.showShortcuts = showShortcuts;
-        window.closeShortcuts = closeShortcuts;
-        window.showAchievements = showAchievements;
-        window.closeAchievements = closeAchievements;
-        window.confirmReset = confirmReset;
-        window.forceSync = forceSync;
-        window.closeModal = closeModal;
-        window.onUserInput = onUserInput;
-        window.filterByAccount = filterByAccount;
-        window.searchItems = searchItems;
-
-        if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
-        else init();
-    })();
+    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
+})();
 </script>
 </body>
 </html>
