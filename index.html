@@ -836,12 +836,24 @@
     };
     if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-    db.settings({ experimentalForceLongPolling: true, merge: true });
+    
+    // 🔧 Configuración para mejor compatibilidad (del segundo código)
+    db.settings({
+        experimentalForceLongPolling: true,
+        merge: true
+    });
     // 🔥🔥🔥 FIN CONFIG 🔥🔥🔥
 
+    // 🔄 REFERENCIA DIRECTA A DOCUMENTO (SIN AUTH) - del segundo código
     const docRef = db.collection("usuarios").doc("x9k2mP7qLz4wN1vB8cR5Hernan2026");
     
-    let syncing = false, saveT, currency = 'USD', privateMode = false, chartInst = null;
+    // Estado global - del segundo código
+    let isUpdatingFromDB = false;
+    let saveTimeout;
+    let currency = 'USD';
+    let privateMode = false;
+    let chartInst = null;
+    
     const sym = {USD:'$', EUR:'€', MXN:'$', COP:'$'};
     const icons = {general:'📌',vivienda:'🏠',comida:'🍔',transporte:'🚗',servicios:'💡',ocio:'🎮',salud:'🏥',emergencia:'🚨',vacaciones:'✈️',inversion:'📈',compra:'🛒',educacion:'📚'};
     const CIRC = 2 * Math.PI * 54;
@@ -852,73 +864,66 @@
 
     // Init
     function init(){
-        renderColors(); setupEvents(); setupSync(); loadPrefs();
+        renderColors(); setupEvents(); setupFirestoreListener(); loadPrefs();
         toast('✨ Smart Budget Pro listo', 'success');
     }
 
-    // 🔥 SYNC - FIXED & ROBUST 🔥
-    function setupSync(){
+    // 🔥 LISTENER DE FIRESTORE - MÉTODO DEL SEGUNDO CÓDIGO (SIMPLIFICADO) 🔥
+    function setupFirestoreListener() {
+        console.log('📡 Configurando listener de Firestore');
         updateSync('🔄 Conectando...','warning');
         
-        docRef.onSnapshot(doc => {
-            try {
-                syncing = true;
-                if(doc.exists){
-                    const d = doc.data();
-                    
-                    // Income
-                    if(d.sueldo !== undefined) $('#sueldoBase').value = d.sueldo;
-                    
-                    // Theme color
-                    if(d.temaColor){ 
-                        document.documentElement.style.setProperty('--primary', d.temaColor);
-                        $$('.color-dot').forEach(p => p.classList.toggle('active', p.dataset.c === d.temaColor));
-                    }
-                    
-                    // Dark mode
-                    if(d.darkMode !== undefined){
-                        const isLight = !d.darkMode;
-                        document.documentElement[isLight ? 'setAttribute' : 'removeAttribute']('data-theme', 'light');
-                        $('#themeToggle').classList.toggle('active', isLight);
-                    }
-                    
-                    // Currency
-                    if(d.currency){ currency = d.currency; updateCurrencyUI(); }
-                    
-                    // Private mode
-                    if(d.privateMode !== undefined){ 
-                        privateMode = d.privateMode; 
-                        document.documentElement.setAttribute('data-private', privateMode);
-                        $('#privateToggle').classList.toggle('active', privateMode);
-                    }
-                    
-                    // Lists
-                    renderLists(d.deudas || [], d.ahorros || []);
-                    
-                } else {
-                    renderLists([], []);
+        docRef.onSnapshot(function(doc) {
+            isUpdatingFromDB = true;
+            if (doc.exists) {
+                const data = doc.data();
+                console.log('📥 Datos recibidos de Firestore');
+                
+                // Income
+                if(data.sueldo !== undefined) $('#sueldoBase').value = data.sueldo;
+                
+                // Theme color
+                if(data.temaColor) { 
+                    document.documentElement.style.setProperty('--primary', data.temaColor);
+                    $$('.color-dot').forEach(p => p.classList.toggle('active', p.dataset.c === data.temaColor));
                 }
                 
-                calc(); updateBadges(); 
-                syncing = false;
-                updateSync('✅ Sincronizado','success');
-                $('#lastSync').textContent = new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+                // Dark mode
+                if(data.darkMode !== undefined){
+                    const isDark = data.darkMode;
+                    if(isDark) {
+                        document.documentElement.removeAttribute('data-theme');
+                    } else {
+                        document.documentElement.setAttribute('data-theme', 'light');
+                    }
+                    $('#themeToggle').classList.toggle('active', isDark);
+                }
                 
-            } catch(err){
-                console.error('Sync parse error:', err);
-                syncing = false;
-                updateSync('❌ Error de datos','error');
+                // Currency
+                if(data.currency) { currency = data.currency; updateCurrencyUI(); }
+                
+                // Private mode
+                if(data.privateMode !== undefined){ 
+                    privateMode = data.privateMode; 
+                    document.documentElement.setAttribute('data-private', privateMode);
+                    $('#privateToggle').classList.toggle('active', privateMode);
+                }
+                
+                // Lists
+                renderLists(data.deudas || [], data.ahorros || []);
+                
+            } else {
+                console.log('📄 Documento nuevo, estructura inicial');
+                renderLists([], []);
             }
-        }, err => {
-            console.error('🔥 Firebase Sync Error:', err.code, err.message);
-            syncing = false;
-            updateSync('❌ Sin conexión','error');
-            toast('Error de sincronización: ' + err.message, 'error');
-            
-            // Auto-reconnect attempt
-            setTimeout(() => {
-                if(!syncing) setupSync();
-            }, 5000);
+            calc(); updateBadges();
+            isUpdatingFromDB = false;
+            updateSync('✅ Sincronizado','success');
+            $('#lastSync').textContent = new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+        }, function(error) {
+            console.error('❌ Error en listener Firestore:', error);
+            updateSync('❌ Error Sync','error');
+            toast('Error de sincronización', 'error');
         });
     }
 
@@ -975,18 +980,18 @@
             row.querySelector('.btn-check'), row.querySelector('.btn-del')
         ];
         
-        [name, amt].forEach(el => el.addEventListener('input', () => !syncing && userChange()));
+        [name, amt].forEach(el => el.addEventListener('input', () => !isUpdatingFromDB && userChange()));
         sel.addEventListener('change', () => { 
             row.querySelector('.item-icon').textContent = icons[sel.value]||'📌'; 
-            !syncing && userChange(); 
+            !isUpdatingFromDB && userChange(); 
         });
         col.addEventListener('input', () => { 
             row.style.setProperty('--item-color', col.value); 
-            !syncing && userChange(); 
+            !isUpdatingFromDB && userChange(); 
         });
         comp.addEventListener('click', () => { 
             row.classList.toggle('completed'); 
-            !syncing && userChange(); 
+            !isUpdatingFromDB && userChange(); 
         });
         rem.addEventListener('click', () => {
             row.style.opacity='0'; row.style.transform='translateX(20px)';
@@ -997,7 +1002,7 @@
                         type==='g'?'Sin gastos':'Sin metas', 
                         'Agrega uno nuevo');
                 }
-                !syncing && userChange(); 
+                !isUpdatingFromDB && userChange(); 
             }, 220);
         });
         
@@ -1104,19 +1109,19 @@
         }
     }
 
-    // Save
+    // Save - MÉTODO DEL SEGUNDO CÓDIGO (SIMPLIFICADO)
     function userChange(){ 
-        if(syncing) return; 
+        if(isUpdatingFromDB) return; 
         calc(); 
         updateSync('📡 Guardando...','warning'); 
-        clearTimeout(saveT); 
-        saveT = setTimeout(saveToDB, 850); 
+        clearTimeout(saveTimeout); 
+        saveTimeout = setTimeout(function() { saveToFirestore(); }, 800); 
     }
     
-    function saveToDB(){
+    function saveToFirestore(skipTimestamp) {
         const sueldo = +$('#sueldoBase').value||0;
         const theme = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim();
-        const dark = !document.documentElement.hasAttribute('data-theme');
+        const isDark = !document.documentElement.hasAttribute('data-theme');
         
         const deudas = $$('#listG .item').map(r => ({
             nombre: r.querySelector('.item-name').value,
@@ -1134,19 +1139,29 @@
             completed: r.classList.contains('completed')
         }));
         
-        docRef.set({
-            sueldo, temaColor:theme, darkMode:dark, currency, privateMode, deudas, ahorros,
-            ultimaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
-        }, {merge:true})
-        .then(()=>{ 
-            updateSync('✅ Sincronizado','success'); 
-            $('#lastSync').textContent = new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}); 
-            savePrefs(); 
-        })
-        .catch(e=>{ 
-            console.error('Save error:', e); 
-            updateSync('❌ Error al guardar','error'); 
-            toast('Error: ' + e.message, 'error'); 
+        const dataToSave = {
+            sueldo: sueldo,
+            temaColor: theme,
+            darkMode: isDark,
+            currency: currency,
+            privateMode: privateMode,
+            deudas: deudas,
+            ahorros: ahorros
+        };
+        
+        if (!skipTimestamp) {
+            dataToSave.ultimaActualizacion = firebase.firestore.FieldValue.serverTimestamp();
+        }
+        
+        docRef.set(dataToSave, { merge: true }).then(function() {
+            console.log('📤 Datos guardados en Firestore');
+            updateSync('✅ Sincronizado','success');
+            $('#lastSync').textContent = new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+            savePrefs();
+        }).catch(function(err) {
+            console.error('❌ Error al guardar:', err);
+            updateSync('❌ Error','error');
+            toast('Error al guardar: ' + err.message, 'error');
         });
     }
 
@@ -1157,24 +1172,25 @@
     }
     
     function toggleTheme(){ 
-        const h=document.documentElement, isLight=h.hasAttribute('data-theme');
-        h[isLight?'removeAttribute':'setAttribute']('data-theme','light'); 
-        $('#themeToggle').classList.toggle('active', !isLight); 
-        if(!syncing) userChange(); 
-        toast(isLight?'☀️ Modo claro':'🌙 Modo oscuro','success'); 
+        const h=document.documentElement, isDark=!h.hasAttribute('data-theme');
+        if(isDark) h.setAttribute('data-theme', 'light');
+        else h.removeAttribute('data-theme');
+        $('#themeToggle').classList.toggle('active', !isDark); 
+        if(!isUpdatingFromDB) userChange(); 
+        toast(isDark?'☀️ Modo claro':'🌙 Modo oscuro','success'); 
     }
     
     function togglePrivate(){ 
         privateMode = !privateMode; 
         document.documentElement.setAttribute('data-private',privateMode); 
         $('#privateToggle').classList.toggle('active',privateMode); 
-        if(!syncing) userChange(); 
+        if(!isUpdatingFromDB) userChange(); 
         toast(privateMode?'👁️ Montos ocultos':'👁️ Montos visibles','success'); 
     }
     
     function setCurrency(c){ 
         currency=c; updateCurrencyUI(); 
-        if(!syncing) userChange(); 
+        if(!isUpdatingFromDB) userChange(); 
         toast('💱 '+c,'success'); 
         toggleMenu(); 
     }
@@ -1209,7 +1225,7 @@
             $$('.color-dot').forEach(x=>x.classList.remove('active')); 
             p.classList.add('active'); 
             document.documentElement.style.setProperty('--primary',p.dataset.c); 
-            if(!syncing) userChange(); 
+            if(!isUpdatingFromDB) userChange(); 
             toast('🎨 Color actualizado','success'); 
         });
     }
@@ -1346,7 +1362,7 @@
     function forceSync(){ 
         updateSync('🔄 Sincronizando...','warning'); 
         userChange(); 
-        setTimeout(()=>toast('✅ Sincronizado','success'),1200); 
+        setTimeout(()=>toast('✅ Sincronizado','success'),1000); 
         toggleMenu(); 
     }
 
