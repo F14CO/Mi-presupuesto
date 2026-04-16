@@ -755,6 +755,10 @@
     var countdownInterval = null;
     var syncCountdown = 60;
     
+    // Debounce para mejorar rendimiento
+    var debounceTimer = null;
+    var DEBOUNCE_DELAY = 300; // 300ms de delay
+    
     var sym = {USD:'$', EUR:'€', MXN:'$', COP:'$'};
     
     var gastosCats = {
@@ -795,6 +799,14 @@
     function $(sel){return document.querySelector(sel);}
     function $$(sel){return Array.from(document.querySelectorAll(sel));}
     function safeCall(fn){try{if(typeof fn==='function')fn();}catch(e){console.warn('Error:',e);}}
+    
+    // Función de sanitización para prevenir XSS
+    function escapeHTML(str) {
+        if (!str) return '';
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
 
     function init(){
         if(!$('#listG')||!$('#listA')||!$('#sueldoBase')){console.error('❌ Elementos críticos no encontrados');return;}
@@ -947,7 +959,18 @@
         curPickerItem=null;
         curPickerType=null;
     }
-    function markChange(){hasPendingChanges=true;if(!isUpdatingFromDB)safeCall(calc);}
+    
+    // Función markChange con debounce para mejor rendimiento
+    function markChange(){
+        hasPendingChanges=true;
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(function() {
+            if(!isUpdatingFromDB){
+                safeCall(calc);
+                saveToFirebase(false);
+            }
+        }, DEBOUNCE_DELAY);
+    }
 
     function renderLists(gastos,ahorros){
         resetSearch('g');resetSearch('a');
@@ -970,7 +993,9 @@
         row.style.setProperty('--item-color',color);
         var cats=type==='g'?gastosCats:ahorrosCats,catKey=data.category||'general',catData=cats[catKey]||cats.general;
         row.setAttribute('data-cat',catKey);
-        row.innerHTML='<div class="item-icon-btn" title="Cambiar categoría"><div class="item-color-ring"></div>'+catData.icon+'</div><div class="item-body"><input type="text" class="item-name" placeholder="'+(type==='g'?'Gasto...':'Meta...')+'" value="'+(data.nombre||'')+'"><div class="item-row"><div class="cat-label" title="Toca para cambiar categoría"><span class="cat-label-icon">'+catData.icon+'</span><span class="cat-label-text">'+catData.label+'</span></div><input type="number" class="item-val amount" placeholder="0" min="0" step="0.01" value="'+(data.monto||'')+'"></div></div><div class="item-actions"><button class="btn-check" title="Completado">✔️</button><button class="btn-del" title="Eliminar">✕</button></div>';
+        
+        // Usar escapeHTML para prevenir XSS
+        row.innerHTML='<div class="item-icon-btn" title="Cambiar categoría"><div class="item-color-ring"></div>'+escapeHTML(catData.icon)+'</div><div class="item-body"><input type="text" class="item-name" placeholder="'+(type==='g'?'Gasto...':'Meta...')+'" value="'+escapeHTML(data.nombre||'')+'"><div class="item-row"><div class="cat-label" title="Toca para cambiar categoría"><span class="cat-label-icon">'+escapeHTML(catData.icon)+'</span><span class="cat-label-text">'+escapeHTML(catData.label)+'</span></div><input type="number" class="item-val amount" placeholder="0" min="0" step="0.01" value="'+(data.monto||'')+'"></div></div><div class="item-actions"><button class="btn-check" title="Completado">✔️</button><button class="btn-del" title="Eliminar">✕</button></div>';
         var name=row.querySelector('.item-name'),amt=row.querySelector('.item-val'),iconBtn=row.querySelector('.item-icon-btn'),catLabel=row.querySelector('.cat-label'),comp=row.querySelector('.btn-check'),rem=row.querySelector('.btn-del');
         if(iconBtn)iconBtn.addEventListener('click',function(e){e.stopPropagation();openCatPicker(row,type);});
         if(catLabel)catLabel.addEventListener('click',function(e){e.stopPropagation();openCatPicker(row,type);});
@@ -987,33 +1012,37 @@
     function empty(el,icon,title,sub){if(el)el.innerHTML='<div class="empty"><div class="empty-icon">'+icon+'</div><p class="empty-txt"><strong>'+title+'</strong><br><small>'+sub+'</small></p></div>';}
 
     function calc(){
-        var si=$('#sueldoBase'),s=si?+si.value||0:0,sym_=sym[currency],g=0,a=0;
-        $$('#listG .item-val').forEach(function(i){g+=+i.value||0;});
-        $$('#listA .item-val').forEach(function(i){a+=+i.value||0;});
-        var d=Math.max(0,s-g-a),ex=(g+a)>s;
-        var gp=s?Math.min(100,(g/s)*100):0,ap=s?Math.min(100,(a/s)*100):0,dp=s?Math.max(0,(d/s)*100):0;
-        safeCall(function(){anim('statG',g,sym_);});
-        safeCall(function(){anim('statA',a,sym_);});
-        safeCall(function(){anim('statD',d,sym_);});
-        safeCall(function(){updRing('gRing',gp);});
-        safeCall(function(){updRing('aRing',ap);});
-        safeCall(function(){updRing('dRing',dp);});
-        var gP=$('#gPct');if(gP)gP.textContent=s?Math.round(gp)+'%':'0%';
-        var aP=$('#aPct');if(aP)aP.textContent=s?Math.round(ap)+'%':'0%';
-        var dP=$('#dPct');if(dP)dP.textContent=s?Math.round(dp)+'%':'0%';
-        var fG=$('#fG');if(fG)fG.textContent=sym_+' '+fmt(g);
-        var fA=$('#fA');if(fA)fA.textContent=sym_+' '+fmt(a);
-        var fD=$('#fD');if(fD)fD.textContent=sym_+' '+fmt(d);
-        var fGP=$('#fGP');if(fGP)fGP.textContent=Math.round(gp)+'%';
-        var fAP=$('#fAP');if(fAP)fAP.textContent=Math.round(ap)+'%';
-        var fDP=$('#fDP');if(fDP)fDP.textContent=Math.round(dp)+'%';
-        var gpt=$('#gProgTxt');if(gpt)gpt.textContent=Math.round(gp)+'%';
-        var gp_=$('#gProg');if(gp_)gp_.style.width=gp+'%';
-        var apt=$('#aProgTxt');if(apt)apt.textContent=Math.round(ap)+'%';
-        var ap_=$('#aProg');if(ap_)ap_.style.width=ap+'%';
-        var ag=$('#alertG');if(ag)ag.style.display=ex?'block':'none';
-        safeCall(updateBadges);
-    }
+    var si=$('#sueldoBase'),s=si?+si.value||0:0,sym_=sym[currency],g=0,a=0;
+    $$('#listG .item-val').forEach(function(i){g+=+i.value||0;});
+    $$('#listA .item-val').forEach(function(i){a+=+i.value||0;});
+    var d=Math.max(0,s-g-a),ex=(g+a)>s;
+    var gp=s?Math.min(100,(g/s)*100):0,ap=s?Math.min(100,(a/s)*100):0,dp=s?Math.max(0,(d/s)*100):0;
+    
+    // Actualización DIRECTA sin animación para asegurar que se vean los valores
+    var elG=$('#statG'), elA=$('#statA'), elD=$('#statD');
+    if(elG) elG.textContent = sym_ + ' ' + fmt(g);
+    if(elA) elA.textContent = sym_ + ' ' + fmt(a);
+    if(elD) elD.textContent = sym_ + ' ' + fmt(d);
+    
+    safeCall(function(){updRing('gRing',gp);});
+    safeCall(function(){updRing('aRing',ap);});
+    safeCall(function(){updRing('dRing',dp);});
+    var gP=$('#gPct');if(gP)gP.textContent=s?Math.round(gp)+'%':'0%';
+    var aP=$('#aPct');if(aP)aP.textContent=s?Math.round(ap)+'%':'0%';
+    var dP=$('#dPct');if(dP)dP.textContent=s?Math.round(dp)+'%':'0%';
+    var fG=$('#fG');if(fG)fG.textContent=sym_+' '+fmt(g);
+    var fA=$('#fA');if(fA)fA.textContent=sym_+' '+fmt(a);
+    var fD=$('#fD');if(fD)fD.textContent=sym_+' '+fmt(d);
+    var fGP=$('#fGP');if(fGP)fGP.textContent=Math.round(gp)+'%';
+    var fAP=$('#fAP');if(fAP)fAP.textContent=Math.round(ap)+'%';
+    var fDP=$('#fDP');if(fDP)fDP.textContent=Math.round(dp)+'%';
+    var gpt=$('#gProgTxt');if(gpt)gpt.textContent=Math.round(gp)+'%';
+    var gp_=$('#gProg');if(gp_)gp_.style.width=gp+'%';
+    var apt=$('#aProgTxt');if(apt)apt.textContent=Math.round(ap)+'%';
+    var ap_=$('#aProg');if(ap_)ap_.style.width=ap+'%';
+    var ag=$('#alertG');if(ag)ag.style.display=ex?'block':'none';
+    safeCall(updateBadges);
+}
     function anim(id,val,sym_){var el=$(id);if(!el)return;var cur=+el.textContent.replace(/[^0-9.-]/g,'')||0,dur=320,steps=16,inc=(val-cur)/steps,s=0;var t=setInterval(function(){s++;el.textContent=sym_+' '+fmt(Math.round((cur+inc*s)*100)/100);if(s>=steps){clearInterval(t);el.textContent=sym_+' '+fmt(val);}},dur/steps);}
     function fmt(n){return n.toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2});}
     function updRing(id,pct){var c=$(id);if(c)c.style.strokeDashoffset=CIRC-(pct/100)*CIRC;}
@@ -1046,7 +1075,7 @@
     function toast(msg,type){
         if(type===undefined)type='success';
         var t=document.createElement('div');t.className='toast '+type;
-        t.innerHTML='<span>'+(type==='success'?'✅':'❌')+'</span><span>'+msg+'</span>';
+        t.innerHTML='<span>'+(type==='success'?'✅':'❌')+'</span><span>'+escapeHTML(msg)+'</span>';
         var tb=$('#toastBox');if(tb)tb.appendChild(t);
         setTimeout(function(){if(t){t.style.opacity='0';t.style.transform='translateX(35px)';setTimeout(function(){if(t&&t.parentNode)t.remove();},220);}},3200);
     }
@@ -1110,29 +1139,40 @@
             data=Object.values(cats),
             colors=['#6366f1','#ec4899','#10b981','#f59e0b','#3b82f6','#8b5cf6','#f43f5e','#14b8a6'];
         if(chartInst){chartInst.destroy();chartInst=null;}
-        if(typeof Chart==='undefined'){toast('📊 Cargando gráfica...','warning');var sc=document.createElement('script');sc.src='https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js';sc.onload=function(){showChart();};sc.onerror=function(){toast('❌ Error al cargar','error');};document.head.appendChild(sc);toggleMenu();return;}
+        if(typeof Chart==='undefined'){
+            toast('📊 Cargando gráfica...','warning');
+            var sc=document.createElement('script');
+            sc.src='https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js';
+            sc.onload=function(){showChart();};
+            sc.onerror=function(){
+                toast('❌ Error al cargar Chart.js. Intenta recargar la página.','error');
+            };
+            document.head.appendChild(sc);
+            toggleMenu();
+            return;
+        }
         chartInst=new Chart(ctx,{
-    type:'doughnut',
-    data: {  // ✅ AGREGADO "data:" - ESTO ES LO QUE FALTABA
-        labels:labels,
-        datasets:[{
-            data,
-            borderColor:colors.slice(0,data.length),
-            backgroundColor:colors.slice(0,data.length).map(function(c){return c+'99';}),
-            borderWidth:2
-        }]
-    },
-    options:{
-        responsive:true,
-        maintainAspectRatio:false,
-        cutout:'68%',
-        plugins:{
-            legend:{display:false},
-            tooltip:{callbacks:{label:function(ctx){return ctx.label+': '+sym[currency]+ctx.parsed.toFixed(2)+' ('+((ctx.parsed/total)*100).toFixed(1)+'%)';}}}
-        },
-        animation:{animateScale:true,animateRotate:true}
-    }
-});
+            type:'doughnut',
+            data:{
+                labels:labels,
+                datasets:[{
+                    data:data,
+                    borderColor:colors.slice(0,data.length),
+                    backgroundColor:colors.slice(0,data.length).map(function(c){return c+'99';}),
+                    borderWidth:2
+                }]
+            },
+            options:{
+                responsive:true,
+                maintainAspectRatio:false,
+                cutout:'68%',
+                plugins:{
+                    legend:{display:false},
+                    tooltip:{callbacks:{label:function(ctx){return ctx.label+': '+sym[currency]+ctx.parsed.toFixed(2)+' ('+((ctx.parsed/total)*100).toFixed(1)+'%)';}}}
+                },
+                animation:{animateScale:true,animateRotate:true}
+            }
+        });
         $('#chartModal').classList.add('active');toggleMenu();
     }
     
